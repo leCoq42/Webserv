@@ -25,6 +25,6 @@ forms, including the uploading of files.
 
 Program name:        <pre>Webserv</pre>
 Makefile:            <pre>all, clean, fclean, re, bonus</pre>
-Arguments:            A configuration file
-External functions:   Everything in C++11
-External libraties:   Any external library and Boost libraries are forbidden.
+Arguments:           <pre>A configuration file</pre>
+External functions:  <pre>Everything in C++11</pre>
+External libraties:  <pre>Any external library and Boost libraries are forbidden</pre>
