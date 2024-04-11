@@ -2,25 +2,13 @@
 This project is about writing a HTTP server in c++ which will be tested in an actual browser.
 
 **Summary**
-The Hypertext Transfer Protocol (HTTP) is an application protocol for distributed,
-collaborative, hypermedia information systems.
-HTTP is the foundation of data communication for the World Wide Web, where hypertext documents include hyperlinks to other resources that the user can easily access.
-For example, by a mouse click or by tapping the screen in a web browser.
-HTTP was developed to facilitate hypertext and the World Wide Web.
-The primary function of a web server is to store, process, and deliver web pages to
-clients. The communication between client and server takes place using the Hypertext
-Transfer Protocol (HTTP).
-Pages delivered are most frequently HTML documents, which may include images,
-style sheets, and scripts in addition to the text content.
-Multiple web servers may be used for a high-traffic website.
-A user agent, commonly a web browser or web crawler, initiates communication by
-requesting a specific resource using HTTP and the server responds with the content of
-that resource or an error message if unable to do so. The resource is typically a real file
-on the server’s secondary storage, but this is not necessarily the case and depends on how
-the webserver is implemented.
-While the primary function is to serve content, full implementation of HTTP also
-includes ways of receiving content from clients. This feature is used for submitting web
-forms, including the uploading of files.
+This project involves creating a HTTP server in C++11 with specific requirements outlined in the assignment. The server must be able to handle multiple ports, serve static websites, accept GET, POST, and DELETE methods, allow file uploads, and be non-blocking using only one poll() (or equivalent) for all I/O operations. Additionally, the server must accurately handle HTTP response status codes, have default error pages, and be compatible with HTTP 1.1 standards like NGINX.
+
+The configuration file allows users to customize server settings such as port, host, server names, error pages, route configurations, directory listing, default files, and CGI execution. Notably, CGI execution should be handled with the full path as PATH_INFO and must work with one CGI, such as PHP or Python.
+
+For MacOS, fcntl() can be used to implement non-blocking behavior, with specific flags allowed.
+
+The bonus part includes additional features like support for cookies and session management, as well as handling multiple CGI.
 
 
 Program name:        <pre>Webserv</pre>
