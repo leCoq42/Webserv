@@ -18,4 +18,4 @@ External functions:  <pre>Everything in C++11</pre>
 External libraties:  <pre>Any external library and Boost libraries are forbidden</pre>
 
 
-This project was accomplished by [leCoq42]([https://pages.github.com/](https://github.com/leCoq42)), @Joost-L & @Chavert-ter-Maat
+This project was accomplished by [leCoq42](https://github.com/leCoq42), @Joost-L & @Chavert-ter-Maat
