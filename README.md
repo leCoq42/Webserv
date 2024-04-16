@@ -1,6 +1,7 @@
 # Webserv
 This project is about writing a HTTP server in c++ which will be tested in an actual browser.
 
+
 **Summary**
 This project involves creating a HTTP server in C++11 with specific requirements outlined in the assignment. The server must be able to handle multiple ports, serve static websites, accept GET, POST, and DELETE methods, allow file uploads, and be non-blocking using only one poll() (or equivalent) for all I/O operations. Additionally, the server must accurately handle HTTP response status codes, have default error pages, and be compatible with HTTP 1.1 standards like NGINX.
 
