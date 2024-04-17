@@ -14,7 +14,7 @@ The bonus part includes additional features like support for cookies and session
 Program name:        <pre>Webserv</pre>
 Makefile:            <pre>all, clean, fclean, re, bonus</pre>
 Arguments:           <pre>A configuration file</pre>
-External functions:  <pre>Everything in C++ 11.
+External functions:  <pre>Everything in C++ 98.
 execve, dup, dup2, pipe, strerror, gai_strerror,
 errno, dup, dup2, fork, socketpair, htons, htonl,
 ntohs, ntohl, select, poll, epoll (epoll_create,
@@ -22,7 +22,8 @@ epoll_ctl, epoll_wait), kqueue (kqueue, kevent),
 socket, accept, listen, send, recv, chdir bind,
 connect, getaddrinfo, freeaddrinfo, setsockopt,
 getsockname, getprotobyname, fcntl, close, read,
-write, waitpid, kill, signal, acce</pre>
+write, waitpid, kill, signal, access, stat, open,
+opendir, readdir and closedir.</pre>
 External libraties:  <pre>Any external library and Boost libraries are forbidden</pre>
 
 
