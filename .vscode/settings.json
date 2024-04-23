@@ -46,6 +46,8 @@
 		"streambuf": "cpp",
 		"typeinfo": "cpp",
 		"iostream": "cpp",
-		"istream": "cpp"
+		"istream": "cpp",
+		"cstring": "cpp",
+		"cinttypes": "cpp"
 	}
 }
