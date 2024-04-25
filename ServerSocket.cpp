@@ -6,12 +6,14 @@ ServerSocket::ServerSocket(){
 ServerSocket::~ServerSocket() {
 }
 
+
+
 struct sockaddr_in	ServerSocket::defineServerAddress() {
 	struct sockaddr_in server_addr;
 	memset(&server_addr, 0, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;     		  // IPv4
 	server_addr.sin_addr.s_addr = INADDR_ANY;     // Accept connections from any IP address
-	server_addr.sin_port = htons(8080);      	  // Port 8080
+	server_addr.sin_port = htons(MYPORT);      	  // Port 8080
 	return (server_addr);
 }
 
@@ -33,7 +35,7 @@ void	ServerSocket::bindServerSocket(int serverSocket_fd, struct sockaddr_in &ser
 }
 
 void	ServerSocket::listenIncomingConnections(int serverSocket_fd) {
-	if (listen(serverSocket_fd, 5) == -1) { // adjust the value (5) based on the performance and scalability needs.
+	if (listen(serverSocket_fd, BACKLOG) == -1) { // adjust the value (5) based on the performance and scalability needs.
 		std::cerr << "Error listening for connection on server socket" << std::endl;
 		close(serverSocket_fd);
 	}

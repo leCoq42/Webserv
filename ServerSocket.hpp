@@ -10,6 +10,9 @@
 #include <arpa/inet.h> //to convert ip into string
 #include <netdb.h>
 
+#define	MYPORT 8080
+#define	BACKLOG 10
+
 class ServerSocket{
 	private:
 		struct sockaddr_in	_server_addr;
