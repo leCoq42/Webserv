@@ -46,19 +46,22 @@ int main() {
 	int serverSocket_fd = SS.createServerSocket();
 	SS.bindServerSocket(serverSocket_fd, server_addr);
 	SS.listenIncomingConnections(serverSocket_fd);
+	// serverSocket (listener) is now listening
 	std::cout << "Initial server socket listening on port 8080..." << std::endl;
 
 	// Accepting incoming connections.
-	int client_fd = acceptIncomingConnection(serverSocket_fd);
+	// int client_fd = acceptIncomingConnection(serverSocket_fd);
 
-	// Send stuff
-	sendStuff(client_fd);
+	// // Send stuff
+	// sendStuff(client_fd);
 
-	// Receive stuff
-	receiveStuff(client_fd);
+	// // Receive stuff
+	// receiveStuff(client_fd);
 
-	// CS.startPolling(serverSocket_fd);
+	CS.startPolling(serverSocket_fd);
+
 
 	close(serverSocket_fd);
 	return (0);
 }
+

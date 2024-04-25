@@ -1,5 +1,5 @@
-#ifndef CLIENTSOCKET_HPP
-#define CLIENTSOCKET_HPP
+#ifndef CCLIENTSOCKET_HPP
+#define CCLIENTSOCKET_HPP
 
 #include <iostream>
 #include <vector>
@@ -9,17 +9,17 @@
 #include <unistd.h>
 #include "ServerSocket.hpp"
 
-class ClientSocket : ServerSocket{
+class CClientSocket : ServerSocket{
 	private:
 		std::vector<int> 	_connectedClientSockets;
 		std::vector<pollfd>	pfds;
 
 	public:
-		ClientSocket();
-		~ClientSocket();
+		2ClientSocket();
+		~2ClientSocket();
 
-		void	handleInputEvent(int index);
-		void	handleIncomingConnection(int index, int serverSocket_fd);
+		void	handleInputEvent(int index, int server_fd);
+		void	handleIncomingConnection(int server_fd);
 		void	addClientSocketToFds(int client_fd);
 		void	startPolling(int server_fd);
 };
