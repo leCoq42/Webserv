@@ -25,6 +25,10 @@ int	ServerSocket::createServerSocket() {
 }
 
 void	ServerSocket::bindServerSocket(int serverSocket_fd, struct sockaddr_in &server_addr) {
+	const int reuse = 1;
+	if (setsockopt(serverSocket_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) != 0) {
+		std::cerr << "Could not configure socket options: " + std::string(std::strerror(errno));
+	}
 	if (bind(serverSocket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
 		std::cerr << "Error binding socket" << std::endl;
 		close(serverSocket_fd);
@@ -37,4 +41,13 @@ void	ServerSocket::listenIncomingConnections(int serverSocket_fd) {
 		std::cerr << "Error listening for connection on server socket" << std::endl;
 		close(serverSocket_fd);
 	}
+}
+
+int	ServerSocket::setUpServerSocket() {
+	struct sockaddr_in server_addr = defineServerAddress();
+	int serverSocket_fd = createServerSocket();
+	bindServerSocket(serverSocket_fd, server_addr);
+	listenIncomingConnections(serverSocket_fd);
+	std::cout << "Initial server socket listening on port 8080..." << std::endl;
+	return (serverSocket_fd);
 }

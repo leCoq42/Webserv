@@ -25,6 +25,7 @@ class ServerSocket{
 		struct sockaddr_in	defineServerAddress();
 		void				bindServerSocket(int server_fd, struct sockaddr_in &server_addr);
 		void				listenIncomingConnections(int server_fd);
+		int					setUpServerSocket();
 };
 
 #endif

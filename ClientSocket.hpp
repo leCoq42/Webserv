@@ -18,10 +18,11 @@ class ClientSocket : ServerSocket{
 		ClientSocket();
 		~ClientSocket();
 
-		void	handleInputEvent(int index);
-		void	handleIncomingConnection(int index, int serverSocket_fd);
+		int		handleInputEvent(int index);
+		void	acceptClient(int index, int serverSocket_fd);
 		void	addClientSocketToFds(int client_fd);
 		void	startPolling(int server_fd);
+		int		checkExitSignals(char *buffer, int client_fd);
 };
 
 #endif
