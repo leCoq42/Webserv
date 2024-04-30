@@ -95,7 +95,8 @@ void	ClientSocket::startPolling(int serverSocket_fd) {
 				if (pfds[i].revents & POLLIN) {
 					if (pfds[i].fd == serverSocket_fd) {
 						acceptClient(i, serverSocket_fd);
-					} else {
+					} 
+					else {
 						std::cout << "Input available on descriptor " << pfds[i].fd << std::endl;
 						if (handleInputEvent(i) == CLOSE)
 							return ;

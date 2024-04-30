@@ -1,6 +1,6 @@
 #include "ServerSocket.hpp"
 
-ServerSocket::ServerSocket(){
+ServerSocket::ServerSocket() {
 }
 
 ServerSocket::~ServerSocket() {
@@ -9,9 +9,9 @@ ServerSocket::~ServerSocket() {
 struct sockaddr_in	ServerSocket::defineServerAddress() {
 	struct sockaddr_in server_addr;
 	memset(&server_addr, 0, sizeof(server_addr));
-	server_addr.sin_family = AF_INET;     		  // IPv4
-	server_addr.sin_addr.s_addr = INADDR_ANY;     // Accept connections from any IP address
-	server_addr.sin_port = htons(8080);      	  // Port 8080
+	server_addr.sin_family = AF_INET;     		  
+	server_addr.sin_addr.s_addr = INADDR_ANY;    
+	server_addr.sin_port = htons(8080);
 	return (server_addr);
 }
 
@@ -48,6 +48,6 @@ int	ServerSocket::setUpServerSocket() {
 	int serverSocket_fd = createServerSocket();
 	bindServerSocket(serverSocket_fd, server_addr);
 	listenIncomingConnections(serverSocket_fd);
-	std::cout << "Initial server socket listening on port 8080..." << std::endl;
+	std::cout << "Initial server socket listening on port 8080" << std::endl;
 	return (serverSocket_fd);
 }
