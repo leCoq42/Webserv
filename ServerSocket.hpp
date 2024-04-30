@@ -9,6 +9,7 @@
 #include <cstring>
 #include <arpa/inet.h> //to convert ip into string
 #include <netdb.h>
+#include <vector>
 
 #define	MYPORT 8080
 #define	BACKLOG 10
@@ -16,6 +17,8 @@
 class ServerSocket{
 	private:
 		struct sockaddr_in	_server_addr;
+		std::vector<int>	_vecServerSockets;
+		int					_portNumber;
 
 	public:
 		ServerSocket();

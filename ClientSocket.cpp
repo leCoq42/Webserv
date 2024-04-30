@@ -2,7 +2,7 @@
 
 #define	CLOSE	1
 
-ClientSocket::ClientSocket(){
+ClientSocket::ClientSocket() {
 }
 
 ClientSocket::~ClientSocket() {
