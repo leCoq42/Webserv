@@ -1,4 +1,4 @@
-#include "requestParser.hpp"
+#include "Request.hpp"
 #include <iostream>
 #include <ostream>
 
@@ -37,7 +37,7 @@ void test_parser() {
   Request parser_src(GET_EXAMPLE);
   parser_src.parseRequest();
 
-  Request parser = parser_src;
+  Request parser(parser_src);
   /* parser.parseRequest(); */
 
   std::cout << "raw request:\n"

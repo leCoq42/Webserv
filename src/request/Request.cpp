@@ -1,4 +1,4 @@
-#include "requestParser.hpp"
+#include "Request.hpp"
 #include <cstddef>
 #include <iostream>
 #include <sstream>
@@ -6,7 +6,7 @@
 #include <string>
 #include <unordered_map>
 
-Request::Request() {}
+Request::Request() : _rawRequest("") {}
 
 Request::Request(const std::string &rawStr) : _rawRequest(rawStr) {}
 
@@ -18,14 +18,17 @@ Request::Request(const Request &src)
       _body(src._body) {}
 
 Request &Request::operator=(const Request &rhs) {
-  if (this != &rhs) {
-    _requestMethod = rhs.get_requestMethod();
-    _uri = rhs.get_uri();
-    _htmlVersion = rhs.get_htmlVersion();
-    _headers = rhs.get_headers();
-    _body = rhs.get_body();
-  }
+  Request temp(rhs);
+  temp.swap(*this);
   return *this;
+}
+
+void Request::swap(Request &lhs) {
+  std::swap(_requestMethod, lhs._requestMethod);
+  std::swap(_uri, lhs._uri);
+  std::swap(_htmlVersion, lhs._htmlVersion);
+  std::swap(_headers, lhs._headers);
+  std::swap(_body, lhs._body);
 }
 
 bool Request::parseRequest() {
