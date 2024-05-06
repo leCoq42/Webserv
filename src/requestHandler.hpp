@@ -1,7 +1,6 @@
 #pragma once
 
 #include "request/Request.hpp"
-#include <iostream>
 #include <unordered_map>
 
 class requestHandler {
@@ -14,15 +13,15 @@ public:
   requestHandler &operator=(const requestHandler &rhs);
   void swap(requestHandler &tmp);
 
-  void handleRequest(const Request &request);
+  std::string handleRequest(const Request &request);
   std::string sendResponse(const Request &request);
 
 private:
   Request *_request;
   std::string handleGetRequest(const Request &request);
-  std::string handlePOSTRequest(const Request &request);
+  std::string handlePostRequest(const Request &request);
   std::string handleDeleteRequest(const Request &request);
-  std::string
-  buildResponse(int status, const std::string &message, const std::string &body,
-                const std::unordered_map<std::string, std::string> &headers);
+  std::string buildResponse(
+      int status, const std::string &message, const std::string &body,
+      const std::unordered_map<std::string, std::string> &headers = {});
 };
