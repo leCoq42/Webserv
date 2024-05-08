@@ -80,11 +80,12 @@ bool Request::parseRequestHeaders(std::istringstream &requestStream) {
 bool Request::parseRequestBody(const std::string &_rawRequest) {
   size_t body_start;
   size_t content_len;
+
   std::unordered_map<std::string, std::string>::iterator content_len_it =
       _headers.find("Content-Length");
-
   if (content_len_it == _headers.end())
     return false;
+
   try {
     content_len = std::stoul(content_len_it->second);
   } catch (const std::invalid_argument) {
