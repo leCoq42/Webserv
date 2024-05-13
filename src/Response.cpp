@@ -7,6 +7,10 @@
 #include <sstream>
 #include <string>
 #include <unordered_map>
+#include <vector>
+
+std::vector<std::string> get_parts(std::string requestBody,
+                                   std::string boundary);
 
 Response::Response() : _request(nullptr), _responseString("") {}
 
@@ -76,7 +80,7 @@ std::string Response::handleGetRequest(const Request &request) {
 std::string Response::handlePostRequest(const Request &request) {
   std::string resourcePath = request.get_uri();
   std::string requestBody = request.get_body();
-  std::string requestHeaders = request.get_headers().at("Content-Type");
+  std::string requestContentType = request.get_headers().at("Content-Type");
 
   if (resourcePath.empty())
     resourcePath = "index.html";
@@ -85,26 +89,24 @@ std::string Response::handlePostRequest(const Request &request) {
   else
     return buildResponse(static_cast<int>(400), "Bad Request", "");
 
-  std::istringstream requestStream(requestBody);
-  std::string line;
-  std::unordered_map<std::string, std::string> formData;
-  while (std::getline(requestStream, line)) {
-    std::size_t seperatorPos = line.find('=');
-    if (seperatorPos != std::string::npos) {
-      std::string key = line.substr(0, seperatorPos);
-      std::string value = line.substr(seperatorPos + 1);
-      formData[key] = value;
-    }
-  }
+  /* std::istringstream requestStream(requestBody); */
+  /* std::string line; */
+  /* std::unordered_map<std::string, std::string> formData; */
+  /* while (std::getline(requestStream, line)) { */
+  /*   std::size_t seperatorPos = line.find('='); */
+  /*   if (seperatorPos != std::string::npos) { */
+  /*     std::string key = line.substr(0, seperatorPos); */
+  /*     std::string value = line.substr(seperatorPos + 1); */
+  /*     formData[key] = value; */
+  /*   } */
+  /* } */
 
   std::string response;
-  std::unordered_map<std::string, std::string> bodyArgs = get_args(requestBody);
-
-  std::unordered_map<std::string, std::string> headers;
-  headers["Content-Type"] = "text/plain";
+  std::unordered_map<std::string, std::string> bodyArgs =
+      get_args(requestBody, requestContentType);
 
   return buildResponse(static_cast<int>(StatusCode::OK), "OK", response,
-                       headers);
+                       request.get_headers());
 };
 
 std::string Response::handleDeleteRequest(const Request &request) {
@@ -126,32 +128,78 @@ std::unordered_map<std::string, std::string> get_args(std::string requestBody,
         args[key] = value;
       }
     }
-
   } else if (contentType == "multipart/form-data") {
-  }
-}
+    size_t boundaryPos = contentType.find("boundary=");
+    if (boundaryPos == std::string::npos)
+      return args;
+    std::string boundary = contentType.substr(boundaryPos + 9);
 
-std::string Response::buildResponse(
-    int status, const std::string &message, const std::string &body,
-    const std::unordered_map<std::string, std::string> &headers) {
-  _responseString.append("HTTP/1.1 " + std::to_string(status) + " " + message +
-                         "\r\n");
+    std::vector<std::string> parts = get_parts(requestBody, boundary);
+    if (parts.empty())
+      return args;
 
-  for (const auto &header : headers) {
-    _responseString.append(header.first + ": " + header.second + "/r/n");
-  }
+    for (const std::string &part : parts) {
+      size_t cdPos;
+      if ((cdPos = part.find("Content-Disposition: for-data;")) ==
+          std::string::npos)
+        return args; // error ?
 
-  if (!body.empty()) {
-    if (headers.count("Content-Length") == 0) {
-      _responseString.append(
-          "Content-Length: " + std::to_string(body.length()) + "\r\n");
+      size_t namePos = part.find("name=\"");
+      if (namePos == std::string::npos)
+        return args; // error ?
+      size_t nameEnd = part.find("\"", namePos);
+      if (nameEnd == std::string::npos)
+        return args; // error ?
+      std::string name = part.substr(namePos + 6, nameEnd - namePos - 6);
+
+      std::string filename;
+      size_t filenamePos = part.find("filename=\"", cdPos + 31);
+      if (filenamePos != std::string::npos) {
+        size_t filenameEnd = part.find("\"", filenamePos + 10);
+        if (filenameEnd != std::string::npos)
+          filename =
+              part.substr(filenamePos + 10, filenameEnd - filenamePos - 10);
+      }
     }
-    _responseString.append("\r\n" + body);
-  } else {
-    _responseString.append("\r\n");
+    return args;
   }
 
-  return _responseString;
-}
+  std::vector<std::string> get_parts(std::string requestBody,
+                                     std::string boundary) {
+    size_t pos = 0;
+    std::vector<std::string> parts;
 
-std::string Response::get_response() { return _responseString; }
+    while ((pos = requestBody.find("--" + boundary, pos)) !=
+           std::string::npos) {
+      size_t start = pos + boundary.length() + 4;
+      pos = requestBody.find("--" + boundary, start);
+      if (pos != std::string::npos)
+        parts.push_back(requestBody.substr(start, pos - start - 2));
+    }
+    return parts;
+  }
+
+  std::string Response::buildResponse(
+      int status, const std::string &message, const std::string &body,
+      const std::unordered_map<std::string, std::string> &headers) {
+    _responseString.append("HTTP/1.1 " + std::to_string(status) + " " +
+                           message + "\r\n");
+
+    for (const auto &header : headers) {
+      _responseString.append(header.first + ": " + header.second + "/r/n");
+    }
+
+    if (!body.empty()) {
+      if (headers.count("Content-Length") == 0) {
+        _responseString.append(
+            "Content-Length: " + std::to_string(body.length()) + "\r\n");
+      }
+      _responseString.append("\r\n" + body);
+    } else {
+      _responseString.append("\r\n");
+    }
+
+    return _responseString;
+  }
+
+  std::string Response::get_response() { return _responseString; }

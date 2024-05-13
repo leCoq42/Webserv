@@ -51,6 +51,10 @@ private:
   std::string handleGetRequest(const Request &request);
   std::string handlePostRequest(const Request &request);
   std::string handleDeleteRequest(const Request &request);
+
+  std::unordered_map<std::string, std::string>
+  get_args(std::string requestBody, std::string contentType);
+
   std::string buildResponse(
       int status, const std::string &message, const std::string &body,
       const std::unordered_map<std::string, std::string> &headers = {});
