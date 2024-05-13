@@ -11,6 +11,8 @@ std::list<std::string>	split_content(std::string content)
 	while (word.length())
 	{
 		pos = word.find_first_not_of(" 	\n");
+		if (pos > word.size())
+			break ;
 		word = word.substr(pos, word.length() - pos);
 		pos = word.find_first_of("'");
 		if (pos == 0)
