@@ -161,45 +161,45 @@ std::unordered_map<std::string, std::string> get_args(std::string requestBody,
               part.substr(filenamePos + 10, filenameEnd - filenamePos - 10);
       }
     }
-    return args;
+  }
+  return args;
+}
+
+std::vector<std::string> get_parts(std::string requestBody,
+                                   std::string boundary) {
+  size_t pos = 0;
+  std::vector<std::string> parts;
+
+  while ((pos = requestBody.find("--" + boundary, pos)) != std::string::npos) {
+    size_t start = pos + boundary.length() + 4;
+    pos = requestBody.find("--" + boundary, start);
+    if (pos != std::string::npos)
+      parts.push_back(requestBody.substr(start, pos - start - 2));
+  }
+  return parts;
+}
+
+std::string Response::buildResponse(
+    int status, const std::string &message, const std::string &body,
+    const std::unordered_map<std::string, std::string> &headers) {
+  _responseString.append("HTTP/1.1 " + std::to_string(status) + " " + message +
+                         "\r\n");
+
+  for (const auto &header : headers) {
+    _responseString.append(header.first + ": " + header.second + "/r/n");
   }
 
-  std::vector<std::string> get_parts(std::string requestBody,
-                                     std::string boundary) {
-    size_t pos = 0;
-    std::vector<std::string> parts;
-
-    while ((pos = requestBody.find("--" + boundary, pos)) !=
-           std::string::npos) {
-      size_t start = pos + boundary.length() + 4;
-      pos = requestBody.find("--" + boundary, start);
-      if (pos != std::string::npos)
-        parts.push_back(requestBody.substr(start, pos - start - 2));
+  if (!body.empty()) {
+    if (headers.count("Content-Length") == 0) {
+      _responseString.append(
+          "Content-Length: " + std::to_string(body.length()) + "\r\n");
     }
-    return parts;
+    _responseString.append("\r\n" + body);
+  } else {
+    _responseString.append("\r\n");
   }
 
-  std::string Response::buildResponse(
-      int status, const std::string &message, const std::string &body,
-      const std::unordered_map<std::string, std::string> &headers) {
-    _responseString.append("HTTP/1.1 " + std::to_string(status) + " " +
-                           message + "\r\n");
+  return _responseString;
+}
 
-    for (const auto &header : headers) {
-      _responseString.append(header.first + ": " + header.second + "/r/n");
-    }
-
-    if (!body.empty()) {
-      if (headers.count("Content-Length") == 0) {
-        _responseString.append(
-            "Content-Length: " + std::to_string(body.length()) + "\r\n");
-      }
-      _responseString.append("\r\n" + body);
-    } else {
-      _responseString.append("\r\n");
-    }
-
-    return _responseString;
-  }
-
-  std::string Response::get_response() { return _responseString; }
+std::string Response::get_response() { return _responseString; }
