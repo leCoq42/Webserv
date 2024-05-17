@@ -1,4 +1,4 @@
-#include "main.hpp"
+#include "inc/parser.hpp"
 
 void	error_exit(int error_code)
 {
