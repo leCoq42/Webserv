@@ -1,0 +1,54 @@
+# Compiler
+CXX = g++
+
+# Compiler flags
+# CXXFLAGS = -Wall -Wextra -Werror -std=c++20
+CXXFLAGS = -std=c++20
+
+# Directories
+SRC_DIRS = ./src/sockets ./src/parser_0 ./src/request 
+OBJ_DIR = ./obj
+BIN_DIR = ./bin
+
+# Source files
+SRC_FILES = $(wildcard $(addsuffix /*.cpp, $(SRC_DIRS))) src/main.cpp
+
+# Function to convert src/%.cpp to obj/%.o
+define make-obj-dir
+$(OBJ_DIR)/$(1)/%.o: src/$(1)/%.cpp
+	mkdir -p $$(dir $$@)
+	$(CXX) $(CXXFLAGS) -I./inc -c -o $$@ $$<
+endef
+
+# Generate object files
+OBJ_FILES = $(patsubst src/%.cpp,$(OBJ_DIR)/%.o,$(SRC_FILES))
+
+# Debug prints
+# $(info SRC_FILES: $(SRC_FILES))
+# $(info OBJ_FILES: $(OBJ_FILES))
+
+# Target executable
+TARGET = $(BIN_DIR)/webserv
+
+# Default target
+all: $(TARGET)
+
+# Linking target
+$(TARGET): $(OBJ_FILES)
+	mkdir -p $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+# Include rules for each src directory
+$(foreach dir,$(notdir $(SRC_DIRS)),$(eval $(call make-obj-dir,$(dir))))
+
+# Cleaning up generated files
+clean:
+	rm -rf $(OBJ_DIR)
+
+fclean: clean
+	rm -rf $(BIN_DIR)
+
+re: fclean all
+
+# Phony targets 
+.PHONY: all clean fclean re

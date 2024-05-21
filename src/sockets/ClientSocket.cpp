@@ -69,7 +69,7 @@ void ClientSocket::addClientSocketToFds(int serverSocket_fd) {
 	}
 }
 
-void	ClientSocket::acceptClient(int index, int serverSocket_fd) {
+void	ClientSocket::acceptClient(int serverSocket_fd) {
 	struct sockaddr_in clientAddr;
 	socklen_t clientAddrLen = sizeof(clientAddr);
 	int client_fd = accept(serverSocket_fd, (struct sockaddr*)&clientAddr, &clientAddrLen);
@@ -94,7 +94,7 @@ void	ClientSocket::startPolling(int serverSocket_fd) {
 			for (size_t i = 0; i < _polledfds.size(); i++) {
 				if (_polledfds[i].revents & POLLIN) {
 					if (_polledfds[i].fd == serverSocket_fd) {
-						acceptClient(i, serverSocket_fd);
+						acceptClient(serverSocket_fd);
 					} 
 					else {
 						std::cout << "Input available on descriptor " << _polledfds[i].fd << std::endl;

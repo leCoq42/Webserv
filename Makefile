@@ -1,43 +1,55 @@
-# Compiler
-C++ = g++
+include makerc/colors.mk
 
-# Compiler flags
-C++FLAGS = -Wall -Wextra -Werror -std=c++11 
+# Directories and File Names
+NAME		:= webserv
+SRC_DIR		:= src
+BUILD_DIR	:= build
+MAIN		:= main.c
+RM			:= rm -rvf
+HEADERS		= inc/Webserver.hpp
+CC			= g++
 
-# Include directories
-INCLUDES = -I./inc
 
-# Directories
-SRC_DIRS = src/sockets src/cgi src/parser src/request src/response
-OBJ_DIR = ./obj
-BIN_DIR = ./bin
+
+
+# Include Paths
+INCLUDES	= -I ./inc
+
+
+# Compiler Flags
+# CFLAGS			= -Wall -Wextra -Werror -Wunreachable-code -Ofast
+CFLAGS			= 
+INCLUDE_FLAGS	:= $(addprefix -I, $(sort $(dir $(HEADERS))))
 
 # Source files
-SRC_FILES = $(wildcard main.cpp $(addsuffix /*.cpp, $(SRC_DIRS)))
-OBJ_FILES = $(addprefix $(OBJ_DIR)/, $(notdir $(SRC_FILES:.cpp=.o)))
+SRC =	
 
-# Target executable
-TARGET = $(BIN_DIR)/webserv
 
-# Default target
-all: $(TARGET)
+# Object files
+OBJS        = $(addprefix $(BUILD_DIR)/, $(SRC:$(SRC_DIR)/%.c=%.o))
+MAIN_OBJ    = $(addprefix $(BUILD_DIR)/, $(MAIN:%.c=%.o))
 
-# Linking target
-$(TARGET): $(OBJ_FILES)
-	$(C++) $(C++FLAGS) -o $@ $^
 
-# Compiling source files to object files
-$(OBJ_DIR)/%.o: %.cpp
-	$(C++) $(C++FLAGS) -c -o $@ $<
+# Targets
+all: $(NAME)
 
-# Cleaning up generated files
-re: fclean all
 
+$(NAME): $(OBJS) $(MAIN_OBJ)
+	$(CC) $(CFLAGS) $^ $(INCLUDE_FLAGS) $(ARCHIVE_LIBFT) $(ARCHIVE_PRINTF) $(ARCHIVE_MLX_MAC) -o $(NAME)
+	@printf "$(BLUE_FG)$(NAME)$(RESET_COLOR) created_archive\n"
+
+$(MAIN_OBJ) $(OBJS): $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(HEADERS)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INCLUDE_FLAGS) -c $< -o $@
+
+
+# Cleaning Targets
 clean:
-	rm ./obj/*
+	@$(RM) $(OBJS) $(MAIN_OBJ)
 
 fclean: clean
-	rm ./dir/*
+	@$(RM) $(NAME)
 
-# Phony targets
-.PHONY: all clean fclean
+re: fclean all
+
+.PHONY: all clean fclean re debug rebug fsan resan
