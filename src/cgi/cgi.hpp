@@ -16,6 +16,11 @@ public:
   void set_header(const std::string &content_type);
   void set_title(const std::string &title);
 
+  std::string get_contentType() const { return _contentType; }
+  std::string get_title() const { return _title; }
+
+  void executeCGI(const std::string &path, const std::string &args);
+
 private:
   std::string _contentType;
   std::string _title;
