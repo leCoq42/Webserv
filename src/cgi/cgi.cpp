@@ -60,7 +60,6 @@ void cgi::executeCGI(const std::string &path, const std::string &args) {
     close(pipefd[1]);
 
     std::vector<std::string> argv_str;
-    // argv_str.push_back("python3");
     argv_str.push_back(path);
     argv_str.push_back(args);
 

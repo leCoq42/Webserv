@@ -7,7 +7,7 @@ int main() {
   std::cout << CGI.get_start_html(CGI.get_title());
   // std::cout << "test" << std::endl;
 
-  CGI.executeCGI("/home/mhaan/core/webserv/src/cgi/time", "");
+  CGI.executeCGI("/home/mhaan/core/webserv/src/cgi/time.cgi", "");
   std::cout << CGI.get_end_html();
 
   return 0;
