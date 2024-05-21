@@ -12,7 +12,7 @@
 class ClientSocket : ServerSocket{
 	private:
 		std::vector<int> 	_connectedClientSockets;
-		std::vector<pollfd>	pfds;
+		std::vector<pollfd>	_polledfds;
 
 	public:
 		ClientSocket();

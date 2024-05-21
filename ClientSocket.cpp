@@ -29,7 +29,7 @@ int	ClientSocket::checkExitSignals(char *buffer, int client_fd) {
 
 int ClientSocket::handleInputEvent(int index) {
 	char buffer[1024];
-	int client_fd = pfds[index].fd;
+	int client_fd = _polledfds[index].fd;
 
 	const char* messageFromServer = "Server received data \n";
 	ssize_t bytesSent = send(client_fd, messageFromServer, strlen(messageFromServer), 0);
@@ -49,7 +49,7 @@ int ClientSocket::handleInputEvent(int index) {
 	std::cout << "Received data from client: " << buffer << std::endl;
 	if (checkExitSignals(buffer, client_fd) == CLOSE)
 		return (CLOSE);
-	pfds[index].revents = POLLOUT;
+	_polledfds[index].revents = POLLOUT;
 	return (0);
 }
 
@@ -58,14 +58,14 @@ void ClientSocket::addClientSocketToFds(int serverSocket_fd) {
 	pollfd server_pollfd;
 	server_pollfd.fd = serverSocket_fd;
 	server_pollfd.events = POLLIN;
-	pfds.push_back(server_pollfd);
+	_polledfds.push_back(server_pollfd);
 
 	// Add client sockets
 	for (size_t i = 0; i < _connectedClientSockets.size(); ++i) {
 		pollfd client_pollfd;
 		client_pollfd.fd = _connectedClientSockets[i];
 		client_pollfd.events = POLLIN;
-		pfds.push_back(client_pollfd);
+		_polledfds.push_back(client_pollfd);
 	}
 }
 
@@ -83,30 +83,30 @@ void	ClientSocket::acceptClient(int index, int serverSocket_fd) {
 
 void	ClientSocket::startPolling(int serverSocket_fd) {
 	while (true) {
-		pfds.clear(); // Clear the vector before each iteration
+		_polledfds.clear(); // Clear the vector before each iteration
 		// for (int i = 0; i < _connectedClientSockets.size(); i++) {
 		// 	std::cout << "added client socked fd" << _connectedClientSockets[i] << std::endl;
 		// 	addClientSocketToFds(_connectedClientSockets[i]);
 		// }
 		addClientSocketToFds(serverSocket_fd);
-		int poll_count = poll(pfds.data(), pfds.size(), 15000);
+		int poll_count = poll(_polledfds.data(), _polledfds.size(), 15000);
 		if (poll_count > 0) {
-			for (size_t i = 0; i < pfds.size(); i++) {
-				if (pfds[i].revents & POLLIN) {
-					if (pfds[i].fd == serverSocket_fd) {
+			for (size_t i = 0; i < _polledfds.size(); i++) {
+				if (_polledfds[i].revents & POLLIN) {
+					if (_polledfds[i].fd == serverSocket_fd) {
 						acceptClient(i, serverSocket_fd);
 					} 
 					else {
-						std::cout << "Input available on descriptor " << pfds[i].fd << std::endl;
+						std::cout << "Input available on descriptor " << _polledfds[i].fd << std::endl;
 						if (handleInputEvent(i) == CLOSE)
 							return ;
 					}
 				}
-				if (pfds[i].revents & POLLOUT) {
-                    std::cout << "Socket " << pfds[i].fd << " is ready for writing" << std::endl;
+				if (_polledfds[i].revents & POLLOUT) {
+                    std::cout << "Socket " << _polledfds[i].fd << " is ready for writing" << std::endl;
                 }
-				if (pfds[i].revents & (POLLHUP | POLLERR)) {
-					std::cerr << "Error or disconnection on descriptor " << pfds[i].fd << std::endl;
+				if (_polledfds[i].revents & (POLLHUP | POLLERR)) {
+					std::cerr << "Error or disconnection on descriptor " << _polledfds[i].fd << std::endl;
 				}
 			}
 		} else if (poll_count == 0) {
