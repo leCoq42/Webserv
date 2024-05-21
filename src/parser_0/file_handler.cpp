@@ -1,4 +1,4 @@
-#include "main.hpp"
+#include "inc/parser.hpp"
 
 int	load_file_to_buff(char *file_name, char **buffer, int *file_len)
 {
