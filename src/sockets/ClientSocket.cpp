@@ -1,4 +1,5 @@
 #include "ClientSocket.hpp"
+#include "../request/Request.hpp"
 
 #define	CLOSE	1
 
@@ -27,16 +28,37 @@ int	ClientSocket::checkExitSignals(char *buffer, int client_fd) {
 	return (0);
 }
 
+// int ClientSocket::handleInputEvent(int index) {
+// 	char buffer[1024];
+// 	int client_fd = _polledfds[index].fd;
+
+// 	const char* messageFromServer = "Server received data \n";
+// 	ssize_t bytesSent = send(client_fd, messageFromServer, strlen(messageFromServer), 0);
+// 	if (bytesSent == -1) {
+// 		std::cerr << "Error sending data to client: " << strerror(errno) << std::endl;
+// 		return (0);
+// 	}
+// 	ssize_t bytesRead = recv(client_fd, buffer, sizeof(buffer), 0);
+// 	if (bytesRead == -1) {
+// 		std::cerr << "Error receiving data from client: " << strerror(errno) << std::endl;
+// 		return (0);
+// 	} else if (bytesRead == 0) {
+// 		std::cout << "Client disconnected" << std::endl;
+// 		return (0);
+// 	}
+// 	buffer[bytesRead] = '\0';
+// 	std::cout << "Received data from client: " << buffer << std::endl;
+// 	if (checkExitSignals(buffer, client_fd) == CLOSE)
+// 		return (CLOSE);
+// 	_polledfds[index].revents = POLLOUT;
+// 	return (0);
+// }
+
 int ClientSocket::handleInputEvent(int index) {
 	char buffer[1024];
 	int client_fd = _polledfds[index].fd;
 
-	const char* messageFromServer = "Server received data \n";
-	ssize_t bytesSent = send(client_fd, messageFromServer, strlen(messageFromServer), 0);
-	if (bytesSent == -1) {
-		std::cerr << "Error sending data to client: " << strerror(errno) << std::endl;
-		return (0);
-	}
+
 	ssize_t bytesRead = recv(client_fd, buffer, sizeof(buffer), 0);
 	if (bytesRead == -1) {
 		std::cerr << "Error receiving data from client: " << strerror(errno) << std::endl;
@@ -46,9 +68,23 @@ int ClientSocket::handleInputEvent(int index) {
 		return (0);
 	}
 	buffer[bytesRead] = '\0';
-	std::cout << "Received data from client: " << buffer << std::endl;
+
 	if (checkExitSignals(buffer, client_fd) == CLOSE)
 		return (CLOSE);
+
+	Request request(buffer);
+	request.parseRequest();
+	request.print_Request();
+	std::cout << request.checkRequestValidity() << std::endl;
+
+
+	// const char* messageFromServer = "Server received data \n";
+	// ssize_t bytesSent = send(client_fd, messageFromServer, strlen(messageFromServer), 0);
+	// if (bytesSent == -1) {
+	// 	std::cerr << "Error sending data to client: " << strerror(errno) << std::endl;
+	// 	return (0);
+	// }
+
 	_polledfds[index].revents = POLLOUT;
 	return (0);
 }

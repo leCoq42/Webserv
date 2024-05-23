@@ -15,12 +15,13 @@ public:
   void swap(Request &lhs);
   bool checkRequestValidity();
 
+  void  print_Request();
   const std::string &get_rawRequest() const;
   const std::string &get_requestMethod() const;
   const std::string &get_uri() const;
   const std::string &get_htmlVersion() const;
   const std::string &get_body() const;
-  const std::unordered_map<std::string, std::string> &get_headers() const;
+  std::unordered_map<std::string, std::string> &get_headers();
 
 private:
   const std::string _rawRequest;

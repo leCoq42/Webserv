@@ -123,7 +123,21 @@ const std::string &Request::get_requestMethod() const { return _requestMethod; }
 const std::string &Request::get_uri() const { return _uri; }
 const std::string &Request::get_body() const { return _body; }
 const std::string &Request::get_htmlVersion() const { return _htmlVersion; }
-const std::unordered_map<std::string, std::string> &
-Request::get_headers() const {
+std::unordered_map<std::string, std::string> &
+Request::get_headers(){
   return _headers;
+}
+
+void Request::print_Request() {
+  std::cout << "Raw request: " << get_rawRequest() << std::endl;
+  std::cout << "Method: " << get_requestMethod() << std::endl;
+  std::cout << "Uri: " << get_uri() << std::endl;
+  std::cout << "Body: " << get_body() << std::endl;
+  std::cout << "HTML version: " << get_htmlVersion() << std::endl;
+  
+  // std::unordered_map<std::string, std::string> headers = get_headers();
+  
+  // std::cout << std::endl;
+  // for (auto it = headers.begin(); it != headers.end(); ++it)
+  //   std::cout << it->first << ": " << it->second << std::endl;
 }
