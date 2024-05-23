@@ -6,16 +6,18 @@
 #include <string>
 #include <unordered_map>
 
-Request::Request() : _rawRequest("") {}
+Request::Request() : _rawRequest(""), _isValid(0) {}
 
-Request::Request(const std::string &rawStr) : _rawRequest(rawStr) {}
+Request::Request(const std::string &rawStr) : _rawRequest(rawStr) {
+  parseRequest();
+}
 
 Request::~Request() {}
 
 Request::Request(const Request &src)
     : _rawRequest(src._rawRequest), _requestMethod(src._requestMethod),
       _uri(src._uri), _htmlVersion(src._htmlVersion), _headers(src._headers),
-      _body(src._body) {}
+      _body(src._body), _isValid(src._isValid) {}
 
 Request &Request::operator=(const Request &rhs) {
   Request temp(rhs);
@@ -29,28 +31,35 @@ void Request::swap(Request &lhs) {
   std::swap(_htmlVersion, lhs._htmlVersion);
   std::swap(_headers, lhs._headers);
   std::swap(_body, lhs._body);
+  std::swap(_isValid, lhs._isValid);
 }
 
-bool Request::parseRequest() {
+void Request::parseRequest() {
   std::string line;
   std::string headerKey;
   std::string headerValue;
 
-  if (_rawRequest.empty())
-    return false;
+  if (_rawRequest.empty()) {
+    _isValid = false;
+    return;
+  }
 
   std::istringstream requestStream(_rawRequest);
-  std::getline(requestStream, line);
+  std::getline(requestStream, line, '\r');
+  requestStream.get();
+  std::cout << "line: " << line << std::endl;
 
-  if (!parseRequestLine(line))
-    return false;
-  if (!Request::parseRequestHeaders(requestStream))
-    return false;
-  if (!Request::parseRequestBody(_rawRequest))
-    return false;
-  checkRequestValidity();
+  if (!parseRequestLine(line)) {
+    _isValid = false;
+    return;
+  }
 
-  return true;
+  if (!Request::parseRequestHeaders(requestStream) ||
+      !Request::parseRequestBody(_rawRequest)) {
+    _isValid = false;
+    return;
+  }
+  _isValid = checkRequestValidity();
 }
 
 bool Request::parseRequestLine(const std::string &line) {
@@ -66,11 +75,14 @@ bool Request::parseRequestHeaders(std::istringstream &requestStream) {
   std::string headerKey;
   std::string headerValue;
 
-  while (std::getline(requestStream, line) && line != "\r") {
+  while (std::getline(requestStream, line) && !line.empty() && line != "\r") {
     pos = line.find(":");
     if (pos != std::string::npos) {
+      size_t headerPos = pos + 1;
+      while (line[headerPos] == ' ')
+        headerPos++;
       headerKey = line.substr(0, pos);
-      headerValue = line.substr(pos + 2);
+      headerValue = line.substr(headerPos);
       _headers[headerKey] = headerValue;
     }
   }
@@ -88,9 +100,9 @@ bool Request::parseRequestBody(const std::string &_rawRequest) {
 
   try {
     content_len = std::stoul(content_len_it->second);
-  } catch (const std::invalid_argument) {
+  } catch (const std::invalid_argument &e) {
     return false;
-  } catch (const std::out_of_range) {
+  } catch (const std::out_of_range &e) {
     return false;
   }
 
@@ -127,3 +139,4 @@ const std::unordered_map<std::string, std::string> &
 Request::get_headers() const {
   return _headers;
 }
+const bool &Request::get_validity() const { return _isValid; }

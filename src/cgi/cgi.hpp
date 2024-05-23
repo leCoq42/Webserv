@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <vector>
 
 class cgi {
 public:
@@ -18,6 +19,10 @@ public:
 
   std::string get_contentType() const { return _contentType; }
   std::string get_title() const { return _title; }
+
+  void createArgs(std::vector<char *> &argv, std::string &path,
+                  std::string &args);
+  void createEnv(std::vector<char *> &envp);
 
   void executeCGI(const std::string &path, const std::string &args);
 

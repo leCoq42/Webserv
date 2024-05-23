@@ -11,7 +11,7 @@ public:
   Request &operator=(const Request &rhs);
   ~Request();
 
-  bool parseRequest();
+  void parseRequest();
   void swap(Request &lhs);
   bool checkRequestValidity();
 
@@ -21,6 +21,7 @@ public:
   const std::string &get_htmlVersion() const;
   const std::string &get_body() const;
   const std::unordered_map<std::string, std::string> &get_headers() const;
+  const bool &get_validity() const;
 
 private:
   const std::string _rawRequest;
@@ -29,6 +30,7 @@ private:
   std::string _htmlVersion;
   std::unordered_map<std::string, std::string> _headers;
   std::string _body;
+  bool _isValid;
 
   bool parseRequestLine(const std::string &line);
   bool parseRequestHeaders(std::istringstream &requestStream);
