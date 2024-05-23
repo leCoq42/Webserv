@@ -1,55 +1,53 @@
-include makerc/colors.mk
-
 # Directories and File Names
-NAME		:= webserv
-SRC_DIR		:= src
-BUILD_DIR	:= build
-MAIN		:= main.c
-RM			:= rm -rvf
-HEADERS		= inc/Webserver.hpp
-CC			= g++
-
-
-
+NAME        := Webserv
+SRC_DIR     := src
+BUILD_DIR   := obj
+MAIN        := main.cpp
+RM          := rm -rf
+HEADERS     := inc/Webserv.hpp
+CC          := g++
 
 # Include Paths
-INCLUDES	= -I ./inc
-
+INCLUDES    := -I ./inc
 
 # Compiler Flags
-# CFLAGS			= -Wall -Wextra -Werror -Wunreachable-code -Ofast
-CFLAGS			= 
-INCLUDE_FLAGS	:= $(addprefix -I, $(sort $(dir $(HEADERS))))
+CFLAGS      := 
+# CFLAGS      := -Wall -Wextra -Werror -Wunreachable-code -Ofast
 
 # Source files
-SRC =	
-
+SRC         := $(wildcard $(SRC_DIR)/**/*.cpp)
 
 # Object files
-OBJS        = $(addprefix $(BUILD_DIR)/, $(SRC:$(SRC_DIR)/%.c=%.o))
-MAIN_OBJ    = $(addprefix $(BUILD_DIR)/, $(MAIN:%.c=%.o))
+OBJS        := $(addprefix $(BUILD_DIR)/, $(SRC:$(SRC_DIR)/%.cpp=%.o))
+MAIN_OBJ    := $(addprefix $(BUILD_DIR)/, $(MAIN:%.cpp=%.o))
 
+# Colors
+RED		  	:= \033[31m
+BLUE	  	:= \033[34m
+YELLOW		:= \033[33m
+GREEN    	:= \033[32m
+RESET_COLOR := \033[0m
 
 # Targets
 all: $(NAME)
 
-
 $(NAME): $(OBJS) $(MAIN_OBJ)
-	$(CC) $(CFLAGS) $^ $(INCLUDE_FLAGS) $(ARCHIVE_LIBFT) $(ARCHIVE_PRINTF) $(ARCHIVE_MLX_MAC) -o $(NAME)
-	@printf "$(BLUE_FG)$(NAME)$(RESET_COLOR) created_archive\n"
+	$(CC) $(CFLAGS) $(INCLUDES) $^ -o $(NAME)
+	@echo "$(GREEN)$(NAME) executable created$(RESET_COLOR)"
 
-$(MAIN_OBJ) $(OBJS): $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(HEADERS)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(INCLUDE_FLAGS) -c $< -o $@
-
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 # Cleaning Targets
 clean:
-	@$(RM) $(OBJS) $(MAIN_OBJ)
-
+	find ./obj -name "*.o" -type f -delete
+	@echo "$(YELLOW)Object files deleted$(RESET_COLOR)"
+	
 fclean: clean
-	@$(RM) $(NAME)
+	$(RM) $(NAME)
+	@echo "$(RED)$(NAME) executable deleted$(RESET_COLOR)"
 
 re: fclean all
 
-.PHONY: all clean fclean re debug rebug fsan resan
+.PHONY: all clean fclean re
