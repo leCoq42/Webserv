@@ -1,8 +1,9 @@
 #pragma once
 
-#include "request/Request.hpp"
+#include "../request/Request.hpp"
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 enum class StatusCode {
   OK = 200,
@@ -39,21 +40,25 @@ public:
 
   Response(const Response &src);
   Response &operator=(const Response &rhs);
-  void swap(Response &tmp);
+  void swap(Response &lhs);
 
-  std::string handleRequest(const Request &request);
+  void handleRequest(const std::shared_ptr<Request> &request);
   std::string get_response();
+
+  void printResponse();
 
 private:
   std::shared_ptr<Request> _request;
   std::string _responseString;
 
-  std::string handleGetRequest(const Request &request);
-  std::string handlePostRequest(const Request &request);
-  std::string handleDeleteRequest(const Request &request);
+  bool handleGetRequest(const std::shared_ptr<Request> &request);
+  std::string handlePostRequest(const std::shared_ptr<Request> &request);
+  std::string handleDeleteRequest(const std::shared_ptr<Request> &request);
 
   std::unordered_map<std::string, std::string>
   get_args(std::string requestBody, std::string contentType);
+  std::vector<std::string> get_parts(std::string requestBody,
+                                     std::string boundary);
 
   std::string buildResponse(
       int status, const std::string &message, const std::string &body,

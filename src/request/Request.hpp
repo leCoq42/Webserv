@@ -13,7 +13,7 @@ public:
 
   void parseRequest();
   void swap(Request &lhs);
-  bool checkRequestValidity();
+  bool checkRequestValidity() const;
 
   const std::string &get_rawRequest() const;
   const std::string &get_requestMethod() const;
@@ -22,6 +22,8 @@ public:
   const std::string &get_body() const;
   const std::unordered_map<std::string, std::string> &get_headers() const;
   const bool &get_validity() const;
+
+  void printRequest() const;
 
 private:
   const std::string _rawRequest;

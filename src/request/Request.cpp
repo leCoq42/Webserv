@@ -6,6 +6,8 @@
 #include <string>
 #include <unordered_map>
 
+#define MESSAGE_END "\n*-------------------------*\n"
+
 Request::Request() : _rawRequest(""), _isValid(0) {}
 
 Request::Request(const std::string &rawStr) : _rawRequest(rawStr) {
@@ -115,7 +117,7 @@ bool Request::parseRequestBody(const std::string &_rawRequest) {
 }
 
 // TODO: max length of GET request 2048 bytes?
-bool Request::checkRequestValidity() {
+bool Request::checkRequestValidity() const {
   if (_requestMethod.empty() || _htmlVersion.empty() || _uri.empty())
     return false;
   if (_requestMethod != "GET" && _requestMethod != "POST" &&
@@ -140,3 +142,28 @@ Request::get_headers() const {
   return _headers;
 }
 const bool &Request::get_validity() const { return _isValid; }
+
+void Request::printRequest() const {
+  std::cout << "< raw request: >\n" << get_rawRequest() << MESSAGE_END;
+  std::cout << "< Request: >" << std::endl;
+  std::cout << "request method: " << get_requestMethod() << std::endl;
+  std::cout << "uri: " << get_uri() << std::endl;
+  std::cout << "html version: " << get_htmlVersion() << std::endl;
+
+  std::cout << "< Headers: >" << std::endl;
+  std::unordered_map<std::string, std::string> headers = get_headers();
+
+  std::unordered_map<std::string, std::string>::iterator it = headers.begin();
+  while (it != headers.end()) {
+    std::cout << (*it).first << ": " << (*it).second << std::endl;
+    ++it;
+  }
+  std::cout << "< Body: >" << std::endl;
+  std::string body = get_body();
+  (body.empty()) ? std::cout << "Empty Body" << std::endl
+                 : std::cout << body << std::endl;
+
+  std::cout << "< Request Validity check: >" << std::endl;
+  (checkRequestValidity() == true) ? (std::cout << "Valid!" << std::endl)
+                                   : (std::cout << "Invalid!" << std::endl);
+}

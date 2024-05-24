@@ -3,70 +3,86 @@
 #include <exception>
 #include <fstream>
 #include <iostream>
-#include <memory>
 #include <sstream>
 #include <string>
-#include <unordered_map>
 #include <vector>
-
-std::vector<std::string> get_parts(std::string requestBody,
-                                   std::string boundary);
 
 Response::Response() : _request(nullptr), _responseString("") {}
 
 Response::Response(std::shared_ptr<Request> request)
-    : _request(request), _responseString("") {}
+    : _request(request), _responseString("") {
+  handleRequest(request);
+  std::cout << std::endl;
+  std::cout << "< Response: >" << std::endl;
+  std::cout << _responseString << std::endl;
+}
 
 Response::~Response(){};
 
-Response::Response(const Response &src){};
+Response::Response(const Response &src)
+    : _request(src._request), _responseString(src._responseString) {}
 
-Response &Response::operator=(const Response &rhs) { return *this; };
+Response &Response::operator=(const Response &rhs) {
+  Response temp(rhs);
+  temp.swap(*this);
+  return *this;
+}
 
-std::string Response::handleRequest(const Request &request) {
-  std::string request_method = request.get_requestMethod();
+void Response::swap(Response &lhs) {
+  std::swap(_request, lhs._request);
+  std::swap(_responseString, lhs._responseString);
+}
+
+void Response::handleRequest(const std::shared_ptr<Request> &request) {
+  std::string request_method = request->get_requestMethod();
   try {
     if (request_method == "GET")
-      return handleGetRequest(request);
-    if (request_method == "POST")
-      return handlePostRequest(request);
-    if (request_method == "DELETE")
-      return handleDeleteRequest(request);
+      handleGetRequest(request);
+    else if (request_method == "POST")
+      handlePostRequest(request);
+    else if (request_method == "DELETE")
+      handleDeleteRequest(request);
     else
-      return buildResponse(static_cast<int>(StatusCode::METHOD_NOT_ALLOWED),
-                           "Method Not Allowed", "");
+      buildResponse(static_cast<int>(StatusCode::METHOD_NOT_ALLOWED),
+                    "Method Not Allowed", "");
   } catch (const std::exception &e) {
-    return buildResponse(static_cast<int>(StatusCode::INTERNAL_SERVER_ERROR),
-                         "Internal Server Error", "");
+    buildResponse(static_cast<int>(StatusCode::INTERNAL_SERVER_ERROR),
+                  "Internal Server Error", "");
   }
 }
 
-std::string Response::handleGetRequest(const Request &request) {
-  std::string resourcePath = request.get_uri();
+bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
+  std::string resourcePath = request->get_uri();
 
   if (resourcePath.empty())
     resourcePath = "index.html";
   else if (!resourcePath.empty() && resourcePath[0] == '/')
     resourcePath = resourcePath.substr(1);
-  else
-    return buildResponse(static_cast<int>(400), "Bad Request", "");
+  else {
+    _responseString = buildResponse(static_cast<int>(400), "Bad Request", "");
+    return false;
+  }
 
   std::string contentType;
   std::size_t extensionPos = resourcePath.find_last_of('.');
   if (extensionPos != std::string::npos) {
     std::string extension = resourcePath.substr(extensionPos + 1);
-    if (contentTypes.find(extension) == contentTypes.end())
-      return buildResponse(static_cast<int>(StatusCode::UNSUPPORTED_MEDIA_TYPE),
-                           "Unsupported Media Type", "");
+    if (contentTypes.find(extension) == contentTypes.end()) {
+      _responseString =
+          buildResponse(static_cast<int>(StatusCode::UNSUPPORTED_MEDIA_TYPE),
+                        "Unsupported Media Type", "");
+      return false;
+    }
     contentType = contentTypes.at(extension);
   }
 
   std::string path = "server/root/" + resourcePath;
   std::ifstream file(path, std::ios::binary);
-  if (!file)
-    return buildResponse(static_cast<int>(StatusCode::NOT_FOUND), "Not Found",
-                         "");
-
+  if (!file) {
+    _responseString =
+        buildResponse(static_cast<int>(StatusCode::NOT_FOUND), "Not Found", "");
+    return false;
+  }
   std::stringstream buffer;
   buffer << file.rdbuf();
   std::string body = buffer.str();
@@ -74,13 +90,17 @@ std::string Response::handleGetRequest(const Request &request) {
   std::unordered_map<std::string, std::string> headers;
   headers["Content-Type"] = contentType;
 
-  return buildResponse(static_cast<int>(StatusCode::OK), "OK", body, headers);
+  _responseString =
+      buildResponse(static_cast<int>(StatusCode::OK), "OK", body, headers);
+
+  return true;
 }
 
-std::string Response::handlePostRequest(const Request &request) {
-  std::string resourcePath = request.get_uri();
-  std::string requestBody = request.get_body();
-  std::string requestContentType = request.get_headers().at("Content-Type");
+std::string
+Response::handlePostRequest(const std::shared_ptr<Request> &request) {
+  std::string resourcePath = request->get_uri();
+  std::string requestBody = request->get_body();
+  std::string requestContentType = request->get_headers().at("Content-Type");
 
   if (resourcePath.empty())
     resourcePath = "index.html";
@@ -101,20 +121,22 @@ std::string Response::handlePostRequest(const Request &request) {
   /*   } */
   /* } */
 
-  std::string response;
-  std::unordered_map<std::string, std::string> bodyArgs =
-      get_args(requestBody, requestContentType);
+  // std::string response;
+  // std::unordered_map<std::string, std::string> bodyArgs =
+  //     get_args(requestBody, requestContentType);
 
-  return buildResponse(static_cast<int>(StatusCode::OK), "OK", response,
-                       request.get_headers());
+  return buildResponse(static_cast<int>(StatusCode::OK), "OK", "Lorem Ipsum",
+                       request->get_headers());
 };
 
-std::string Response::handleDeleteRequest(const Request &request) {
-  return buildResponse(static_cast<int>(StatusCode::OK), "OK", "");
+std::string
+Response::handleDeleteRequest(const std::shared_ptr<Request> &request) {
+  return buildResponse(static_cast<int>(StatusCode::OK), "OK",
+                       request->get_body());
 };
 
-std::unordered_map<std::string, std::string> get_args(std::string requestBody,
-                                                      std::string contentType) {
+std::unordered_map<std::string, std::string>
+Response::get_args(std::string requestBody, std::string contentType) {
   std::unordered_map<std::string, std::string> args;
 
   if (contentType == "application/x-www-form-urlencoded") {
@@ -165,8 +187,8 @@ std::unordered_map<std::string, std::string> get_args(std::string requestBody,
   return args;
 }
 
-std::vector<std::string> get_parts(std::string requestBody,
-                                   std::string boundary) {
+std::vector<std::string> Response::get_parts(std::string requestBody,
+                                             std::string boundary) {
   size_t pos = 0;
   std::vector<std::string> parts;
 
@@ -186,14 +208,12 @@ std::string Response::buildResponse(
                          "\r\n");
 
   for (const auto &header : headers) {
-    _responseString.append(header.first + ": " + header.second + "/r/n");
+    _responseString.append(header.first + ": " + header.second + "\r\n");
   }
 
   if (!body.empty()) {
-    if (headers.count("Content-Length") == 0) {
-      _responseString.append(
-          "Content-Length: " + std::to_string(body.length()) + "\r\n");
-    }
+    _responseString.append("Content-Length: " + std::to_string(body.length()) +
+                           "\r\n");
     _responseString.append("\r\n" + body);
   } else {
     _responseString.append("\r\n");
@@ -203,3 +223,8 @@ std::string Response::buildResponse(
 }
 
 std::string Response::get_response() { return _responseString; }
+
+void Response::printResponse() {
+  std::cout << "< Response: >" << std::endl;
+  std::cout << _responseString;
+}
