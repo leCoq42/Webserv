@@ -1,1 +1,5 @@
 https://www.nginx.com/resources/wiki/start/topics/examples/full/
+https://www.cybrosys.com/blog/how-to-handle-multiple-domains-and-ports-in-nginx    #NGINX handles multiple ports, will make changes to format it as the currently std::list of ports. to test at the moment put it in the same list
+https://www.educba.com/nginx-multiple-server-name/                                #NGINX server names can be multiple.
+NGINX can have multiple server blocks
+NGINX can have multiple loaction trees 
