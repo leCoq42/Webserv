@@ -48,6 +48,6 @@ int	ServerSocket::setUpServerSocket(ServerStruct &serverinfo) {
 	int serverSocket_fd = createServerSocket();
 	bindServerSocket(serverSocket_fd, server_addr);
 	listenIncomingConnections(serverSocket_fd);
-	std::cout << "Initial server socket listening on port 8080" << std::endl;
+	std::cout << "Initial server socket listening on port " << atoi(serverinfo.port.content_list.front().c_str()) << std::endl;
 	return (serverSocket_fd);
 }

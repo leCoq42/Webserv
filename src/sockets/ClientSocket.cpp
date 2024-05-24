@@ -69,23 +69,31 @@ int ClientSocket::handleInputEvent(int index) {
 	}
 	buffer[bytesRead] = '\0';
 
+	// Testing purposses
 	if (checkExitSignals(buffer, client_fd) == CLOSE)
 		return (CLOSE);
-
+	
 	Request request(buffer);
 	request.parseRequest();
-	request.print_Request();
-	std::cout << request.checkRequestValidity() << std::endl;
+
+	int valid = request.checkRequestValidity();
+	if (valid == 1)
+		std::cout << "request is valid" << std::endl;
+	else
+		std::cout << "request is not valid" << std::endl;
 
 
-	// const char* messageFromServer = "Server received data \n";
-	// ssize_t bytesSent = send(client_fd, messageFromServer, strlen(messageFromServer), 0);
-	// if (bytesSent == -1) {
-	// 	std::cerr << "Error sending data to client: " << strerror(errno) << std::endl;
-	// 	return (0);
-	// }
-
-	_polledfds[index].revents = POLLOUT;
+	const char* httpResponse = 
+	    "HTTP/1.1 200 OK\r\n"
+	    "Content-Type: text/plain\r\n"
+	    "Content-Length: 23\r\n"
+	    "\r\n"
+	    "Server received data\n";
+	ssize_t bytesSent = send(client_fd, httpResponse, strlen(httpResponse), 0);
+	if (bytesSent == -1) {
+	    std::cerr << "Error sending data to client: " << strerror(errno) << std::endl;
+	    return (0);
+	}
 	return (0);
 }
 
@@ -93,14 +101,14 @@ void ClientSocket::addClientSocketToFds(int serverSocket_fd) {
 	// Add server socket
 	pollfd server_pollfd;
 	server_pollfd.fd = serverSocket_fd;
-	server_pollfd.events = POLLIN;
+	server_pollfd.events = POLLIN | POLLOUT;
 	_polledfds.push_back(server_pollfd);
 
 	// Add client sockets
 	for (size_t i = 0; i < _connectedClientSockets.size(); ++i) {
 		pollfd client_pollfd;
 		client_pollfd.fd = _connectedClientSockets[i];
-		client_pollfd.events = POLLIN;
+		client_pollfd.events = POLLIN | POLLOUT;
 		_polledfds.push_back(client_pollfd);
 	}
 }
@@ -117,22 +125,23 @@ void	ClientSocket::acceptClient(int serverSocket_fd) {
 	_connectedClientSockets.push_back(client_fd);
 }
 
-void	ClientSocket::removeClientSocket(int client_fd) {
+void ClientSocket::removeClientSocket(int client_fd) {
 	close(client_fd);
 
 	auto it = std::find(_connectedClientSockets.begin(), _connectedClientSockets.end(), client_fd);
-	if (it != _connectedClientSockets.end()){
+	if (it != _connectedClientSockets.end()) {
 		_connectedClientSockets.erase(it);
 	}
 
-	for (auto it = _polledfds.begin(); it != _polledfds.end(); it++) {
+	for (auto it = _polledfds.begin(); it != _polledfds.end(); ++it) {
 		if (it->fd == client_fd) {
 			_polledfds.erase(it);
-			break ;
+			break;
 		}
 	}
 	std::cout << "Client socket " << client_fd << " removed" << std::endl;
 }
+
 
 void	ClientSocket::startPolling(int serverSocket_fd) {
 	while (true) {
@@ -142,19 +151,17 @@ void	ClientSocket::startPolling(int serverSocket_fd) {
 		// 	addClientSocketToFds(_connectedClientSockets[i]);
 		// }
 		addClientSocketToFds(serverSocket_fd);
-		int poll_count = poll(_polledfds.data(), _polledfds.size(), 15000);
+		int poll_count = poll(_polledfds.data(), _polledfds.size(), 20000);
 		if (poll_count > 0) {
 			for (size_t i = 0; i < _polledfds.size(); i++) {
-				if (_polledfds[i].revents & POLLIN) {
+				if (_polledfds[i].revents & POLLIN) { // revents == POLLIN (en mischiend andere dingen gebeurt)
 					if (_polledfds[i].fd == serverSocket_fd) {
 						acceptClient(serverSocket_fd);
-					} 
+					}
 					else {
 						std::cout << "Input available on descriptor " << _polledfds[i].fd << std::endl;
 						if (handleInputEvent(i) == CLOSE)
 								return ;
-							removeClientSocket(_polledfds[i].fd);
-							i--;
 					}
 				}
 				if (_polledfds[i].revents & POLLOUT) {
