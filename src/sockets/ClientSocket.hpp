@@ -8,6 +8,8 @@
 #include <sys/poll.h>
 #include <unistd.h>
 #include "ServerSocket.hpp"
+#include <iterator>
+#include <algorithm> 
 
 class ClientSocket : ServerSocket{
 	private:
@@ -23,6 +25,7 @@ class ClientSocket : ServerSocket{
 		void	addClientSocketToFds(int client_fd);
 		void	startPolling(int server_fd);
 		int		checkExitSignals(char *buffer, int client_fd);
+		void	removeClientSocket(int client_fd);
 };
 
 #endif

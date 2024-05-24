@@ -6,12 +6,12 @@ ServerSocket::ServerSocket() {
 ServerSocket::~ServerSocket() {
 }
 
-struct sockaddr_in	ServerSocket::defineServerAddress() {
+struct sockaddr_in	ServerSocket::defineServerAddress(ServerStruct &serverinfo) {
 	struct sockaddr_in server_addr;
 	memset(&server_addr, 0, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = INADDR_ANY;    
-	server_addr.sin_port = htons(8080);
+	server_addr.sin_port = htons(atoi(serverinfo.port.content_list.front().c_str()));
 	return (server_addr);
 }
 
@@ -43,8 +43,8 @@ void	ServerSocket::listenIncomingConnections(int serverSocket_fd) {
 	}
 }
 
-int	ServerSocket::setUpServerSocket() {
-	struct sockaddr_in server_addr = defineServerAddress();
+int	ServerSocket::setUpServerSocket(ServerStruct &serverinfo) {
+	struct sockaddr_in server_addr = defineServerAddress(serverinfo);
 	int serverSocket_fd = createServerSocket();
 	bindServerSocket(serverSocket_fd, server_addr);
 	listenIncomingConnections(serverSocket_fd);

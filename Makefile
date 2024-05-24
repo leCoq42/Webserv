@@ -5,14 +5,14 @@ BUILD_DIR   := obj
 MAIN        := main.cpp
 RM          := rm -rf
 HEADERS     := inc/Webserv.hpp
-CC          := g++
+CC          := c++ --std=c++11
 
 # Include Paths
 INCLUDES    := -I ./inc
 
 # Compiler Flags
-CFLAGS      := 
-# CFLAGS      := -Wall -Wextra -Werror -Wunreachable-code -Ofast
+CFLAGS     	:= 
+# CFLAGS	:= -Wall -Wextra -Werror -Wunreachable-code -Ofast
 
 # Source files
 SRC         := $(wildcard $(SRC_DIR)/**/*.cpp)

@@ -1,7 +1,7 @@
 #pragma once
 #include <list>
 #include "ConfigContent.hpp"
-#include "../text_file_parser/ParserStruct.hpp"
+#include "ParserStruct.hpp"
 
 class ProtoStruct
 {

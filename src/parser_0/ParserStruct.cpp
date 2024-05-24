@@ -10,7 +10,7 @@ ParserStruct::ParserStruct(void)
 
 ParserStruct::~ParserStruct()
 {
-	std::cout << "delete parser struct" << std::endl;
+	//std::cout << "delete parser struct" << std::endl;
 	delete this->head;
 	this->head = 0;
 }

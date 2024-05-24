@@ -58,13 +58,13 @@ int ClientSocket::handleInputEvent(int index) {
 	char buffer[1024];
 	int client_fd = _polledfds[index].fd;
 
-
 	ssize_t bytesRead = recv(client_fd, buffer, sizeof(buffer), 0);
 	if (bytesRead == -1) {
 		std::cerr << "Error receiving data from client: " << strerror(errno) << std::endl;
 		return (0);
 	} else if (bytesRead == 0) {
 		std::cout << "Client disconnected" << std::endl;
+		_polledfds[index].revents = POLLERR;
 		return (0);
 	}
 	buffer[bytesRead] = '\0';
@@ -117,6 +117,23 @@ void	ClientSocket::acceptClient(int serverSocket_fd) {
 	_connectedClientSockets.push_back(client_fd);
 }
 
+void	ClientSocket::removeClientSocket(int client_fd) {
+	close(client_fd);
+
+	auto it = std::find(_connectedClientSockets.begin(), _connectedClientSockets.end(), client_fd);
+	if (it != _connectedClientSockets.end()){
+		_connectedClientSockets.erase(it);
+	}
+
+	for (auto it = _polledfds.begin(); it != _polledfds.end(); it++) {
+		if (it->fd == client_fd) {
+			_polledfds.erase(it);
+			break ;
+		}
+	}
+	std::cout << "Client socket " << client_fd << " removed" << std::endl;
+}
+
 void	ClientSocket::startPolling(int serverSocket_fd) {
 	while (true) {
 		_polledfds.clear(); // Clear the vector before each iteration
@@ -135,7 +152,9 @@ void	ClientSocket::startPolling(int serverSocket_fd) {
 					else {
 						std::cout << "Input available on descriptor " << _polledfds[i].fd << std::endl;
 						if (handleInputEvent(i) == CLOSE)
-							return ;
+								return ;
+							removeClientSocket(_polledfds[i].fd);
+							i--;
 					}
 				}
 				if (_polledfds[i].revents & POLLOUT) {
@@ -143,6 +162,8 @@ void	ClientSocket::startPolling(int serverSocket_fd) {
                 }
 				if (_polledfds[i].revents & (POLLHUP | POLLERR)) {
 					std::cerr << "Error or disconnection on descriptor " << _polledfds[i].fd << std::endl;
+					removeClientSocket(_polledfds[i].fd);
+					i--;
 				}
 			}
 		} else if (poll_count == 0) {

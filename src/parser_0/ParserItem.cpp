@@ -5,7 +5,7 @@ ParserItem::ParserItem(void)
 	this->next = 0;
 	this->child = 0;
 	this->parent = 0;
-	std::cout << "PI created: " << this->name << "_:_" << this->content << std::endl;
+	//std::cout << "PI created: " << this->name << "_:_" << this->content << std::endl;
 }
 
 ParserItem::ParserItem(std::string name, std::string content, ParserItem *parent)
@@ -15,7 +15,7 @@ ParserItem::ParserItem(std::string name, std::string content, ParserItem *parent
 	this->parent = parent;
 	this->name = name;
 	this->content = content;
-	std::cout << "PI created: " << this->name << "_:_" << this->content << std::endl;
+	//std::cout << "PI created: " << this->name << "_:_" << this->content << std::endl;
 }
 
 ParserItem::ParserItem(ParserItem &to_copy)
@@ -25,7 +25,7 @@ ParserItem::ParserItem(ParserItem &to_copy)
 	this->parent = to_copy.parent;
 	this->name = to_copy.name;
 	this->content = to_copy.content;
-	std::cout << "PI created: " << this->name << "_:_" << this->content << std::endl;
+	//std::cout << "PI created: " << this->name << "_:_" << this->content << std::endl;
 }
 
 ParserItem	&ParserItem::operator=(ParserItem &to_copy)
