@@ -5,7 +5,7 @@ BUILD_DIR   := obj
 MAIN        := main.cpp
 RM          := rm -rf
 HEADERS     := inc/Webserv.hpp
-CC          := c++ --std=c++11
+CC          := c++ --std=c++20
 
 # Include Paths
 INCLUDES    := -I ./inc

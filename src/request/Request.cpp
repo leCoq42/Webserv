@@ -137,7 +137,8 @@ const std::string &Request::get_requestMethod() const { return _requestMethod; }
 const std::string &Request::get_uri() const { return _uri; }
 const std::string &Request::get_body() const { return _body; }
 const std::string &Request::get_htmlVersion() const { return _htmlVersion; }
-std::unordered_map<std::string, std::string> &Request::get_headers() {
+const std::unordered_map<std::string, std::string> &
+Request::get_headers() const {
   return _headers;
 }
 const bool &Request::get_validity() const { return _isValid; }

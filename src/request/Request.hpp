@@ -9,13 +9,13 @@ public:
   Request(const std::string &str);
   Request(const Request &src);
   Request &operator=(const Request &rhs);
+  void swap(Request &lhs);
   ~Request();
 
-  void parseRequest();
-  void swap(Request &lhs);
   bool checkRequestValidity() const;
 
   void print_Request();
+
   const std::string &get_rawRequest() const;
   const std::string &get_requestMethod() const;
   const std::string &get_uri() const;
@@ -35,6 +35,7 @@ private:
   std::string _body;
   bool _isValid;
 
+  void parseRequest();
   bool parseRequestLine(const std::string &line);
   bool parseRequestHeaders(std::istringstream &requestStream);
   bool parseRequestBody(const std::string &_rawRequest);
