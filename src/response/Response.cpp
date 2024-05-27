@@ -90,8 +90,7 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
   std::unordered_map<std::string, std::string> headers;
   headers["Content-Type"] = contentType;
 
-  _responseString =
-      buildResponse(static_cast<int>(StatusCode::OK), "OK", body, headers);
+  _responseString = buildResponse(static_cast<int>(StatusCode::OK), "OK", body);
 
   return true;
 }
@@ -125,8 +124,7 @@ Response::handlePostRequest(const std::shared_ptr<Request> &request) {
   // std::unordered_map<std::string, std::string> bodyArgs =
   //     get_args(requestBody, requestContentType);
 
-  return buildResponse(static_cast<int>(StatusCode::OK), "OK", "Lorem Ipsum",
-                       request->get_headers());
+  return buildResponse(static_cast<int>(StatusCode::OK), "OK", "Lorem Ipsum");
 };
 
 std::string
@@ -201,15 +199,12 @@ std::vector<std::string> Response::get_parts(std::string requestBody,
   return parts;
 }
 
-std::string Response::buildResponse(
-    int status, const std::string &message, const std::string &body,
-    const std::unordered_map<std::string, std::string> &headers) {
+std::string Response::buildResponse(int status, const std::string &message,
+                                    const std::string &body) {
   _responseString.append("HTTP/1.1 " + std::to_string(status) + " " + message +
                          "\r\n");
 
-  for (const auto &header : headers) {
-    _responseString.append(header.first + ": " + header.second + "\r\n");
-  }
+  _responseString.append("Content-Type: text/html\r\n");
 
   if (!body.empty()) {
     _responseString.append("Content-Length: " + std::to_string(body.length()) +
@@ -218,7 +213,6 @@ std::string Response::buildResponse(
   } else {
     _responseString.append("\r\n");
   }
-
   return _responseString;
 }
 

@@ -31,7 +31,7 @@ void test_parser(std::string raw_request);
 int main(int argc, char **argv) {
   (void)argc;
   (void)argv;
-  test_parser(POST_EXAMPLE);
+  test_parser(GET_EXAMPLE);
 }
 
 void test_parser(std::string raw_request) {

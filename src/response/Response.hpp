@@ -60,9 +60,8 @@ private:
   std::vector<std::string> get_parts(std::string requestBody,
                                      std::string boundary);
 
-  std::string buildResponse(
-      int status, const std::string &message, const std::string &body,
-      const std::unordered_map<std::string, std::string> &headers = {});
+  std::string buildResponse(int status, const std::string &message,
+                            const std::string &body);
 
   static const inline std::unordered_map<std::string, std::string> contentTypes{
       {"html", "text/html"},
