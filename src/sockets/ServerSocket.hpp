@@ -21,9 +21,11 @@
 class ServerSocket{
 	private:
 		struct sockaddr_in	_server_addr;
-		std::vector<int>	_vecServerSockets;
+	
+	protected:
 
 	public:
+		std::vector<int>	_vecServerSockets;
 		ServerSocket();
 		~ServerSocket();
 

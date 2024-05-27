@@ -59,4 +59,7 @@ void	ServerSocket::setUpServerSockets(ServerStruct &serverinfo) {
 		std::cout << "Initial server socket listening on port " << atoi(it->c_str()) << std::endl;
 		_vecServerSockets.push_back(serverSocket_fd);
 	}
+	for (int i = 0; i < _vecServerSockets.size(); i++) {
+		std::cout << "Server socket fd: " << _vecServerSockets[i] << std::endl;
+	}
 }

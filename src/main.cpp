@@ -1,4 +1,5 @@
 #include "../inc/Webserv.hpp"
+#include <memory>
 
 void	error_exit(int error_code)
 {
@@ -49,8 +50,8 @@ void	parse(Parser *parser, std::list<ServerStruct> *server_structs, char **buffe
 
 int	main(int argc, char **argv)
 {
-	ServerSocket SS;
-	ClientSocket CS;
+	auto SS = std::make_shared<ServerSocket>();
+	ClientSocket CS(SS);
 	Parser					parser("#", "\n", "{", "}", " 	\n", "'", " 	\n", ";");
 	std::list<ServerStruct>	server_structs;
 	char					*buffer;
@@ -59,7 +60,7 @@ int	main(int argc, char **argv)
 		error_exit(1);
 	parse(&parser, &server_structs, &buffer, argv);
 	std::cout << std::endl << std::endl;
-	SS.setUpServerSockets(server_structs.front());
+	SS->setUpServerSockets(server_structs.front());
 	CS.startPolling();
 	delete buffer;
 }
