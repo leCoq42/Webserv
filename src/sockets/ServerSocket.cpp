@@ -1,17 +1,22 @@
 #include "ServerSocket.hpp"
+#include <list>
 
 ServerSocket::ServerSocket() {
 }
 
 ServerSocket::~ServerSocket() {
+	for(size_t i = 0; i < _vecServerSockets.size(); i++) {
+		std::cout << "Closing server socket listening on port " << _vecServerSockets[i] << std::endl;
+		close(_vecServerSockets[i]);
+	}
 }
 
-struct sockaddr_in	ServerSocket::defineServerAddress(ServerStruct &serverinfo) {
+struct sockaddr_in	ServerSocket::defineServerAddress(std::list<std::string>::iterator it) {
 	struct sockaddr_in server_addr;
 	memset(&server_addr, 0, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = INADDR_ANY;    
-	server_addr.sin_port = htons(atoi(serverinfo.port.content_list.front().c_str()));
+	server_addr.sin_port = htons(atoi(it->c_str()));
 	return (server_addr);
 }
 
@@ -43,11 +48,15 @@ void	ServerSocket::listenIncomingConnections(int serverSocket_fd) {
 	}
 }
 
-int	ServerSocket::setUpServerSocket(ServerStruct &serverinfo) {
-	struct sockaddr_in server_addr = defineServerAddress(serverinfo);
-	int serverSocket_fd = createServerSocket();
-	bindServerSocket(serverSocket_fd, server_addr);
-	listenIncomingConnections(serverSocket_fd);
-	std::cout << "Initial server socket listening on port " << atoi(serverinfo.port.content_list.front().c_str()) << std::endl;
-	return (serverSocket_fd);
+void	ServerSocket::setUpServerSockets(ServerStruct &serverinfo) {
+	std::list<std::string>::iterator it = serverinfo.port.content_list.begin();
+	for (; it != serverinfo.port.content_list.end(); ++it) {
+		std::cout << it->c_str() << std::endl;
+		struct sockaddr_in server_addr = defineServerAddress(it);
+		int serverSocket_fd = createServerSocket();
+		bindServerSocket(serverSocket_fd, server_addr);
+		listenIncomingConnections(serverSocket_fd);
+		std::cout << "Initial server socket listening on port " << atoi(it->c_str()) << std::endl;
+		_vecServerSockets.push_back(serverSocket_fd);
+	}
 }

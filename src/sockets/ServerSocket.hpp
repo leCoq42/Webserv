@@ -28,10 +28,10 @@ class ServerSocket{
 		~ServerSocket();
 
 		int					createServerSocket();
-		struct sockaddr_in	defineServerAddress(ServerStruct &serverinfo);
+		struct sockaddr_in	defineServerAddress(std::list<std::string>::iterator it);
 		void				bindServerSocket(int server_fd, struct sockaddr_in &server_addr);
 		void				listenIncomingConnections(int server_fd);
-		int					setUpServerSocket(ServerStruct &serverinfo);
+		void				setUpServerSockets(ServerStruct &serverinfo);
 };
 
 #endif

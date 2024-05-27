@@ -58,8 +58,8 @@ int	main(int argc, char **argv)
 	if (argc != 2)
 		error_exit(1);
 	parse(&parser, &server_structs, &buffer, argv);
-	int serverSocket_fd1 = SS.setUpServerSocket(server_structs.front());
-	CS.startPolling(serverSocket_fd1);
-	close(serverSocket_fd1);
+	std::cout << std::endl << std::endl;
+	SS.setUpServerSockets(server_structs.front());
+	CS.startPolling();
 	delete buffer;
 }

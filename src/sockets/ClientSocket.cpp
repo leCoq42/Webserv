@@ -142,8 +142,7 @@ void ClientSocket::removeClientSocket(int client_fd) {
 	std::cout << "Client socket " << client_fd << " removed" << std::endl;
 }
 
-
-void	ClientSocket::startPolling(int serverSocket_fd) {
+void	ClientSocket::startPolling() {
 	while (true) {
 		_polledfds.clear(); // Clear the vector before each iteration
 		// for (int i = 0; i < _connectedClientSockets.size(); i++) {
@@ -154,7 +153,7 @@ void	ClientSocket::startPolling(int serverSocket_fd) {
 		int poll_count = poll(_polledfds.data(), _polledfds.size(), 20000);
 		if (poll_count > 0) {
 			for (size_t i = 0; i < _polledfds.size(); i++) {
-				if (_polledfds[i].revents & POLLIN) { // revents == POLLIN (en mischiend andere dingen gebeurt)
+				if (_polledfds[i].revents & POLLIN) { // revents == POLLIN (en mischiend andere dingen gebeurt9/3
 					if (_polledfds[i].fd == serverSocket_fd) {
 						acceptClient(serverSocket_fd);
 					}
@@ -181,3 +180,42 @@ void	ClientSocket::startPolling(int serverSocket_fd) {
 		}
 	}
 }
+
+// void	ClientSocket::startPolling() {
+// 	while (true) {
+// 		_polledfds.clear(); // Clear the vector before each iteration
+// 		// for (int i = 0; i < _connectedClientSockets.size(); i++) {
+// 		// 	std::cout << "added client socked fd" << _connectedClientSockets[i] << std::endl;
+// 		// 	addClientSocketToFds(_connectedClientSockets[i]);
+// 		// }
+// 		addClientSocketToFds(serverSocket_fd);
+// 		int poll_count = poll(_polledfds.data(), _polledfds.size(), 20000);
+// 		if (poll_count > 0) {
+// 			for (size_t i = 0; i < _polledfds.size(); i++) {
+// 				if (_polledfds[i].revents & POLLIN) { // revents == POLLIN (en mischiend andere dingen gebeurt9/3
+// 					if (_polledfds[i].fd == serverSocket_fd) {
+// 						acceptClient(serverSocket_fd);
+// 					}
+// 					else {
+// 						std::cout << "Input available on descriptor " << _polledfds[i].fd << std::endl;
+// 						if (handleInputEvent(i) == CLOSE)
+// 								return ;
+// 					}
+// 				}
+// 				if (_polledfds[i].revents & POLLOUT) {
+//                     std::cout << "Socket " << _polledfds[i].fd << " is ready for writing" << std::endl;
+//                 }
+// 				if (_polledfds[i].revents & (POLLHUP | POLLERR)) {
+// 					std::cerr << "Error or disconnection on descriptor " << _polledfds[i].fd << std::endl;
+// 					removeClientSocket(_polledfds[i].fd);
+// 					i--;
+// 				}
+// 			}
+// 		} else if (poll_count == 0) {
+// 			std::cout << "Poll timeout" << std::endl;
+
+// 		} else {
+// 			std::cerr << "Poll error: " << strerror(errno) << std::endl;
+// 		}
+// 	}
+// }

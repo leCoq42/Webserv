@@ -23,7 +23,7 @@ class ClientSocket : ServerSocket{
 		int		handleInputEvent(int index);
 		void	acceptClient(int serverSocket_fd);
 		void	addClientSocketToFds(int client_fd);
-		void	startPolling(int server_fd);
+		void	startPolling();
 		int		checkExitSignals(char *buffer, int client_fd);
 		void	removeClientSocket(int client_fd);
 };
