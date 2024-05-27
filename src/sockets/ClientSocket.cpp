@@ -1,4 +1,5 @@
 #include "Webserv.hpp"
+#include <memory>
 
 #define CLOSE 1
 
@@ -73,16 +74,18 @@ int ClientSocket::handleInputEvent(int index) {
   if (checkExitSignals(buffer, client_fd) == CLOSE)
     return (CLOSE);
 
-  Request request(buffer);
-  request.printRequest();
-  std::cout << request.checkRequestValidity() << std::endl;
+  auto request = std::make_shared<Request>(buffer);
+  request->printRequest();
+  Response response(request);
 
-  // const char* messageFromServer = "Server received data \n";
-  // ssize_t bytesSent = send(client_fd, messageFromServer,
-  // strlen(messageFromServer), 0); if (bytesSent == -1) { 	std::cerr <<
-  // "Error sending data to client: " << strerror(errno) << std::endl; 	return
-  // (0);
-  // }
+  const std::string messageFromServer = response.get_response();
+  ssize_t bytesSent =
+      send(client_fd, messageFromServer.c_str(), messageFromServer.length(), 0);
+  if (bytesSent == -1) {
+    std::cerr << "Error sending data to client: " << strerror(errno)
+              << std::endl;
+    return (0);
+  }
 
   _polledfds[index].revents = POLLOUT;
   return (0);
