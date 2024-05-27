@@ -15,6 +15,7 @@ public:
   void swap(Request &lhs);
   bool checkRequestValidity() const;
 
+  void print_Request();
   const std::string &get_rawRequest() const;
   const std::string &get_requestMethod() const;
   const std::string &get_uri() const;
