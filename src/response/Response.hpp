@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../request/Request.hpp"
+#include "Webserv.hpp"
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -44,12 +44,14 @@ public:
 
   void handleRequest(const std::shared_ptr<Request> &request);
   std::string get_response();
+  std::string get_contentType();
 
   void printResponse();
 
 private:
   std::shared_ptr<Request> _request;
   std::string _responseString;
+  std::string _contentType;
 
   bool handleGetRequest(const std::shared_ptr<Request> &request);
   std::string handlePostRequest(const std::shared_ptr<Request> &request);
@@ -71,6 +73,8 @@ private:
       {"jpg", "image/jpg"},
       {"png", "image/png"},
       {"gif", "image/gif"},
+
+      {"cgi", "text/html"},
 
       {"x-www-form-urlencoded", "application/x-www-form-urlencoded"},
       {"form-data", "multipart/form-data"}};

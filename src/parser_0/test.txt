@@ -16,7 +16,7 @@ pimpamplet ;
 server B {
 		listen                8081 ssl hoi;
 
-        root                  /srv/our-site/html;
+        root                  /srv/html;
         index                 index.html;
 
         server_name           our-site.org www.our-site.org;

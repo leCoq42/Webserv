@@ -1,4 +1,4 @@
-#include "Response.hpp"
+#include "Webserv.hpp"
 #include <cstddef>
 #include <exception>
 #include <fstream>
@@ -10,17 +10,18 @@
 Response::Response() : _request(nullptr), _responseString("") {}
 
 Response::Response(std::shared_ptr<Request> request)
-    : _request(request), _responseString("") {
+    : _request(request), _responseString(""), _contentType("") {
   handleRequest(request);
   std::cout << std::endl;
-  std::cout << "< Response: >" << std::endl;
+  std::cout << "<Response:>" << std::endl;
   std::cout << _responseString << std::endl;
 }
 
 Response::~Response(){};
 
 Response::Response(const Response &src)
-    : _request(src._request), _responseString(src._responseString) {}
+    : _request(src._request), _responseString(src._responseString),
+      _contentType(src._contentType) {}
 
 Response &Response::operator=(const Response &rhs) {
   Response temp(rhs);
@@ -31,6 +32,7 @@ Response &Response::operator=(const Response &rhs) {
 void Response::swap(Response &lhs) {
   std::swap(_request, lhs._request);
   std::swap(_responseString, lhs._responseString);
+  std::swap(_contentType, lhs._contentType);
 }
 
 void Response::handleRequest(const std::shared_ptr<Request> &request) {
@@ -65,8 +67,9 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 
   std::string contentType;
   std::size_t extensionPos = resourcePath.find_last_of('.');
+  std::string extension;
   if (extensionPos != std::string::npos) {
-    std::string extension = resourcePath.substr(extensionPos + 1);
+    extension = resourcePath.substr(extensionPos + 1);
     if (contentTypes.find(extension) == contentTypes.end()) {
       _responseString =
           buildResponse(static_cast<int>(StatusCode::UNSUPPORTED_MEDIA_TYPE),
@@ -76,19 +79,27 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
     contentType = contentTypes.at(extension);
   }
 
-  std::string path = "server/root/" + resourcePath;
-  std::ifstream file(path, std::ios::binary);
-  if (!file) {
-    _responseString =
-        buildResponse(static_cast<int>(StatusCode::NOT_FOUND), "Not Found", "");
-    return false;
+  std::string path = "./html/" + resourcePath;
+  std::string body;
+  if (extension != "cgi") {
+    std::ifstream file(path, std::ios::binary);
+    if (!file) {
+      _responseString = buildResponse(static_cast<int>(StatusCode::NOT_FOUND),
+                                      "Not Found", "");
+      return false;
+    }
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    body = buffer.str();
+  } else {
+    path.append("cgi-bin/");
+    cgi CGI("Time");
+    CGI.executeCGI(path, "");
+    body = "";
   }
-  std::stringstream buffer;
-  buffer << file.rdbuf();
-  std::string body = buffer.str();
 
-  std::unordered_map<std::string, std::string> headers;
-  headers["Content-Type"] = contentType;
+  // std::unordered_map<std::string, std::string> headers;
+  // headers["Content-Type"] = contentType;
 
   _responseString = buildResponse(static_cast<int>(StatusCode::OK), "OK", body);
 
@@ -204,7 +215,7 @@ std::string Response::buildResponse(int status, const std::string &message,
   _responseString.append("HTTP/1.1 " + std::to_string(status) + " " + message +
                          "\r\n");
 
-  _responseString.append("Content-Type: text/html\r\n");
+  _responseString.append("Content-Type: " + get_contentType() + "\r\n");
 
   if (!body.empty()) {
     _responseString.append("Content-Length: " + std::to_string(body.length()) +
@@ -217,6 +228,7 @@ std::string Response::buildResponse(int status, const std::string &message,
 }
 
 std::string Response::get_response() { return _responseString; }
+std::string Response::get_contentType() { return _contentType; }
 
 void Response::printResponse() {
   std::cout << "< Response: >" << std::endl;
