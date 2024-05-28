@@ -1,8 +1,6 @@
 #include "ClientSocket.hpp"
 #include "../request/Request.hpp"
 
-#define	CLOSE	1
-
 ClientSocket::ClientSocket() {
 }
 
@@ -16,50 +14,10 @@ ClientSocket::~ClientSocket() {
 	}
 }
 
-int	ClientSocket::checkExitSignals(char *buffer, int client_fd) {
-	std::string bufferstr = buffer;
-	if (bufferstr.find("close") != std::string::npos) {
-		std::cout << "Received close command from client. Closing connection." << std::endl;
-		close(client_fd);
-		return (0);
-	}
-	if (bufferstr.find("exit") != std::string::npos) {
-		std::cout << "Received exit command from client. Closing connection and program." << std::endl;
-		close(client_fd);
-		return (CLOSE);
-	}
-	return (0);
-}
-
-// int ClientSocket::handleInputEvent(int index) {
-// 	char buffer[1024];
-// 	int client_fd = _polledfds[index].fd;
-
-// 	const char* messageFromServer = "Server received data \n";
-// 	ssize_t bytesSent = send(client_fd, messageFromServer, strlen(messageFromServer), 0);
-// 	if (bytesSent == -1) {
-// 		std::cerr << "Error sending data to client: " << strerror(errno) << std::endl;
-// 		return (0);
-// 	}
-// 	ssize_t bytesRead = recv(client_fd, buffer, sizeof(buffer), 0);
-// 	if (bytesRead == -1) {
-// 		std::cerr << "Error receiving data from client: " << strerror(errno) << std::endl;
-// 		return (0);
-// 	} else if (bytesRead == 0) {
-// 		std::cout << "Client disconnected" << std::endl;
-// 		return (0);
-// 	}
-// 	buffer[bytesRead] = '\0';
-// 	std::cout << "Received data from client: " << buffer << std::endl;
-// 	if (checkExitSignals(buffer, client_fd) == CLOSE)
-// 		return (CLOSE);
-// 	_polledfds[index].revents = POLLOUT;
-// 	return (0);
-// }
 
 int ClientSocket::handleInputEvent(int index) {
 	char buffer[1024];
-	int client_fd = _polledfds[index].fd;
+	int client_fd = _pollfdContainer[index].fd;
 
 	ssize_t bytesRead = recv(client_fd, buffer, sizeof(buffer), 0);
 	if (bytesRead == -1) {
@@ -67,14 +25,10 @@ int ClientSocket::handleInputEvent(int index) {
 		return (0);
 	} else if (bytesRead == 0) {
 		std::cout << "Client disconnected" << std::endl;
-		_polledfds[index].revents = POLLERR;
+		_pollfdContainer[index].revents = POLLERR;
 		return (0);
 	}
 	buffer[bytesRead] = '\0';
-
-	// Testing purposses
-	if (checkExitSignals(buffer, client_fd) == CLOSE)
-		return (CLOSE);
 	
 	Request request(buffer);
 	request.parseRequest();
@@ -87,27 +41,27 @@ int ClientSocket::handleInputEvent(int index) {
 
 
 	const char* httpResponse = 
-	    "HTTP/1.1 200 OK\r\n"
-	    "Content-Type: text/plain\r\n"
-	    "Content-Length: 23\r\n"
-	    "\r\n"
-	    "Server received data\n";
+		"HTTP/1.1 200 OK\r\n"
+		"Content-Type: text/plain\r\n"
+		"Content-Length: 23\r\n"
+		"\r\n"
+		"Server received data\n";
 	ssize_t bytesSent = send(client_fd, httpResponse, strlen(httpResponse), 0);
 	if (bytesSent == -1) {
-	    std::cerr << "Error sending data to client: " << strerror(errno) << std::endl;
-	    return (0);
+		std::cerr << "Error sending data to client: " << strerror(errno) << std::endl;
+		return (0);
 	}
-	  _polledfds[index].events = POLLOUT;
+	  _pollfdContainer[index].events = POLLOUT;
 	return (0);
 }
 
-void ClientSocket::addClientToServer_fd() {
+void ClientSocket::addSocketsToPollfdContainer() {
 	// Add server socket
 	for (size_t i = 0; i < ptrServerSocket->_vecServerSockets.size(); i++) {
 		pollfd server_pollfd;
 		server_pollfd.fd = ptrServerSocket->_vecServerSockets[i];
 		server_pollfd.events = POLLIN;
-		_polledfds.push_back(server_pollfd);
+		_pollfdContainer.push_back(server_pollfd);
 		std::cout << "server_fd: " << ptrServerSocket->_vecServerSockets[i] << std::endl;
 	}
 
@@ -116,7 +70,7 @@ void ClientSocket::addClientToServer_fd() {
 		pollfd client_pollfd;
 		client_pollfd.fd = _connectedClientSockets[i];
 		client_pollfd.events = POLLIN;
-		_polledfds.push_back(client_pollfd);
+		_pollfdContainer.push_back(client_pollfd);
 		std::cout << "client_fd: " << _connectedClientSockets[i] << std::endl;
 	}
 }
@@ -135,11 +89,11 @@ void ClientSocket::acceptClients(int server_fd) {
 	std::cout << "Client_fd: " << client_fd << std::endl;
 	if (client_fd == -1) {
 		std::cerr << "Error accepting connection on server socket " 
-                     << server_fd << ": " 
-                     << strerror(errno) << std::endl;
+					 << server_fd << ": " 
+					 << strerror(errno) << std::endl;
 	}
 	std::cout << "Accepted new connection on server socket " 
-                 << server_fd << " from client socket " << client_fd << std::endl;
+				 << server_fd << " from client socket " << client_fd << std::endl;
 	_connectedClientSockets.push_back(client_fd);
 }
 
@@ -151,9 +105,9 @@ void ClientSocket::removeClientSocket(int client_fd) {
 		_connectedClientSockets.erase(it);
 	}
 
-	for (auto it = _polledfds.begin(); it != _polledfds.end(); ++it) {
+	for (auto it = _pollfdContainer.begin(); it != _pollfdContainer.end(); ++it) {
 		if (it->fd == client_fd) {
-			_polledfds.erase(it);
+			_pollfdContainer.erase(it);
 			break;
 		}
 	}
@@ -162,45 +116,54 @@ void ClientSocket::removeClientSocket(int client_fd) {
 
 
 bool ClientSocket::isServerSocket(int fd) {
-    for (const auto& server_fd : ptrServerSocket->_vecServerSockets) {
-        if (fd == server_fd) {
-            return true;
-        }
-    }
-    return false;
+	for (const auto& server_fd : ptrServerSocket->_vecServerSockets) {
+		if (fd == server_fd) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void ClientSocket::handlePollOutEvent(size_t index) {
+    std::cout << "Socket " << _pollfdContainer[index].fd << " is ready for writing" << std::endl;
+    _pollfdContainer[index].events &= ~POLLOUT;
+}
+
+void ClientSocket::handlePollErrorEvent(size_t index) {
+    std::cerr << "Error or disconnection on descriptor " << _pollfdContainer[index].fd << std::endl;
+    removeClientSocket(_pollfdContainer[index].fd);
 }
 
 void ClientSocket::startPolling() {
     while (true) {
-        _polledfds.clear();
-        addClientToServer_fd();
-        int poll_count = poll(_polledfds.data(), _polledfds.size(), 20000);
+        _pollfdContainer.clear();
+        addSocketsToPollfdContainer();
+        int poll_count = poll(_pollfdContainer.data(), _pollfdContainer.size(), 20000);
         if (poll_count > 0) {
-            for (size_t i = 0; i < _polledfds.size(); i++) {
-                if (_polledfds[i].revents & POLLIN) {
-                    if (isServerSocket(_polledfds[i].fd)) 
-                        acceptClients(_polledfds[i].fd);
-					else {
-						std::cout << "Input available on descriptor " << _polledfds[i].fd << std::endl;
+            for (size_t i = 0; i < _pollfdContainer.size(); i++) {
+                if (_pollfdContainer[i].revents & POLLIN) {
+                    if (isServerSocket(_pollfdContainer[i].fd)) 
+                        acceptClients(_pollfdContainer[i].fd);
+                    else {
+                        std::cout << "Input available on descriptor " << _pollfdContainer[i].fd << std::endl;
                         handleInputEvent(i);
-					}
+                    }
                 }
-                if (_polledfds[i].revents & POLLOUT) {
-                    std::cout << "Socket " << _polledfds[i].fd << " is ready for writing" << std::endl;
-                    _polledfds[i].events &= ~POLLOUT; // Disable POLLOUT after handling
+                if (_pollfdContainer[i].revents & POLLOUT) {
+                    handlePollOutEvent(i);
                 }
-                if (_polledfds[i].revents & (POLLHUP | POLLERR)) {
-                    std::cerr << "Error or disconnection on descriptor " << _polledfds[i].fd << std::endl;
-                    removeClientSocket(_polledfds[i].fd);
+                if (_pollfdContainer[i].revents & (POLLHUP | POLLERR)) {
+                    handlePollErrorEvent(i);
                     i--;
                 }
             }
         } 
-		else if (poll_count == 0) {
-            std::cout << "Poll timeout" << std::endl;
+        else if (poll_count == 0) {
+            continue;
         }
-		else {
+        else {
             std::cerr << "Poll error: " << strerror(errno) << std::endl;
+			exit(EXIT_FAILURE);
         }
     }
 }

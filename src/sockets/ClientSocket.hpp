@@ -14,9 +14,9 @@
 
 class ClientSocket : ServerSocket{
 	private:
-			std::vector<int> 	_connectedClientSockets;
-			std::vector<pollfd>	_polledfds;
-			std::shared_ptr<ServerSocket> ptrServerSocket;
+			std::vector<int> 				_connectedClientSockets;
+			std::vector<pollfd>				_pollfdContainer;
+			std::shared_ptr<ServerSocket> 	ptrServerSocket;
 
 			public:
 				ClientSocket();
@@ -24,13 +24,13 @@ class ClientSocket : ServerSocket{
 				~ClientSocket();
 
 				int		handleInputEvent(int index);
-				void acceptClients(int server_fd);
-				void	addClientToServer_fd();
+				void	acceptClients(int server_fd);
+				void	addSocketsToPollfdContainer();
 				void	startPolling();
-				int		checkExitSignals(char *buffer, int client_fd);
 				void	removeClientSocket(int client_fd);
-
 				bool 	isServerSocket(int fd);
+				void 	handlePollOutEvent(size_t index);
+				void	handlePollErrorEvent(size_t index);
 };
 
 #endif
