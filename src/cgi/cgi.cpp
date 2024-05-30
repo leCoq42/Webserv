@@ -18,7 +18,7 @@ cgi::cgi(const std::string &title) : _title(title) {}
 cgi::~cgi() {}
 
 std::string cgi::get_header(const std::string &content_type) {
-  std::string header = "Content-type: " + content_type + "\r\n\r\n";
+  std::string header = "Content-Type: " + content_type + "\r\n\r\n";
   return header;
 }
 
@@ -36,54 +36,66 @@ void cgi::set_header(const std::string &content_type) {
 
 void cgi::set_title(const std::string &title) { _title = title; }
 
-void cgi::executeCGI(const std::string &path, const std::string &args) {
+std::string cgi::executeCGI(const std::string &path, const std::string &args) {
   int pipefd[2];
+  int status;
+  pid_t pid;
+  std::string result;
+  int bytes_read;
+  std::vector<char *> argv;
+  std::vector<std::string> argv_str;
+
+  // std::cout << "path: " << path << std::endl;
+
   if (pipe(pipefd) == -1) {
-    throw "Pipe Failed";
+    // throw "Pipe Failed";
+    std::cerr << "Pipe Failed" << std::endl;
     exit(EXIT_FAILURE);
   }
 
-  pid_t pid = fork();
+  pid = fork();
   if (pid < 0) {
-    throw "Fork Failed";
+    // throw "Fork Failed";
+    std::cerr << "Fork Failed" << std::endl;
     exit(EXIT_FAILURE);
   } else if (pid == 0) {
     close(pipefd[0]);
     dup2(pipefd[1], STDOUT_FILENO);
     close(pipefd[1]);
 
-    std::vector<char *> argv;
-    std::vector<std::string> argv_str;
     argv_str.push_back(path);
     argv_str.push_back(args);
     for (const std::string &arg : argv_str) {
       argv.push_back(const_cast<char *>(arg.c_str()));
     }
+    argv.push_back(NULL);
 
     execve(argv[0], argv.data(), environ);
-    throw "Exec failed";
+    std::cout << "Exec failed" << std::endl;
+    // throw "Exec failed";
     _exit(EXIT_FAILURE);
   } else {
     close(pipefd[1]);
 
     char buffer[BUFF_SIZE];
-    ssize_t bytes_read;
     while ((bytes_read = read(pipefd[0], buffer, sizeof(buffer) - 1)) > 0) {
-      buffer[bytes_read] = '\0';
-      std::cout << buffer;
+      std::string part(buffer, bytes_read);
+      result.append(part);
     }
     if (bytes_read == -1) {
-      throw "Read failed";
+      std::cerr << "Read failed" << std::endl;
+      // throw "Read failed";
     }
     close(pipefd[0]);
 
-    int status;
     waitpid(pid, &status, 0);
     if (WIFEXITED(status)) {
-      return;
-    } else {
-      throw "Child process did not terminate normally";
+      int exit_status = WEXITSTATUS(status);
+      if (exit_status != 0) {
+        std::cout << "exit_status: " << exit_status << std::endl;
+      }
     }
+    return result;
   }
 }
 
@@ -97,6 +109,6 @@ void cgi::createArgs(std::vector<char *> &argv, std::string &path,
   }
 }
 
-void cgi::createEnv(std::vector<char *> &envp) {
-  std::vector<std::string> env_str;
-}
+// void cgi::createEnv(std::vector<char *> &envp) {
+//   std::vector<std::string> env_str;
+// }

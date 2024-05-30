@@ -11,8 +11,7 @@ CC          := c++ --std=c++20
 INCLUDES    := -I ./inc
 
 # Compiler Flags
-CFLAGS     	:= 
-# CFLAGS	:= -Wall -Wextra -Werror -Wunreachable-code -Ofast
+CFLAGS     	:= -Wall -Wextra -Werror -Wunreachable-code #-Ofast
 
 # Source files
 SRC         := $(wildcard $(SRC_DIR)/**/*.cpp)
@@ -41,7 +40,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 
 # Cleaning Targets
 clean:
-	find ./obj -name "*.o" -type f -delete
+	find ./obj -name "*.o" -type f -delete 
 	@echo "$(YELLOW)Object files deleted$(RESET_COLOR)"
 	
 fclean: clean

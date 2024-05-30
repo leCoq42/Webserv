@@ -22,9 +22,9 @@ public:
 
   void createArgs(std::vector<char *> &argv, std::string &path,
                   std::string &args);
-  void createEnv(std::vector<char *> &envp);
+  // void createEnv(std::vector<char *> &envp);
 
-  void executeCGI(const std::string &path, const std::string &args);
+  std::string executeCGI(const std::string &path, const std::string &args);
 
 private:
   std::string _contentType;

@@ -63,7 +63,7 @@ private:
                                      std::string boundary);
 
   std::string buildResponse(int status, const std::string &message,
-                            const std::string &body);
+                            const std::string &body, bool isCGI = false);
 
   static const inline std::unordered_map<std::string, std::string> contentTypes{
       {"html", "text/html"},

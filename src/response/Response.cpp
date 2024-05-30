@@ -54,7 +54,16 @@ void Response::handleRequest(const std::shared_ptr<Request> &request) {
 }
 
 bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
-  std::string resourcePath = request->get_uri();
+  std::string body;
+  std::string path;
+  std::string extension;
+  // std::string contentType;
+  std::string resourcePath;
+  std::size_t extensionPos;
+  std::stringstream buffer;
+  bool isCGI;
+
+  resourcePath = request->get_uri();
 
   if (resourcePath.empty())
     resourcePath = "index.html";
@@ -65,9 +74,7 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
     return false;
   }
 
-  std::string contentType;
-  std::size_t extensionPos = resourcePath.find_last_of('.');
-  std::string extension;
+  extensionPos = resourcePath.find_last_of('.');
   if (extensionPos != std::string::npos) {
     extension = resourcePath.substr(extensionPos + 1);
     if (contentTypes.find(extension) == contentTypes.end()) {
@@ -76,32 +83,30 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
                         "Unsupported Media Type", "");
       return false;
     }
-    contentType = contentTypes.at(extension);
+    _contentType = contentTypes.at(extension);
   }
 
-  std::string path = "./html/" + resourcePath;
-  std::string body;
+  path = "./html/";
   if (extension != "cgi") {
+    isCGI = false;
+    path.append(resourcePath);
     std::ifstream file(path, std::ios::binary);
     if (!file) {
       _responseString = buildResponse(static_cast<int>(StatusCode::NOT_FOUND),
                                       "Not Found", "");
       return false;
     }
-    std::stringstream buffer;
     buffer << file.rdbuf();
     body = buffer.str();
   } else {
+    isCGI = true;
     path.append("cgi-bin/");
-    cgi CGI("Time");
-    CGI.executeCGI(path, "");
-    body = "";
+    path.append(resourcePath);
+    cgi CGI("TestXYZ");
+    body = CGI.executeCGI(path, "");
   }
-
-  // std::unordered_map<std::string, std::string> headers;
-  // headers["Content-Type"] = contentType;
-
-  _responseString = buildResponse(static_cast<int>(StatusCode::OK), "OK", body);
+  _responseString =
+      buildResponse(static_cast<int>(StatusCode::OK), "OK", body, isCGI);
 
   return true;
 }
@@ -211,18 +216,19 @@ std::vector<std::string> Response::get_parts(std::string requestBody,
 }
 
 std::string Response::buildResponse(int status, const std::string &message,
-                                    const std::string &body) {
+                                    const std::string &body, bool is_cgi) {
   _responseString.append("HTTP/1.1 " + std::to_string(status) + " " + message +
                          "\r\n");
-
-  _responseString.append("Content-Type: " + get_contentType() + "\r\n");
 
   if (!body.empty()) {
     _responseString.append("Content-Length: " + std::to_string(body.length()) +
                            "\r\n");
+  }
+  if (!is_cgi) {
+    _responseString.append("Content-Type: " + get_contentType() + "\r\n");
     _responseString.append("\r\n" + body);
   } else {
-    _responseString.append("\r\n");
+    _responseString.append(body);
   }
   return _responseString;
 }
