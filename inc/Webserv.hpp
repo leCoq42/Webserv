@@ -21,8 +21,11 @@
 #include "../src/request/Request.hpp"
 
 // Include headers from src/response
-
+#include "../src/response/Response.hpp"
 
 // Include headers from src/sockets
 #include "../src/sockets/ClientSocket.hpp"
 #include "../src/sockets/ServerSocket.hpp"
+
+// Include headers from src/utils
+#include "../src/utils/string_utils.hpp"
