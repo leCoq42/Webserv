@@ -1,4 +1,4 @@
-#include "Request.hpp"
+#include "Webserv.hpp"
 #include <cstddef>
 #include <iostream>
 #include <sstream>
@@ -55,7 +55,7 @@ void Request::parseRequest() {
     _isValid = false;
     return;
   }
-
+  _uri = trim(_uri, "/");
   if (!Request::parseRequestHeaders(requestStream) ||
       !Request::parseRequestBody(_rawRequest)) {
     _isValid = false;

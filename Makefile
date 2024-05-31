@@ -1,5 +1,5 @@
 # Directories and File Names
-NAME        := Webserv
+NAME        := webserv
 SRC_DIR     := src
 BUILD_DIR   := obj
 MAIN        := main.cpp
@@ -11,7 +11,7 @@ CC          := c++ --std=c++20
 INCLUDES    := -I ./inc
 
 # Compiler Flags
-CFLAGS     	:= -Wall -Wextra -Werror -Wunreachable-code #-Ofast
+CFLAGS     	:= -Wall -Wextra -Werror -Wunreachable-code#-Ofast
 
 # Source files
 SRC         := $(wildcard $(SRC_DIR)/**/*.cpp)

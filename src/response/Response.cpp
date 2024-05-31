@@ -1,6 +1,7 @@
 #include "Webserv.hpp"
 #include <cstddef>
 #include <exception>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -55,41 +56,28 @@ void Response::handleRequest(const std::shared_ptr<Request> &request) {
 
 bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
   std::string body;
-  std::string path;
-  std::string extension;
-  // std::string contentType;
-  std::string resourcePath;
-  std::size_t extensionPos;
   std::stringstream buffer;
   bool isCGI;
+  std::filesystem::path path = "html/";
+  std::filesystem::path resourcePath = request->get_uri();
 
-  resourcePath = request->get_uri();
-
-  if (resourcePath.empty())
+  if (resourcePath.empty() || resourcePath == "/") {
     resourcePath = "index.html";
-  else if (!resourcePath.empty() && resourcePath[0] == '/')
-    resourcePath = resourcePath.substr(1);
-  else {
-    _responseString = buildResponse(static_cast<int>(400), "Bad Request", "");
-    return false;
   }
 
-  extensionPos = resourcePath.find_last_of('.');
-  if (extensionPos != std::string::npos) {
-    extension = resourcePath.substr(extensionPos + 1);
-    if (contentTypes.find(extension) == contentTypes.end()) {
+  if (resourcePath.has_extension()) {
+    if (contentTypes.find(resourcePath.extension()) == contentTypes.end()) {
       _responseString =
           buildResponse(static_cast<int>(StatusCode::UNSUPPORTED_MEDIA_TYPE),
                         "Unsupported Media Type", "");
       return false;
     }
-    _contentType = contentTypes.at(extension);
+    _contentType = contentTypes.at(resourcePath.extension());
   }
 
-  path = "./html/";
-  if (extension != "cgi") {
+  if (resourcePath.extension() != ".cgi") {
     isCGI = false;
-    path.append(resourcePath);
+    path.append(resourcePath.string());
     std::ifstream file(path, std::ios::binary);
     if (!file) {
       _responseString = buildResponse(static_cast<int>(StatusCode::NOT_FOUND),
@@ -101,13 +89,12 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
   } else {
     isCGI = true;
     path.append("cgi-bin/");
-    path.append(resourcePath);
-    cgi CGI("TestXYZ");
+    path.append(resourcePath.string());
+    cgi CGI(_contentType);
     body = CGI.executeCGI(path, "");
   }
   _responseString =
       buildResponse(static_cast<int>(StatusCode::OK), "OK", body, isCGI);
-
   return true;
 }
 
@@ -145,6 +132,8 @@ Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 
 std::string
 Response::handleDeleteRequest(const std::shared_ptr<Request> &request) {
+  std::filesystem::path Path = request->get_uri();
+
   return buildResponse(static_cast<int>(StatusCode::OK), "OK",
                        request->get_body());
 };

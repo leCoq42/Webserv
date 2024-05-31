@@ -66,15 +66,15 @@ private:
                             const std::string &body, bool isCGI = false);
 
   static const inline std::unordered_map<std::string, std::string> contentTypes{
-      {"html", "text/html"},
-      {"txt", "text/plain"},
+      {".html", "text/html"},
+      {".txt", "text/plain"},
 
-      {"jpeg", "image/jpeg"},
-      {"jpg", "image/jpg"},
-      {"png", "image/png"},
-      {"gif", "image/gif"},
+      {".jpeg", "image/jpeg"},
+      {".jpg", "image/jpg"},
+      {".png", "image/png"},
+      {".gif", "image/gif"},
 
-      {"cgi", "text/html"},
+      {".cgi", "text/html"},
 
       {"x-www-form-urlencoded", "application/x-www-form-urlencoded"},
       {"form-data", "multipart/form-data"}};

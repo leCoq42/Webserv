@@ -10,10 +10,11 @@ constexpr size_t BUFF_SIZE = 1024;
 
 cgi::cgi() : _contentType(""), _title("") {}
 
+cgi::cgi(const std::string &contentType)
+    : _contentType(contentType), _title("") {}
+
 cgi::cgi(const std::string &contentType, const std::string &title)
     : _contentType(contentType), _title(title) {}
-
-cgi::cgi(const std::string &title) : _title(title) {}
 
 cgi::~cgi() {}
 
@@ -83,8 +84,8 @@ std::string cgi::executeCGI(const std::string &path, const std::string &args) {
       result.append(part);
     }
     if (bytes_read == -1) {
-      std::cerr << "Read failed" << std::endl;
-      // throw "Read failed";
+      // std::cerr << "Read failed" << std::endl;
+      throw "Read failed";
     }
     close(pipefd[0]);
 
