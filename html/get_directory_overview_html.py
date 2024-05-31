@@ -1,4 +1,4 @@
-# Import CGI and CGIT module 
+# USAGE: python3 get_directory_overview_html.py "directory=<direction_wished_to_be_seen>"
 import cgi, cgitb 
 from os import listdir             
 
