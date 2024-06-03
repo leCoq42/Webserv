@@ -8,6 +8,9 @@
 #include <string>
 #include <vector>
 
+#define KEEP_ALIVE_TIMOUT 10
+#define KEEP_ALIVE_N 100
+
 Response::Response() : _request(nullptr), _responseString("") {}
 
 Response::Response(std::shared_ptr<Request> request)
@@ -165,7 +168,7 @@ Response::get_args(std::string requestBody, std::string contentType) {
 
     for (const std::string &part : parts) {
       size_t cdPos;
-      if ((cdPos = part.find("Content-Disposition: for-data;")) ==
+      if ((cdPos = part.find("content-disposition: for-data;")) ==
           std::string::npos)
         return args; // error ?
 
@@ -212,6 +215,11 @@ std::string Response::buildResponse(int status, const std::string &message,
   if (!body.empty()) {
     _responseString.append("Content-Length: " + std::to_string(body.length()) +
                            "\r\n");
+  }
+  if (_request->get_keepAlive()) {
+    _responseString.append(
+        "Keep-Alive: timeout=" + std::to_string(KEEP_ALIVE_TIMOUT) +
+        ", max=" + std::to_string(KEEP_ALIVE_N) + "\r\n");
   }
   if (!is_cgi) {
     _responseString.append("Content-Type: " + get_contentType() + "\r\n");
