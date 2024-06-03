@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <unordered_map>
+#include <vector>
 
 class Request {
 public:
@@ -30,12 +31,14 @@ private:
   const std::string _rawRequest;
   std::string _requestMethod;
   std::string _uri;
+  std::vector<std::string> _requestArgs;
   std::string _htmlVersion;
   std::unordered_map<std::string, std::string> _headers;
   std::string _body;
   bool _isValid;
 
   void parseRequest();
+  std::vector<std::string> parse_requestArgs(const std::string uri);
   bool parseRequestLine(const std::string &line);
   bool parseRequestHeaders(std::istringstream &requestStream);
   bool parseRequestBody(const std::string &_rawRequest);
