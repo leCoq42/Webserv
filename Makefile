@@ -14,6 +14,11 @@ INCLUDES    := -I ./inc
 CFLAGS     	:= 
 # CFLAGS	:= -Wall -Wextra -Werror -Wunreachable-code -Ofast
 
+# Debug Flags
+ifdef DEBUG
+	CFLAGS += -g -D DEBUG
+endif
+
 # Source files
 SRC         := $(wildcard $(SRC_DIR)/**/*.cpp)
 
@@ -30,6 +35,11 @@ RESET_COLOR := \033[0m
 
 # Targets
 all: $(NAME)
+
+debug:
+	$(MAKE) DEBUG=1
+
+rebug: fclean debug
 
 $(NAME): $(OBJS) $(MAIN_OBJ)
 	$(CC) $(CFLAGS) $(INCLUDES) $^ -o $(NAME)
@@ -50,4 +60,4 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all clean fclean re
+.PHONY: all clean fclean re debug

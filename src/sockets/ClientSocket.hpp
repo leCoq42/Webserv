@@ -12,9 +12,17 @@
 #include <algorithm> 
 #include <memory>
 
+struct ClientInfo {
+	bool 	keepAlive;			// Keep-alive status
+    int 	clientFd;           // Client file descriptor
+    time_t 	lastRequestTime; 	// Timestamp of the last request
+    int 	numRequests;        // Number of requests made so far
+    int 	maxRequests;        // Maximum number of requests allowed
+};
+
 class ClientSocket : ServerSocket{
 	private:
-			std::vector<int> 				_connectedClientSockets;
+			std::vector<ClientInfo> 		_connectedClients;
 			std::vector<pollfd>				_pollfdContainer;
 			std::shared_ptr<ServerSocket> 	ptrServerSocket;
 
@@ -23,14 +31,17 @@ class ClientSocket : ServerSocket{
 				ClientSocket(std::shared_ptr<ServerSocket> serverSocket);
 				~ClientSocket();
 
-				int		handleInputEvent(int index);
-				void	acceptClients(int server_fd);
-				void	addSocketsToPollfdContainer();
-				void	startPolling();
-				void	removeClientSocket(int client_fd);
-				bool 	isServerSocket(int fd);
-				void 	handlePollOutEvent(size_t index);
-				void	handlePollErrorEvent(size_t index);
+				void		handleInputEvent(int index);
+				void		acceptClients(int server_fd);
+				void		addSocketsToPollfdContainer();
+				void		startPolling();
+				void		removeClientSocket(int client_fd);
+				bool 		isServerSocket(int fd);
+				void 		handlePollOutEvent(size_t index);
+				void		handlePollErrorEvent(size_t index);
+				ClientInfo	initClientInfo(int client_fd);
+				void		manageClientConnection(int index);
+				void		checkConnectedClientsStatus();
 };
 
 #endif
