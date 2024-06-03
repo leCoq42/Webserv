@@ -10,3 +10,21 @@ std::string trim(const std::string &str, const std::string &tokens) {
   // std::cout << "Trimmed:" << str.substr(start, end - start + 1) << std::endl;
   return str.substr(start, end - start + 1);
 }
+
+std::vector<std::string> split(const std::string &str,
+                               const std::string &delim) {
+  std::vector<std::string> tokens;
+  size_t pos = 0;
+  size_t next = 0;
+
+  while (pos != std::string::npos) {
+    next = str.find(delim, pos);
+    if (next == std::string::npos) {
+      tokens.push_back(str.substr(pos));
+      break;
+    }
+    tokens.push_back(str.substr(pos, next - pos));
+    pos = next + delim.length();
+  }
+  return tokens;
+}

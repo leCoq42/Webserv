@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #define MESSAGE_END "\n*-------------------------*\n"
 
@@ -56,12 +57,33 @@ void Request::parseRequest() {
     return;
   }
   _uri = trim(_uri, "/");
+  _requestArgs = parse_requestArgs(_uri);
+  for (auto it : _requestArgs) {
+    std::cout << it << std::endl;
+  }
+
   if (!Request::parseRequestHeaders(requestStream) ||
       !Request::parseRequestBody(_rawRequest)) {
     _isValid = false;
     return;
   }
   _isValid = checkRequestValidity();
+}
+
+std::vector<std::string> Request::parse_requestArgs(const std::string uri) {
+  size_t pos;
+  std::vector<std::string> args;
+  std::string argStr;
+
+  pos = uri.find("?");
+  if (pos != std::string::npos) {
+    _uri = uri.substr(0, pos);
+    if (pos + 1) {
+      argStr = uri.substr(pos + 1);
+      args = split(argStr, "?");
+    }
+  }
+  return args;
 }
 
 bool Request::parseRequestLine(const std::string &line) {
@@ -150,14 +172,17 @@ void Request::printRequest() const {
   std::cout << "uri: " << get_uri() << std::endl;
   std::cout << "html version: " << get_htmlVersion() << std::endl;
 
+  std::cout << "URI args:" << std::endl;
+  for (auto it : _requestArgs) {
+    std::cout << it << std::endl;
+  }
+
   std::cout << "< Headers: >" << std::endl;
   std::unordered_map<std::string, std::string> headers = get_headers();
-
-  std::unordered_map<std::string, std::string>::iterator it = headers.begin();
-  while (it != headers.end()) {
-    std::cout << (*it).first << ": " << (*it).second << std::endl;
-    ++it;
+  for (auto it : headers) {
+    std::cout << it.first << ": " << it.second << std::endl;
   }
+
   std::cout << "< Body: >" << std::endl;
   std::string body = get_body();
   (body.empty()) ? std::cout << "Empty Body" << std::endl
