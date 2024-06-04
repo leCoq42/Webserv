@@ -49,21 +49,24 @@ void ServerSocket::listenIncomingConnections(int serverSocket_fd) {
 	}
 }
 
-void ServerSocket::setUpServerSockets(ServerStruct &serverinfo) {
-    std::list<std::string>::iterator it = serverinfo.port.content_list.begin();
-    try {
-    	for (; it != serverinfo.port.content_list.end(); ++it) {
-    	    struct sockaddr_in server_addr = defineServerAddress(it);
-    	    int serverSocket_fd = createServerSocket();
-    	    bindServerSocket(serverSocket_fd, server_addr);
-    	    listenIncomingConnections(serverSocket_fd);
-			#ifdef DEBUG
-    	      std::cout << "Initial server socket listening on port " << atoi(it->c_str()) << std::endl;
-			#endif
-    	    _vecServerSockets.push_back(serverSocket_fd);
-    	}
-	}
-	catch (const std::exception &e){
-		std::cerr << e.what() << std::endl;
-	}
+void ServerSocket::setUpServerSockets(ServerStruct serverinfo) {
+    std::list<std::string>::iterator it= serverinfo.port.content_list.begin();
+    for (; it!= serverinfo.port.content_list.end(); ++it) {
+        if (atoi(it->c_str()) > 0 && atoi(it->c_str()) < 65536) {
+            struct sockaddr_in server_addr = defineServerAddress(it);
+            int serverSocket_fd = createServerSocket();
+            bindServerSocket(serverSocket_fd, server_addr);
+            listenIncomingConnections(serverSocket_fd);
+            #ifdef DEBUG
+              std::cout << "Initial server socket listening on port " << atoi(it->c_str()) << std::endl;
+            #endif
+            _vecServerSockets.push_back(serverSocket_fd);
+        }
+        else {
+            #ifdef DEBUG
+                std::cerr << "Invalid port number: " << *it << std::endl;
+            #endif
+            continue;
+        }
+    }
 }

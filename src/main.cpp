@@ -60,7 +60,8 @@ int	main(int argc, char **argv)
 		error_exit(1);
 	parse(&parser, &server_structs, &buffer, argv);
 	std::cout << std::endl << std::endl;
-	SS->setUpServerSockets(server_structs.front());
+	for (const auto& server : server_structs)
+			SS->setUpServerSockets(server);
 	CS.startPolling();
 	delete buffer;
 }

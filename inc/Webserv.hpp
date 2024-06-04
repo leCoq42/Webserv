@@ -23,6 +23,6 @@
 // Include headers from src/response
 
 
-// Include headers from src/sockets
-#include "../src/sockets/ClientSocket.hpp"
-#include "../src/sockets/ServerSocket.hpp"
+// Include headers from src/connection
+#include "../src/connection/ClientSocket.hpp"
+#include "../src/connection/ServerSocket.hpp"

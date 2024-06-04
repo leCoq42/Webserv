@@ -33,7 +33,7 @@ class ServerSocket{
 		struct sockaddr_in	defineServerAddress(std::list<std::string>::iterator it);
 		void				bindServerSocket(int server_fd, struct sockaddr_in &server_addr);
 		void				listenIncomingConnections(int server_fd);
-		void				setUpServerSockets(ServerStruct &serverinfo);
+		void				setUpServerSockets(ServerStruct serverinfo);
 };
 
 #endif

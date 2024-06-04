@@ -1,5 +1,5 @@
 server A {
-        listen                8080 8081;
+        listen                8080 8081 8082 8083;
         server_name           our-site.org www.our-site.org;
         return                301 https://$host$request_url;
 }
@@ -14,7 +14,7 @@ balo hoi;
 bon ;
 pimpamplet ;
 server B {
-		listen                8081 ssl hoi;
+		listen                8084 8085 ssl hoi;
 
         root                  /srv/our-site/html;
         index                 index.html;

@@ -6,18 +6,21 @@
 #include <unistd.h>
 #include <cstring>
 #include <sys/poll.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #include "ServerSocket.hpp"
 #include <iterator>
 #include <algorithm> 
 #include <memory>
+#include <netinet/tcp.h>
 
 struct ClientInfo {
-	bool 	keepAlive;			// Keep-alive status
     int 	clientFd;           // Client file descriptor
+	bool 	keepAlive;			// Keep-alive status
+	size_t 	timeOut;			// Timeout value
     time_t 	lastRequestTime; 	// Timestamp of the last request
-    int 	numRequests;        // Number of requests made so far
-    int 	maxRequests;        // Maximum number of requests allowed
+    size_t 	numRequests;        // Number of requests made so far
+    size_t 	maxRequests;        // Maximum number of requests allowed
 };
 
 class ClientSocket : ServerSocket{
@@ -40,7 +43,7 @@ class ClientSocket : ServerSocket{
 				void 		handlePollOutEvent(size_t index);
 				void		handlePollErrorEvent(size_t index);
 				ClientInfo	initClientInfo(int client_fd);
-				void		manageClientConnection(int index);
+				void		manageKeepAlive(int index);
 				void		checkConnectedClientsStatus();
 };
 
