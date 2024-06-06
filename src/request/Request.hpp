@@ -20,9 +20,12 @@ public:
   const std::string &get_rawRequest() const;
   const std::string &get_requestMethod() const;
   const std::string &get_uri() const;
+  const std::vector<std::string> &get_requestArgs() const;
   const std::string &get_htmlVersion() const;
+  const std::string &get_connection() const;
   const std::string &get_body() const;
   const std::unordered_map<std::string, std::string> &get_headers() const;
+  const bool &get_keepAlive() const;
   const bool &get_validity() const;
 
   void printRequest() const;
@@ -34,6 +37,7 @@ private:
   std::vector<std::string> _requestArgs;
   std::string _htmlVersion;
   std::unordered_map<std::string, std::string> _headers;
+  bool _keepAlive;
   std::string _body;
   bool _isValid;
 
