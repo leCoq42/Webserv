@@ -1,5 +1,4 @@
-#ifndef ServerSocket_HPP
-#define ServerSocket_HPP
+#pragma once
 
 #include <iostream>
 #include <vector>
@@ -35,5 +34,3 @@ class ServerSocket{
 		void				listenIncomingConnections(int server_fd);
 		void				setUpServerSockets(ServerStruct serverinfo);
 };
-
-#endif

@@ -85,11 +85,12 @@ void	ClientSocket::addSocketsToPollfdContainer() {
 	}
 }
 
-ClientInfo	ClientSocket::initClientInfo(int client_fd) {
+ClientInfo	ClientSocket::initClientInfo(int client_fd, sockaddr_in clientAddr) {
 	ClientInfo clientInfo;
 	time_t currentTime;
 	time(&currentTime);
-	clientInfo.clientFd = client_fd;
+    inet_ntop(AF_INET, &clientAddr.sin_addr, clientInfo.clientIP, sizeof(clientInfo.clientIP));
+	clientInfo.clientFD = client_fd;
 	clientInfo.keepAlive = true;
 	clientInfo.timeOut = 3; // will be configurable later
 	clientInfo.lastRequestTime = currentTime;
@@ -106,7 +107,13 @@ void	ClientSocket::acceptClients(int server_fd) {
 		std::cerr << "Error accepting connection on server socket " << server_fd << ": " << strerror(errno) << std::endl;
 		return;
 	}
-	_connectedClients.push_back(initClientInfo(client_fd));
+	if (getpeername(client_fd, (struct sockaddr*)&clientAddr, &clientAddrLen) != 0) {
+		#ifdef DEBUG
+			std::cerr << "Failed to read client IP" << std::endl;
+			return;
+		#endif
+	}
+	_connectedClients.push_back(initClientInfo(client_fd, clientAddr));
 	#ifdef DEBUG
 		std::cout << "Accepted new connection on server socket " << server_fd << " from client_fd " << client_fd << std::endl;
 	#endif
@@ -117,7 +124,7 @@ void	ClientSocket::removeClientSocket(int client_fd) {
 
 	auto it = std::find_if(_connectedClients.begin(), _connectedClients.end(), 
 						   [client_fd](const ClientInfo& clientInfo) { 
-							   return clientInfo.clientFd == client_fd; 
+							   return clientInfo.clientFD == client_fd; 
 						   });
 	if (it != _connectedClients.end()) {
 		_connectedClients.erase(it);

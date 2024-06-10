@@ -1,4 +1,5 @@
 #include "../inc/Webserv.hpp"
+#include "log/log.hpp"
 #include <memory>
 
 void	error_exit(int error_code)
@@ -64,4 +65,9 @@ int	main(int argc, char **argv)
 			SS->setUpServerSockets(server);
 	CS.startPolling();
 	delete buffer;
+	
+	// Log logger;
+	
+	// logger.logAccess("127.0.0.1", "GET /index.html HTTP/1.1", 200, 612, "-", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36" );
+
 }

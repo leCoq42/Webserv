@@ -22,6 +22,8 @@
 
 // Include headers from src/response
 
+// Include headers from src/log
+#include "../src/log/log.hpp"
 
 // Include headers from src/connection
 #include "../src/connection/ClientSocket.hpp"

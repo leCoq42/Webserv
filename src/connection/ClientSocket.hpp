@@ -1,5 +1,4 @@
-#ifndef CLIENTSOCKET_HPP
-#define CLIENTSOCKET_HPP
+#pragma once
 
 #include <iostream>
 #include <vector>
@@ -15,15 +14,16 @@
 #include <netinet/tcp.h>
 
 struct ClientInfo {
-    int 	clientFd;           // Client file descriptor
-	bool 	keepAlive;			// Keep-alive status
-	size_t 	timeOut;			// Timeout value
-    time_t 	lastRequestTime; 	// Timestamp of the last request
-    size_t 	numRequests;        // Number of requests made so far
-    size_t 	maxRequests;        // Maximum number of requests allowed
+	int 			clientFD;           // Client file descriptor
+	bool 			keepAlive;			// Keep-alive status
+	size_t 			timeOut;			// Timeout value
+	time_t 			lastRequestTime; 	// Timestamp of the last request
+	size_t 			numRequests;        // Number of requests made so far
+	size_t 			maxRequests;        // Maximum number of requests allowed
+	char 			clientIP[INET_ADDRSTRLEN];
 };
 
-class ClientSocket : ServerSocket{
+class ClientSocket : ServerSocket {
 	private:
 			std::vector<ClientInfo> 		_connectedClients;
 			std::vector<pollfd>				_pollfdContainer;
@@ -42,9 +42,7 @@ class ClientSocket : ServerSocket{
 				bool 		isServerSocket(int fd);
 				void 		handlePollOutEvent(size_t index);
 				void		handlePollErrorEvent(size_t index);
-				ClientInfo	initClientInfo(int client_fd);
+				ClientInfo	initClientInfo(int client_fd, sockaddr_in clientAddr);
 				void		manageKeepAlive(int index);
 				void		checkConnectedClientsStatus();
 };
-
-#endif
