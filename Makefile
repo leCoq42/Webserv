@@ -51,6 +51,8 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 # Cleaning Targets
 clean:
 	find ./obj -name "*.o" -type f -delete 
+	$(RM) ./log/*
+	@echo "$(YELLOW)Log deleted$(RESET_COLOR)"
 	@echo "$(YELLOW)Object files deleted$(RESET_COLOR)"
 	
 fclean: clean

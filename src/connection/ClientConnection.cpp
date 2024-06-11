@@ -13,11 +13,20 @@ ClientSocket::~ClientSocket() {
 	}
 }
 
+int	ClientSocket::getIndexByClientFD(int clientFD) {
+	for (size_t i = 0; i < _connectedClients.size(); i++) {
+		if (_connectedClients[i].clientFD == clientFD) {
+			return i;
+		}
+	}
+	return -1;
+}
+
 void	ClientSocket::manageKeepAlive(int index) {
-	int client_fd = _pollfdContainer[index].fd;
+	int clientFD = _pollfdContainer[index].fd;
 	auto it = std::find_if(_connectedClients.begin(), _connectedClients.end(),
-						   [client_fd](const ClientInfo& client) {
-							   return client.clientFD == client_fd;
+						   [clientFD](const ClientInfo& client) {
+							   return client.clientFD == clientFD;
 						   });
 	if (it != _connectedClients.end()) {
 		time_t currentTime;
@@ -49,10 +58,8 @@ void	ClientSocket::handleInputEvent(int index) {
 	}
 	buffer[bytesRead] = '\0';
 	
-	// Request request(buffer);
-	// request.parseRequest();
-
-	// int valid = request.checkRequestValidity();
+	Request request(buffer);
+	request.parseRequest();
 	const char* httpResponse = "here is the response from the server";
 	ssize_t bytesSent = send(_pollfdContainer[index].fd, httpResponse, strlen(httpResponse), 0);
 	if (bytesSent == -1) {
@@ -65,6 +72,7 @@ void	ClientSocket::handleInputEvent(int index) {
 		#endif
 		_pollfdContainer[index].revents = POLLERR;
 	}
+	// logAccess(_connectedClients[getIndexByClientFD(_pollfdContainer[index].fd)].clientIP, request. , 200, bytesSent, "localhost", "Mozilla/5.0");
 	manageKeepAlive(index);
 }
 
@@ -84,59 +92,59 @@ void	ClientSocket::addSocketsToPollfdContainer() {
 	}
 }
 
-ClientInfo	ClientSocket::initClientInfo(int client_fd, sockaddr_in clientAddr) {
+ClientInfo	ClientSocket::initClientInfo(int clientFD, sockaddr_in clientAddr) {
 	ClientInfo clientInfo;
+	memset(&clientInfo, 0, sizeof(clientInfo));
 	time_t currentTime;
 	time(&currentTime);
     inet_ntop(AF_INET, &clientAddr.sin_addr, clientInfo.clientIP, sizeof(clientInfo.clientIP));
-	clientInfo.clientFD = client_fd;
+	clientInfo.clientFD = clientFD;
 	clientInfo.keepAlive = true;
 	clientInfo.timeOut = 10; // will be configurable later
 	clientInfo.lastRequestTime = currentTime;
 	clientInfo.numRequests = 0;
-	clientInfo.maxRequests = 3; // will be configurable later
+	clientInfo.maxRequests = 10; // will be configurable later
 	return (clientInfo);
 }
 
-void	ClientSocket::acceptClients(int server_fd) {
+void	ClientSocket::acceptClients(int serverFD) {
 	struct sockaddr_in clientAddr;
 	socklen_t clientAddrLen = sizeof(clientAddr);
-	int client_fd = accept(server_fd, (struct sockaddr*)&clientAddr, &clientAddrLen);
-	if (client_fd == -1) {
-		std::cerr << "Error accepting connection on server socket " << server_fd << ": " << strerror(errno) << std::endl;
+	int client = accept(serverFD, (struct sockaddr*)&clientAddr, &clientAddrLen);
+	if (client == -1) {
+		std::cerr << "Error accepting connection on server socket " << serverFD << ": " << strerror(errno) << std::endl;
 		return;
 	}
-	if (getpeername(client_fd, (struct sockaddr*)&clientAddr, &clientAddrLen) != 0) {
+	if (getpeername(client, (struct sockaddr*)&clientAddr, &clientAddrLen) != 0) {
 		#ifdef DEBUG
 			std::cerr << "Failed to read client IP" << std::endl;
 			return;
 		#endif
 	}
-	_connectedClients.push_back(initClientInfo(client_fd, clientAddr));
+	_connectedClients.push_back(initClientInfo(client, clientAddr));
 	#ifdef DEBUG
-		std::cout << "Accepted new connection on server socket " << server_fd << " from client_fd " << client_fd << std::endl;
+		std::cout << "Accepted new connection on server socket " << serverFD << " from client " << clientFD << std::endl;
 	#endif
 }
 
-void	ClientSocket::removeClientSocket(int client_fd) {
-	close(client_fd);
-
+void	ClientSocket::removeClientSocket(int clientFD) {
+	close(clientFD);
 	auto it = std::find_if(_connectedClients.begin(), _connectedClients.end(), 
-						   [client_fd](const ClientInfo& clientInfo) { 
-							   return clientInfo.clientFD == client_fd; 
+						   [clientFD](const ClientInfo& clientInfo) { 
+							   return clientInfo.clientFD == clientFD; 
 						   });
 	if (it != _connectedClients.end()) {
 		_connectedClients.erase(it);
 	}
 
 	for (auto it = _pollfdContainer.begin(); it != _pollfdContainer.end(); ++it) {
-		if (it->fd == client_fd) {
+		if (it->fd == clientFD) {
 			_pollfdContainer.erase(it);
 			break;
 		}
 	}
 	#ifdef DEBUG
-		std::cout << "Client socket " << client_fd << " removed" << std::endl;
+		std::cout << "Client socket " << clientFD << " removed" << std::endl;
 	#endif
 }
 
@@ -190,7 +198,7 @@ void	ClientSocket::startPolling() {
 							acceptClients(_pollfdContainer[i].fd);
 						else {
 							#ifdef DEBUG
-							std::cout << "Input available on client_fd " << _pollfdContainer[i].fd << std::endl;
+							std::cout << "Input available on clientFD " << _pollfdContainer[i].fd << std::endl;
 							#endif
 							handleInputEvent(i);
 						}

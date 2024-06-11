@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include "ServerConnection.hpp"
+#include "../log/log.hpp"
 #include <iterator>
 #include <algorithm> 
 #include <memory>
@@ -24,7 +25,7 @@ struct ClientInfo {
 	size_t 			maxRequests;
 };
 
-class ClientSocket : ServerSocket {
+class ClientSocket : ServerSocket, Log {
 	private:
 			std::shared_ptr<ServerSocket> 	ptrServerSocket;
 			std::vector<ClientInfo> 		_connectedClients;
@@ -46,4 +47,5 @@ class ClientSocket : ServerSocket {
 				ClientInfo	initClientInfo(int client_fd, sockaddr_in clientAddr);
 				void		manageKeepAlive(int index);
 				void		checkConnectedClientsStatus();
+				int			getIndexByClientFD(int client_fd);
 };

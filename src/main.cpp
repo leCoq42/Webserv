@@ -54,7 +54,7 @@ int	main(int argc, char **argv)
 	delete buffer;
 	
 	// Log logger;
-	
-	// logger.logAccess("127.0.0.1", "GET /index.html HTTP/1.1", 200, 612, "-", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36" );
+	// for (int i = 0; i < 10; i++)	
+	// 	logger.logAccess("127.0.0.1", "GET /index.html HTTP/1.1", 200, 612, "-", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36" );
 
 }

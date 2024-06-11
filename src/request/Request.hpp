@@ -30,7 +30,6 @@ public:
 
   void printRequest() const;
 
-private:
   const std::string _rawRequest;
   std::string _requestMethod;
   std::string _uri;
@@ -46,4 +45,5 @@ private:
   bool parseRequestLine(const std::string &line);
   bool parseRequestHeaders(std::istringstream &requestStream);
   bool parseRequestBody(const std::string &_rawRequest);
+private:
 };

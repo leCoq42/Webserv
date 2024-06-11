@@ -60,6 +60,7 @@ void ServerSocket::setUpServerSockets(ServerStruct serverStruct) {
                 bindServerSocket(info);
                 listenIncomingConnections(info);
                 _connectedServers.push_back(info);
+                logServerConnection(serverStruct.id, info.serverFD, "Server is listening on port ", info.serverPort);
                 #ifdef DEBUG
                     std::cout << "Initial server socket listening on port " << atoi(it->c_str()) << std::endl;
                 #endif

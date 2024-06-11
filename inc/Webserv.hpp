@@ -21,9 +21,13 @@
 #include "../src/request/Request.hpp"
 
 // Include headers from src/response
+#include "../src/response/Response.hpp"
 
 // Include headers from src/log
 #include "../src/log/log.hpp"
+
+// Include headers from src/utils
+#include "../src/utils/string_utils.hpp"
 
 // Include headers from src/connection
 #include "../src/connection/ClientConnection.hpp"
