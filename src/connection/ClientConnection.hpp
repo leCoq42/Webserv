@@ -14,14 +14,14 @@
 #include <netinet/tcp.h>
 
 struct ClientInfo {
-	unsigned long	clientID;           // Client ID
-	int 			clientFD;           // Client file descriptor
+	unsigned long	clientID;
+	int 			clientFD;
 	char 			clientIP[INET_ADDRSTRLEN];
-	bool 			keepAlive;			// Keep-alive status
-	size_t 			timeOut;			// Timeout value
-	time_t 			lastRequestTime; 	// Timestamp of the last request
-	size_t 			numRequests;        // Number of requests made so far
-	size_t 			maxRequests;        // Maximum number of requests allowed
+	bool 			keepAlive;
+	long int		timeOut;
+	long int		lastRequestTime;
+	size_t 			numRequests;
+	size_t 			maxRequests;
 };
 
 class ClientSocket : ServerSocket {

@@ -1,21 +1,27 @@
-#include "Request.hpp"
+#include "Webserv.hpp"
 #include <cstddef>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
-Request::Request() : _rawRequest("") {}
+#define MESSAGE_END "\n*-------------------------*\n"
 
-Request::Request(const std::string &rawStr) : _rawRequest(rawStr) {}
+Request::Request() : _rawRequest(""), _isValid(0) {}
+
+Request::Request(const std::string &rawStr) : _rawRequest(rawStr) {
+  parseRequest();
+}
 
 Request::~Request() {}
 
 Request::Request(const Request &src)
     : _rawRequest(src._rawRequest), _requestMethod(src._requestMethod),
-      _uri(src._uri), _htmlVersion(src._htmlVersion), _headers(src._headers),
-      _body(src._body) {}
+      _uri(src._uri), _requestArgs(src._requestArgs),
+      _htmlVersion(src._htmlVersion), _headers(src._headers),
+      _keepAlive(src._keepAlive), _body(src._body), _isValid(src._isValid) {}
 
 Request &Request::operator=(const Request &rhs) {
   Request temp(rhs);
@@ -26,31 +32,68 @@ Request &Request::operator=(const Request &rhs) {
 void Request::swap(Request &lhs) {
   std::swap(_requestMethod, lhs._requestMethod);
   std::swap(_uri, lhs._uri);
+  std::swap(_requestArgs, lhs._requestArgs);
   std::swap(_htmlVersion, lhs._htmlVersion);
   std::swap(_headers, lhs._headers);
+  std::swap(_keepAlive, lhs._keepAlive);
   std::swap(_body, lhs._body);
+  std::swap(_isValid, lhs._isValid);
 }
 
-bool Request::parseRequest() {
+void Request::parseRequest() {
   std::string line;
   std::string headerKey;
   std::string headerValue;
 
-  if (_rawRequest.empty())
-    return false;
+  if (_rawRequest.empty()) {
+    _isValid = false;
+    return;
+  }
 
   std::istringstream requestStream(_rawRequest);
-  std::getline(requestStream, line);
+  std::getline(requestStream, line, '\r');
+  requestStream.get();
+  // std::cout << "line: " << line << std::endl;
 
-  if (!parseRequestLine(line))
-    return false;
-  if (!Request::parseRequestHeaders(requestStream))
-    return false;
-  if (!Request::parseRequestBody(_rawRequest))
-    return false;
-  checkRequestValidity();
+  if (!parseRequestLine(line)) {
+    _isValid = false;
+    return;
+  }
 
-  return true;
+  _uri = trim(_uri, "/");
+  _requestArgs = parse_requestArgs(_uri);
+
+  if (!parseRequestHeaders(requestStream)) {
+    _isValid = false;
+    return;
+  }
+  parseRequestBody(_rawRequest);
+
+  if (_headers.find("connection") != _headers.end()) {
+    if (_headers["connection"].compare("keep-alive") == 0) {
+      _keepAlive = true;
+    }
+  }
+  std::cout << "KA test: " << _keepAlive << std::endl; // return 0 all the time
+
+  _isValid = checkRequestValidity();
+  return;
+}
+
+std::vector<std::string> Request::parse_requestArgs(const std::string uri) {
+  size_t pos;
+  std::vector<std::string> args;
+  std::string argStr;
+
+  pos = uri.find("?");
+  if (pos != std::string::npos) {
+    _uri = uri.substr(0, pos);
+    if (pos + 1) {
+      argStr = uri.substr(pos + 1);
+      args = split(argStr, "?");
+    }
+  }
+  return args;
 }
 
 bool Request::parseRequestLine(const std::string &line) {
@@ -63,14 +106,25 @@ bool Request::parseRequestLine(const std::string &line) {
 bool Request::parseRequestHeaders(std::istringstream &requestStream) {
   std::string line;
   size_t pos;
+  size_t headerPos;
   std::string headerKey;
   std::string headerValue;
 
-  while (std::getline(requestStream, line) && line != "\r") {
+  while (std::getline(requestStream, line) && !line.empty() && line != "\r") {
     pos = line.find(":");
     if (pos != std::string::npos) {
+      headerPos = pos + 1;
+      while (line[headerPos] == ' ')
+        headerPos++;
+
       headerKey = line.substr(0, pos);
-      headerValue = line.substr(pos + 2);
+      for (auto &c : headerKey)
+        c = tolower(c);
+
+      headerValue =
+          line.substr(headerPos, line.find_last_not_of("/r") - headerPos);
+      for (auto &c : headerValue)
+        c = tolower(c);
       _headers[headerKey] = headerValue;
     }
   }
@@ -88,9 +142,9 @@ bool Request::parseRequestBody(const std::string &_rawRequest) {
 
   try {
     content_len = std::stoul(content_len_it->second);
-  } catch (const std::invalid_argument) {
+  } catch (const std::invalid_argument &e) {
     return false;
-  } catch (const std::out_of_range) {
+  } catch (const std::out_of_range &e) {
     return false;
   }
 
@@ -103,7 +157,7 @@ bool Request::parseRequestBody(const std::string &_rawRequest) {
 }
 
 // TODO: max length of GET request 2048 bytes?
-bool Request::checkRequestValidity() {
+bool Request::checkRequestValidity() const {
   if (_requestMethod.empty() || _htmlVersion.empty() || _uri.empty())
     return false;
   if (_requestMethod != "GET" && _requestMethod != "POST" &&
@@ -112,9 +166,8 @@ bool Request::checkRequestValidity() {
   if (_htmlVersion != "HTTP/1.0" && _htmlVersion != "HTTP/1.1" &&
       _htmlVersion != "HTTP/2.0")
     return false;
-  if (_htmlVersion != "HTTP/1.0" && _headers.find("Host") == _headers.end())
+  if (_htmlVersion != "HTTP/1.0" && _headers.find("host") == _headers.end())
     return false;
-
   return true;
 }
 
@@ -122,22 +175,45 @@ const std::string &Request::get_rawRequest() const { return _rawRequest; }
 const std::string &Request::get_requestMethod() const { return _requestMethod; }
 const std::string &Request::get_uri() const { return _uri; }
 const std::string &Request::get_body() const { return _body; }
+const bool &Request::get_keepAlive() const { return _keepAlive; }
 const std::string &Request::get_htmlVersion() const { return _htmlVersion; }
-std::unordered_map<std::string, std::string> &
-Request::get_headers(){
+const std::vector<std::string> &Request::get_requestArgs() const {
+  return _requestArgs;
+}
+const std::unordered_map<std::string, std::string> &
+Request::get_headers() const {
   return _headers;
 }
+const bool &Request::get_validity() const { return _isValid; }
 
-void Request::print_Request() {
-  std::cout << "Raw request: " << get_rawRequest() << std::endl;
-  std::cout << "Method: " << get_requestMethod() << std::endl;
-  std::cout << "Uri: " << get_uri() << std::endl;
-  std::cout << "Body: " << get_body() << std::endl;
-  std::cout << "HTML version: " << get_htmlVersion() << std::endl;
-  
-  // std::unordered_map<std::string, std::string> headers = get_headers();
-  
-  // std::cout << std::endl;
-  // for (auto it = headers.begin(); it != headers.end(); ++it)
-  //   std::cout << it->first << ": " << it->second << std::endl;
+void Request::printRequest() const {
+  std::cout << "< raw request: >\n" << get_rawRequest() << MESSAGE_END;
+  std::cout << "< Request: >" << std::endl;
+  std::cout << "request method: " << get_requestMethod() << std::endl;
+  std::cout << "uri: " << get_uri() << std::endl;
+  std::cout << "html version: " << get_htmlVersion() << std::endl;
+
+  std::cout << "< URI args: >" << std::endl;
+  for (auto it : _requestArgs) {
+    std::cout << it << std::endl;
+  }
+
+  std::cout << "< Headers: >" << std::endl;
+  std::unordered_map<std::string, std::string> headers = get_headers();
+  for (auto it : headers) {
+    std::cout << it.first << ": " << it.second << std::endl;
+  }
+
+  bool keepAlive = get_keepAlive();
+  (keepAlive ? std::cout << "Keep-Alive: true" << std::endl
+             : std::cout << "Keep-Alive: false" << std::endl);
+
+  std::cout << "< Body: >" << std::endl;
+  std::string body = get_body();
+  (body.empty()) ? std::cout << "Empty Body" << std::endl
+                 : std::cout << body << std::endl;
+
+  std::cout << "< Request Validity check: >" << std::endl;
+  (checkRequestValidity() == true) ? (std::cout << "Valid!" << std::endl)
+                                   : (std::cout << "Invalid!" << std::endl);
 }

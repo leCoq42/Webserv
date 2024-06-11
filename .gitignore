@@ -2,3 +2,9 @@ Webserv
 webserv
 ./obj/*
 .DS_Store
+*.out
+.cache
+compile_commands.json
+obj/
+*.o
+

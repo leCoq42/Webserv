@@ -1,18 +1,17 @@
 # Directories and File Names
-NAME        := Webserv
+NAME        := webserv
 SRC_DIR     := src
 BUILD_DIR   := obj
 MAIN        := main.cpp
 RM          := rm -rf
 HEADERS     := inc/Webserv.hpp
-CC          := c++ --std=c++11
+CC          := c++ --std=c++20
 
 # Include Paths
 INCLUDES    := -I ./inc
 
 # Compiler Flags
-CFLAGS     	:= 
-# CFLAGS	:= -Wall -Wextra -Werror -Wunreachable-code -Ofast
+CFLAGS     	:= -Wall -Wextra -Werror -Wunreachable-code#-Ofast
 
 # Debug Flags
 ifdef DEBUG
@@ -51,7 +50,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 
 # Cleaning Targets
 clean:
-	find ./obj -name "*.o" -type f -delete
+	find ./obj -name "*.o" -type f -delete 
 	@echo "$(YELLOW)Object files deleted$(RESET_COLOR)"
 	
 fclean: clean

@@ -49,10 +49,10 @@ void	ClientSocket::handleInputEvent(int index) {
 	}
 	buffer[bytesRead] = '\0';
 	
-	Request request(buffer);
-	request.parseRequest();
+	// Request request(buffer);
+	// request.parseRequest();
 
-	int valid = request.checkRequestValidity();
+	// int valid = request.checkRequestValidity();
 	const char* httpResponse = "here is the response from the server";
 	ssize_t bytesSent = send(_pollfdContainer[index].fd, httpResponse, strlen(httpResponse), 0);
 	if (bytesSent == -1) {
