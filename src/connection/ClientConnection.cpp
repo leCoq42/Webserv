@@ -1,4 +1,4 @@
-#include "ClientSocket.hpp"
+#include "ClientConnection.hpp"
 #include "../request/Request.hpp"
 
 ClientSocket::ClientSocket() {
@@ -9,8 +9,7 @@ ClientSocket::ClientSocket(std::shared_ptr<ServerSocket> ServerSocket) : ptrServ
 
 ClientSocket::~ClientSocket() {
 	for (size_t i = 0; i < _connectedClients.size(); ++i) {
-		int client_fd = _connectedClients[i].clientFd;
-		close(client_fd);
+		close(_connectedClients[i].clientFD);
 	}
 }
 
@@ -18,7 +17,7 @@ void	ClientSocket::manageKeepAlive(int index) {
 	int client_fd = _pollfdContainer[index].fd;
 	auto it = std::find_if(_connectedClients.begin(), _connectedClients.end(),
 						   [client_fd](const ClientInfo& client) {
-							   return client.clientFd == client_fd;
+							   return client.clientFD == client_fd;
 						   });
 	if (it != _connectedClients.end()) {
 		time_t currentTime;
@@ -70,16 +69,16 @@ void	ClientSocket::handleInputEvent(int index) {
 }
 
 void	ClientSocket::addSocketsToPollfdContainer() {
-	for (size_t i = 0; i < ptrServerSocket->_vecServerSockets.size(); i++) {
+	for (size_t i = 0; i < ptrServerSocket->_connectedServers.size(); i++) {
 		pollfd server_pollfd;
-		server_pollfd.fd = ptrServerSocket->_vecServerSockets[i];
+		server_pollfd.fd = ptrServerSocket->_connectedServers[i].serverFD;
 		server_pollfd.events = POLLIN;
 		_pollfdContainer.push_back(server_pollfd);
 	}
 
 	for (size_t i = 0; i < _connectedClients.size(); ++i) {
 		pollfd client_pollfd;
-		client_pollfd.fd = _connectedClients[i].clientFd;
+		client_pollfd.fd = _connectedClients[i].clientFD;
 		client_pollfd.events = POLLIN;
 		_pollfdContainer.push_back(client_pollfd);
 	}
@@ -92,7 +91,7 @@ ClientInfo	ClientSocket::initClientInfo(int client_fd, sockaddr_in clientAddr) {
     inet_ntop(AF_INET, &clientAddr.sin_addr, clientInfo.clientIP, sizeof(clientInfo.clientIP));
 	clientInfo.clientFD = client_fd;
 	clientInfo.keepAlive = true;
-	clientInfo.timeOut = 3; // will be configurable later
+	clientInfo.timeOut = 10; // will be configurable later
 	clientInfo.lastRequestTime = currentTime;
 	clientInfo.numRequests = 0;
 	clientInfo.maxRequests = 3; // will be configurable later
@@ -142,8 +141,8 @@ void	ClientSocket::removeClientSocket(int client_fd) {
 }
 
 bool	ClientSocket::isServerSocket(int fd) {
-	for (const auto& server_fd : ptrServerSocket->_vecServerSockets) {
-		if (fd == server_fd) {
+	for (const auto& server_fd : ptrServerSocket->_connectedServers) {
+		if (fd == server_fd.serverFD) {
 			return true;
 		}
 	}
@@ -170,10 +169,10 @@ void	ClientSocket::checkConnectedClientsStatus() {
 	for (size_t i = 0; i < _connectedClients.size(); i++) {
 		if (currentTime - _connectedClients[i].lastRequestTime > _connectedClients[i].timeOut 
 			&& _connectedClients[i].keepAlive == true) 
-				removeClientSocket(_connectedClients[i].clientFd);
+				removeClientSocket(_connectedClients[i].clientFD);
 		if (_connectedClients[i].numRequests >= _connectedClients[i].maxRequests 
 			&& _connectedClients[i].keepAlive == true)
-				removeClientSocket(_connectedClients[i].clientFd);
+				removeClientSocket(_connectedClients[i].clientFD);
 	}
 }
 

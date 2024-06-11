@@ -26,5 +26,5 @@
 #include "../src/log/log.hpp"
 
 // Include headers from src/connection
-#include "../src/connection/ClientSocket.hpp"
-#include "../src/connection/ServerSocket.hpp"
+#include "../src/connection/ClientConnection.hpp"
+#include "../src/connection/ServerConnection.hpp"

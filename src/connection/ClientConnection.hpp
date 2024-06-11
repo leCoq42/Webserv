@@ -7,27 +7,28 @@
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include "ServerSocket.hpp"
+#include "ServerConnection.hpp"
 #include <iterator>
 #include <algorithm> 
 #include <memory>
 #include <netinet/tcp.h>
 
 struct ClientInfo {
+	unsigned long	clientID;           // Client ID
 	int 			clientFD;           // Client file descriptor
+	char 			clientIP[INET_ADDRSTRLEN];
 	bool 			keepAlive;			// Keep-alive status
 	size_t 			timeOut;			// Timeout value
 	time_t 			lastRequestTime; 	// Timestamp of the last request
 	size_t 			numRequests;        // Number of requests made so far
 	size_t 			maxRequests;        // Maximum number of requests allowed
-	char 			clientIP[INET_ADDRSTRLEN];
 };
 
 class ClientSocket : ServerSocket {
 	private:
+			std::shared_ptr<ServerSocket> 	ptrServerSocket;
 			std::vector<ClientInfo> 		_connectedClients;
 			std::vector<pollfd>				_pollfdContainer;
-			std::shared_ptr<ServerSocket> 	ptrServerSocket;
 
 			public:
 				ClientSocket();
