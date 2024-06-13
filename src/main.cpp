@@ -38,8 +38,8 @@ void parse(Parser *parser, std::list<ServerStruct> *server_structs,
 
 int	main(int argc, char **argv)
 {
-	auto SS = std::make_shared<ServerSocket>();
-	ClientSocket CS(SS);
+	auto SS = std::make_shared<ServerConnection>();
+	ClientConnection CC(SS);
 	Parser					parser("#", "\n", "{", "}", " 	\n", "'", " 	\n", ";");
 	std::list<ServerStruct>	server_structs;
 	char					*buffer;
@@ -49,8 +49,8 @@ int	main(int argc, char **argv)
 	parse(&parser, &server_structs, &buffer, argv);
 	std::cout << std::endl << std::endl;
 	for (const auto& server : server_structs)
-			SS->setUpServerSockets(server);
-	CS.startPolling();
+			SS->setUpServerConnection(server);
+	CC.setUpClientConnection();
 	delete buffer;
 	
 	// Log logger;

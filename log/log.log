@@ -1,0 +1,9 @@
+2024/06/13 14:39:33 [info] Server socket created A  on socket 5 is now listening on port 8080
+2024/06/13 14:39:33 [info] Server socket created A  on socket 6 is now listening on port 8081
+2024/06/13 14:39:33 [info] Server socket created A  on socket 7 is now listening on port 8082
+2024/06/13 14:39:33 [info] Server socket created A  on socket 8 is now listening on port 8083
+2024/06/13 14:39:33 [info] Server socket created B  on socket 9 is now listening on port 8084
+2024/06/13 14:39:33 [info] Server socket created B  on socket 10 is now listening on port 8085
+2024/06/13 14:39:33 [error] Invalid port number on server B , on port 0
+2024/06/13 14:39:33 [error] Invalid port number on server B , on port 0
+2024/06/13 14:39:38 [info] Client IP 127.0.0.1 accepted connection from client on socket 11

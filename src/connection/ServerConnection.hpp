@@ -9,6 +9,7 @@
 #include <arpa/inet.h> //to convert ip into string
 #include <netdb.h>
 #include <vector>
+#include "../log/log.hpp"
 
 //
 #include <stdio.h>      /* printf, fgets */
@@ -24,17 +25,17 @@ struct ServerInfo{
 	struct sockaddr_in 	server_addr;
 };
 
-class ServerSocket{
+class ServerConnection : public virtual Log{
 	private:
 
 	public:
 		std::vector<ServerInfo>	_connectedServers;
-		ServerSocket();
-		~ServerSocket();
+		ServerConnection();
+		~ServerConnection();
 
 		void				initServerInfo(ServerStruct serverStruct, ServerInfo& info, std::list<std::string>::iterator it);
 		void				createServerSocket(ServerInfo& info);
 		void				bindServerSocket(ServerInfo& info);
 		void				listenIncomingConnections(ServerInfo &info);
-		void				setUpServerSockets(ServerStruct serverStruct);
+		void				setUpServerConnection(ServerStruct serverStruct);
 };

@@ -4,18 +4,20 @@
 #include <fstream>
 #include <ctime>
 #include <string>
+#include <cstring>
 
-class	Log {
-	public:
-		Log();
-		~Log();
-		
-		void	logError(const std::string& message, const std::string& client_ip, const std::string& request);
-		// void	logAccessClient(const std::string& client_ip, const std::string& request, int status, int size, const std::string& referrer, const std::string& user_agent);
-		void	logServerConnection(const std::string& serverName, int socket, int port);
+class Log {
+public:
+    Log();
+    ~Log();
 
-	private:	
-		std::string	getTimeStamp();
-		std::ofstream _accessLogFile;
-		std::ofstream _errorLogFile;
+    void	logError(const std::string& message);
+    void    logClientError(const std::string& message, char* clientIP, int clientFD);
+    void    logServerError(const std::string& message, const std::string& serverName, int port);
+    void    logClientConnection(const std::string& message, std::string clientIP, int clientFD);
+    void    logServerConnection(const std::string& message, const std::string& serverName, int socket, int port);
+
+private:
+    std::string getTimeStamp();
+    std::ofstream _logFile;
 };
