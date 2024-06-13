@@ -31,7 +31,7 @@ void	Log::logError(const std::string& message) {
 	}
 }
 
-// Client log functions
+// Client connection log functions
 void	Log::logClientError(const std::string& message, char* clientIP, int clientFD) {
 	if (_logFile.is_open()) {
 			_logFile << getTimeStamp() << " [error] " << clientIP << " " << message << " on socket " << clientFD << std::endl;
@@ -44,7 +44,7 @@ void	Log::logClientError(const std::string& message, char* clientIP, int clientF
 
 void	Log::logClientConnection(const std::string& message, std::string clientIP, int clientFD) {
 	if (_logFile.is_open()) {
-		_logFile << getTimeStamp() << " [info] " << "Client IP "<< clientIP << " " << message << " on socket " << clientFD << std::endl;
+		_logFile << getTimeStamp() << " [info]  " << "Client IP "<< clientIP << " " << message << " on socket " << clientFD << std::endl;
 		_logFile.flush();
 	} 
 	else {
@@ -53,11 +53,11 @@ void	Log::logClientConnection(const std::string& message, std::string clientIP, 
 }
 
 
-// Server log functions
+// Server connection log functions
 void	Log::logServerError(const std::string& message, const std::string& serverName, int port) {
 	if (_logFile.is_open()) {
 		_logFile << getTimeStamp() << " [error] " << message << " on server " << serverName 
-					  << ", on port " << port << std::endl;
+					  << "on port " << port << std::endl;
 		_logFile.flush();
 	} 
 	else {
@@ -67,8 +67,19 @@ void	Log::logServerError(const std::string& message, const std::string& serverNa
 
 void	Log::logServerConnection(const std::string& message, const std::string& serverName, int socket, int port) {
 	if (_logFile.is_open()) {
-		_logFile << getTimeStamp() << " [info] " << message << " " << serverName << " on socket " << socket 
+		_logFile << getTimeStamp() << " [info]  " << message << " " << serverName << "on socket " << socket 
 					   << " is now listening on port " << port << std::endl;
+		_logFile.flush();
+	} 
+	else {
+		std::cerr << getTimeStamp() << " [error] Unable to write to access log file" << std::endl;
+	}
+}
+
+// Response log functions
+void	Log::logResponse(int status, const std::string& message) {
+	if (_logFile.is_open()) {
+		_logFile << getTimeStamp() << " [response] " << " Statuscode " << status << "  " << message << " has been send to client" << std::endl;
 		_logFile.flush();
 	} 
 	else {

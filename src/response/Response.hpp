@@ -32,7 +32,7 @@ enum class StatusCode {
   GATEWAY_TIMEOUT = 504
 };
 
-class Response {
+class Response : public virtual Log{
 public:
   Response();
   Response(std::shared_ptr<Request> request);

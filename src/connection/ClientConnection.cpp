@@ -9,7 +9,7 @@ ClientConnection::ClientConnection(std::shared_ptr<ServerConnection> ServerConne
 
 ClientConnection::~ClientConnection() {
 	for (size_t i = 0; i < _connectedClients.size(); ++i) {
-		logClientConnection("closed connection from client", _connectedClients[i].clientIP, _connectedClients[i].clientFD);
+		logClientConnection("connection closed", _connectedClients[i].clientIP, _connectedClients[i].clientFD);
 		close(_connectedClients[i].clientFD);
 	}
 }
@@ -106,12 +106,12 @@ void	ClientConnection::acceptClients(int serverFD) {
 	if (getpeername(clientFD, (struct sockaddr*)&clientAddr, &clientAddrLen) != 0)
 		logError("Failed to read client IP");
 	_connectedClients.push_back(initClientInfo(clientFD, clientAddr));
-	logClientConnection("accepted connection from client", _connectedClients.back().clientIP, clientFD);
+	logClientConnection("accepted connection", _connectedClients.back().clientIP, clientFD);
 }
 
 void	ClientConnection::removeClientSocket(int clientFD) {
 	close(clientFD);
-	logClientConnection("closed connection from client", _connectedClients[getIndexByClientFD(clientFD)].clientIP, clientFD);
+	logClientConnection("closed connection", _connectedClients[getIndexByClientFD(clientFD)].clientIP, clientFD);
 	int indexConnectedClients = getIndexByClientFD(clientFD);
 	_connectedClients.erase(indexConnectedClients + _connectedClients.begin());
 	for (auto it = _pollfdContainer.begin(); it != _pollfdContainer.end(); ++it) {

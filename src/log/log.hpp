@@ -5,6 +5,7 @@
 #include <ctime>
 #include <string>
 #include <cstring>
+#include <iomanip>
 
 class Log {
 public:
@@ -16,6 +17,7 @@ public:
     void    logServerError(const std::string& message, const std::string& serverName, int port);
     void    logClientConnection(const std::string& message, std::string clientIP, int clientFD);
     void    logServerConnection(const std::string& message, const std::string& serverName, int socket, int port);
+    void	logResponse(int status, const std::string& message);
 
 private:
     std::string getTimeStamp();
