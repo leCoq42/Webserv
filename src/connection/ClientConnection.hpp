@@ -27,8 +27,8 @@ struct ClientInfo {
 class ClientConnection : ServerConnection, public virtual Log {
 	private:
 			std::shared_ptr<ServerConnection> 	ptrServerConnection;
-			std::vector<ClientInfo> 		_connectedClients;
-			std::vector<pollfd>				_pollfdContainer;
+			std::vector<ClientInfo> 			_connectedClients;
+			std::vector<pollfd>					_serverClientSockets; 
 
 			public:
 				ClientConnection();

@@ -227,7 +227,8 @@ std::string Response::buildResponse(int status, const std::string &message,
   } else {
     _responseString.append(body);
   }
-  logResponse(status, message);
+  // Test function logResponse with latest response code
+  // logResponse(status, message);
   return _responseString;
 }
 

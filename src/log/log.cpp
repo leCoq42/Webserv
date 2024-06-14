@@ -34,7 +34,7 @@ void	Log::logError(const std::string& message) {
 // Client connection log functions
 void	Log::logClientError(const std::string& message, char* clientIP, int clientFD) {
 	if (_logFile.is_open()) {
-			_logFile << getTimeStamp() << " [error] " << clientIP << " " << message << " on socket " << clientFD << std::endl;
+			_logFile << getTimeStamp() << " [error] " << "Client IP " << clientIP << " " << message << " on socket " << clientFD << std::endl;
 		_logFile.flush();
 	} 
 	else {
@@ -44,7 +44,7 @@ void	Log::logClientError(const std::string& message, char* clientIP, int clientF
 
 void	Log::logClientConnection(const std::string& message, std::string clientIP, int clientFD) {
 	if (_logFile.is_open()) {
-		_logFile << getTimeStamp() << " [info]  " << "Client IP "<< clientIP << " " << message << " on socket " << clientFD << std::endl;
+		_logFile << getTimeStamp() << " [info]  " << "Client IP " << clientIP << " " << message << " on socket " << clientFD << std::endl;
 		_logFile.flush();
 	} 
 	else {

@@ -53,7 +53,7 @@ clean:
 	@find ./obj -name "*.o" -type f -delete 
 	@$(RM) ./log/*
 	@echo "$(YELLOW)Object files deleted$(RESET_COLOR)"
-	@echo "$(YELLOW)Logs deleted$(RESET_COLOR)"
+	@echo "$(YELLOW)Log deleted$(RESET_COLOR)"
 	
 fclean: clean
 	@$(RM) $(NAME)
