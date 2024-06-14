@@ -97,7 +97,7 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
     body = CGI.executeCGI(path, "");
   }
   _responseString =
-      buildResponse(static_cast<int>(StatusCode::OK), "OK", body, isCGI);
+  buildResponse(static_cast<int>(StatusCode::OK), "OK", body, isCGI);
   return true;
 }
 
@@ -227,6 +227,8 @@ std::string Response::buildResponse(int status, const std::string &message,
   } else {
     _responseString.append(body);
   }
+  // Test function logResponse with latest response code
+  // logResponse(status, message);
   return _responseString;
 }
 

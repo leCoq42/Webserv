@@ -1,169 +1,149 @@
 #include "ClientConnection.hpp"
 #include "../request/Request.hpp"
 
-ClientSocket::ClientSocket() {
+ClientConnection::ClientConnection() {
 }
 
-ClientSocket::ClientSocket(std::shared_ptr<ServerSocket> ServerSocket) : ptrServerSocket(ServerSocket){
+ClientConnection::ClientConnection(std::shared_ptr<ServerConnection> ServerConnection) : ptrServerConnection(ServerConnection){
 }
 
-ClientSocket::~ClientSocket() {
+ClientConnection::~ClientConnection() {
 	for (size_t i = 0; i < _connectedClients.size(); ++i) {
+		logClientConnection("connection closed", _connectedClients[i].clientIP, _connectedClients[i].clientFD);
 		close(_connectedClients[i].clientFD);
 	}
 }
 
-void	ClientSocket::manageKeepAlive(int index) {
-	int client_fd = _pollfdContainer[index].fd;
-	auto it = std::find_if(_connectedClients.begin(), _connectedClients.end(),
-						   [client_fd](const ClientInfo& client) {
-							   return client.clientFD == client_fd;
-						   });
-	if (it != _connectedClients.end()) {
-		time_t currentTime;
-		time(&currentTime);
-		it->lastRequestTime = currentTime;
-		it->numRequests += 1;
+int	ClientConnection::getIndexByClientFD(int clientFD) {
+	int index = 0;
+	for (size_t i = 0; i < _connectedClients.size(); i++) {
+		if (_connectedClients[i].clientFD == clientFD)
+			index = i;
 	}
-	if (it->keepAlive == true) {
-		_pollfdContainer[index].events = POLLIN | POLLOUT;
-	} 
-	else {
-		removeClientSocket(_pollfdContainer[index].fd);
-	}
+	return (index);
 }
 
-void	ClientSocket::handleInputEvent(int index) {
-	char buffer[1024];
+void	ClientConnection::manageKeepAlive(int index) {
+	int indexConnectedClients = getIndexByClientFD(_serverClientSockets[index].fd);
+	time_t currentTime;
+	time(&currentTime);
+	_connectedClients[indexConnectedClients].lastRequestTime = currentTime;
+	_connectedClients[indexConnectedClients].numRequests += 1;
+	if (_connectedClients[indexConnectedClients].keepAlive == true)
+		_serverClientSockets[index].events = POLLIN | POLLOUT;
+	else
+		removeClientSocket(_serverClientSockets[index].fd);
+}
 
-	ssize_t bytesRead = recv(_pollfdContainer[index].fd, buffer, sizeof(buffer), 0);
+void	ClientConnection::handleInputEvent(int index) {
+	char buffer[1024];
+	uint32_t connectedClientFD = getIndexByClientFD(index);
+
+	ssize_t bytesRead = recv(_serverClientSockets[index].fd, buffer, sizeof(buffer), 0);
 	if (bytesRead == -1) {
-		std::cerr << "Error receiving data from client: " << strerror(errno) << std::endl;
+		logClientError("Failed to receive data from client", _connectedClients[connectedClientFD].clientIP, _serverClientSockets[index].fd);
 		return;
-	} else if (bytesRead == 0) {
-		#ifdef DEBUG
-			std::cout << "Client disconnected" << std::endl;
-		#endif
-		_pollfdContainer[index].revents = POLLERR;
-		return;
-	}
+	} 
+	if (bytesRead == 0 && _connectedClients[connectedClientFD].keepAlive == false) {
+			logClientError("Client disconnected", _connectedClients[connectedClientFD].clientIP, _serverClientSockets[index].fd);
+			_serverClientSockets[index].revents = POLLERR;
+			return;
+		}
+	
+
 	buffer[bytesRead] = '\0';
 	
-	// Request request(buffer);
-	// request.parseRequest();
-
-	// int valid = request.checkRequestValidity();
-	const char* httpResponse = "here is the response from the server";
-	ssize_t bytesSent = send(_pollfdContainer[index].fd, httpResponse, strlen(httpResponse), 0);
+	Request request(buffer);
+	// Use outcommented code to for parsing and sending response. If keepAlive is set to false, the client will be disconnected.
+	// If keepAlive is set to true, the client will stay connected till chunked request is done.
+	// _connectedClients[connectedClientFD].keepAlive = request.parseRequest(_connectedClients[getIndexByClientFD(index)]); // Fix the error by using getIndexByClientFD(index) instead of connectedClientFD
+	const char* httpResponse = "here is the response from the server\n";
+	ssize_t bytesSent = send(_serverClientSockets[index].fd, httpResponse, strlen(httpResponse), 0);
 	if (bytesSent == -1) {
-		std::cerr << "Error sending data to client: " << strerror(errno) << std::endl;
+		std::cerr << "Failed to send data to client: " << strerror(errno) << std::endl;
 		return;
 	} 
 	else if (bytesSent == 0) {
-		#ifdef DEBUG
-		std::cout << "Client disconnected" << std::endl;
-		#endif
-		_pollfdContainer[index].revents = POLLERR;
+		logClientError("Client disconnected", _connectedClients[getIndexByClientFD(_serverClientSockets[index].fd)].clientIP, _serverClientSockets[index].fd);
+		_serverClientSockets[index].revents = POLLERR;
 	}
 	manageKeepAlive(index);
 }
 
-void	ClientSocket::addSocketsToPollfdContainer() {
-	for (size_t i = 0; i < ptrServerSocket->_connectedServers.size(); i++) {
+void	ClientConnection::addSocketsToPollfdContainer() {
+	for (size_t i = 0; i < ptrServerConnection->_connectedServers.size(); i++) {
 		pollfd server_pollfd;
-		server_pollfd.fd = ptrServerSocket->_connectedServers[i].serverFD;
+		server_pollfd.fd = ptrServerConnection->_connectedServers[i].serverFD;
 		server_pollfd.events = POLLIN;
-		_pollfdContainer.push_back(server_pollfd);
+		_serverClientSockets.push_back(server_pollfd);
 	}
-
 	for (size_t i = 0; i < _connectedClients.size(); ++i) {
 		pollfd client_pollfd;
 		client_pollfd.fd = _connectedClients[i].clientFD;
 		client_pollfd.events = POLLIN;
-		_pollfdContainer.push_back(client_pollfd);
+		_serverClientSockets.push_back(client_pollfd);
 	}
 }
 
-ClientInfo	ClientSocket::initClientInfo(int client_fd, sockaddr_in clientAddr) {
+ClientInfo	ClientConnection::initClientInfo(int clientFD, sockaddr_in clientAddr) {
 	ClientInfo clientInfo;
+	memset(&clientInfo, 0, sizeof(clientInfo));
 	time_t currentTime;
 	time(&currentTime);
     inet_ntop(AF_INET, &clientAddr.sin_addr, clientInfo.clientIP, sizeof(clientInfo.clientIP));
-	clientInfo.clientFD = client_fd;
-	clientInfo.keepAlive = true;
-	clientInfo.timeOut = 10; // will be configurable later
+	clientInfo.clientFD = clientFD;
+	clientInfo.keepAlive = false;
+	clientInfo.timeOut = 100; // will be configurable later
 	clientInfo.lastRequestTime = currentTime;
-	clientInfo.numRequests = 0;
+	clientInfo.numRequests = 0; // can be perhaps be deleted
 	clientInfo.maxRequests = 3; // will be configurable later
-	return (clientInfo);
+	return clientInfo;
 }
 
-void	ClientSocket::acceptClients(int server_fd) {
+void	ClientConnection::acceptClients(int serverFD) {
 	struct sockaddr_in clientAddr;
 	socklen_t clientAddrLen = sizeof(clientAddr);
-	int client_fd = accept(server_fd, (struct sockaddr*)&clientAddr, &clientAddrLen);
-	if (client_fd == -1) {
-		std::cerr << "Error accepting connection on server socket " << server_fd << ": " << strerror(errno) << std::endl;
+	int clientFD = accept(serverFD, (struct sockaddr*)&clientAddr, &clientAddrLen);
+	if (clientFD == -1) {
+		logError("Failed to connect on server socket");
 		return;
 	}
-	if (getpeername(client_fd, (struct sockaddr*)&clientAddr, &clientAddrLen) != 0) {
-		#ifdef DEBUG
-			std::cerr << "Failed to read client IP" << std::endl;
-			return;
-		#endif
-	}
-	_connectedClients.push_back(initClientInfo(client_fd, clientAddr));
-	#ifdef DEBUG
-		std::cout << "Accepted new connection on server socket " << server_fd << " from client_fd " << client_fd << std::endl;
-	#endif
+	if (getpeername(clientFD, (struct sockaddr*)&clientAddr, &clientAddrLen) != 0)
+		logError("Failed to read client IP");
+	_connectedClients.push_back(initClientInfo(clientFD, clientAddr));
+	logClientConnection("accepted connection", _connectedClients.back().clientIP, clientFD);
 }
 
-void	ClientSocket::removeClientSocket(int client_fd) {
-	close(client_fd);
-
-	auto it = std::find_if(_connectedClients.begin(), _connectedClients.end(), 
-						   [client_fd](const ClientInfo& clientInfo) { 
-							   return clientInfo.clientFD == client_fd; 
-						   });
-	if (it != _connectedClients.end()) {
-		_connectedClients.erase(it);
-	}
-
-	for (auto it = _pollfdContainer.begin(); it != _pollfdContainer.end(); ++it) {
-		if (it->fd == client_fd) {
-			_pollfdContainer.erase(it);
+void	ClientConnection::removeClientSocket(int clientFD) {
+	close(clientFD);
+	logClientConnection("closed connection", _connectedClients[getIndexByClientFD(clientFD)].clientIP, clientFD);
+	int indexConnectedClients = getIndexByClientFD(clientFD);
+	_connectedClients.erase(indexConnectedClients + _connectedClients.begin());
+	for (auto it = _serverClientSockets.begin(); it != _serverClientSockets.end(); ++it) {
+		if (it->fd == clientFD) {
+			_serverClientSockets.erase(it);
 			break;
 		}
 	}
-	#ifdef DEBUG
-		std::cout << "Client socket " << client_fd << " removed" << std::endl;
-	#endif
 }
 
-bool	ClientSocket::isServerSocket(int fd) {
-	for (const auto& server_fd : ptrServerSocket->_connectedServers) {
-		if (fd == server_fd.serverFD) {
+bool	ClientConnection::isServerSocket(int fd) {
+	for (const auto& server_fd : ptrServerConnection->_connectedServers) {
+		if (fd == server_fd.serverFD)
 			return true;
-		}
 	}
-	return (false);
+	return false;
 }
 
-void	ClientSocket::handlePollOutEvent(size_t index) {
-	#ifdef DEBUG
-	std::cout << "Socket " << _pollfdContainer[index].fd << " is ready for writing" << std::endl;
-	#endif
-	_pollfdContainer[index].events &= ~POLLOUT;
+void	ClientConnection::handlePollOutEvent(size_t index) {
+	_serverClientSockets[index].events &= ~POLLOUT;
 }
 
-void	ClientSocket::handlePollErrorEvent(size_t index) {
-	#ifdef DEBUG
-	std::cerr << "Error or disconnection on descriptor " << _pollfdContainer[index].fd << std::endl;
-	#endif
-	removeClientSocket(_pollfdContainer[index].fd);
+void	ClientConnection::handlePollErrorEvent(size_t index) {
+	removeClientSocket(_serverClientSockets[index].fd);
 }
 
-void	ClientSocket::checkConnectedClientsStatus() {
+void	ClientConnection::checkConnectedClientsStatus() {
 	time_t currentTime;
 	time(&currentTime);
 	for (size_t i = 0; i < _connectedClients.size(); i++) {
@@ -176,43 +156,31 @@ void	ClientSocket::checkConnectedClientsStatus() {
 	}
 }
 
-void	ClientSocket::startPolling() {
-	try{
-		while (true) {
-			_pollfdContainer.clear();
-			addSocketsToPollfdContainer();
-			int poll_count = poll(_pollfdContainer.data(), _pollfdContainer.size(), 100);
-			checkConnectedClientsStatus();
-			if (poll_count > 0) {
-				for (size_t i = 0; i < _pollfdContainer.size(); i++) {
-					if (_pollfdContainer[i].revents & POLLIN) {
-						if (isServerSocket(_pollfdContainer[i].fd)) 
-							acceptClients(_pollfdContainer[i].fd);
-						else {
-							#ifdef DEBUG
-							std::cout << "Input available on client_fd " << _pollfdContainer[i].fd << std::endl;
-							#endif
-							handleInputEvent(i);
-						}
-					}
-					if (_pollfdContainer[i].revents & POLLOUT) {
-						handlePollOutEvent(i);
-					}
-					if (_pollfdContainer[i].revents & (POLLHUP | POLLERR)) {
-						handlePollErrorEvent(i);
-						i--;
-					}
+void	ClientConnection::setUpClientConnection() {
+	while (true) {
+		_serverClientSockets.clear();
+		addSocketsToPollfdContainer();
+		int poll_count = poll(_serverClientSockets.data(), _serverClientSockets.size(), 100);
+		checkConnectedClientsStatus();
+		if (poll_count > 0) {
+			for (size_t i = 0; i < _serverClientSockets.size(); i++) {
+				if (_serverClientSockets[i].revents & POLLIN) {
+					if (isServerSocket(_serverClientSockets[i].fd))
+						acceptClients(_serverClientSockets[i].fd);
+					else 
+						handleInputEvent(i);
 				}
-			} 
-			else if (poll_count == 0) {
-				continue;
+				if (_serverClientSockets[i].revents & POLLOUT)
+					handlePollOutEvent(i);
+				if (_serverClientSockets[i].revents & (POLLHUP | POLLERR)) {
+					handlePollErrorEvent(i);
+					// i--;
+				}
 			}
-			else {
-				throw std::runtime_error(strerror(errno));
-			}
-		}
-	} 
-	catch (const std::exception &e) {
-		std::cerr << "Error polling: " << e.what() << std::endl;
+		} 
+		else if (poll_count == 0)
+			continue;
+		else 
+			logError("Failed to poll");
 	}
 }
