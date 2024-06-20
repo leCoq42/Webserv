@@ -12,7 +12,7 @@ public:
   Log();
   ~Log();
 
-  void addLogFile(const std::string &fileName);
+  bool addLogFile(const std::string &fileName);
   void logError(const std::string &message);
   void logClientError(const std::string &message, char *clientIP, int clientFD);
   void logServerError(const std::string &message, const std::string &serverName,

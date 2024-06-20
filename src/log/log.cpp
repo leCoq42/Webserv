@@ -18,7 +18,9 @@ Log::~Log() {
     _logFile.close();
 }
 
-void Log::addLogFile(const std::string &fileName) {
+// Check if fileName and directory exist, then create the directory and/or file
+// if needed
+bool Log::addLogFile(const std::string &fileName) {
   std::filesystem::path logFilePath(fileName);
   if (!std::filesystem::exists(logFilePath)) {
     std::filesystem::path folderPath(logFilePath.parent_path());
@@ -30,9 +32,11 @@ void Log::addLogFile(const std::string &fileName) {
     if (!file) {
       std::cerr << "[error] creating logfile: " << logFilePath.string()
                 << std::endl;
+      return false;
     }
     file.close();
   }
+  return true;
 }
 
 std::string Log::getTimeStamp() {
