@@ -1,17 +1,3 @@
-// class CgiParsing
-// {
-// 	private:
-// 	std::unordered_map<std::string, std::string>	meta_variables;	// meta variables and header variables and shiznitz
-// 	std::unordered_map<std::string, std::string>	argv;	// 4.4 The Script Command Line
-// 	std::string										stdin;	//body should go here unless otherwise defined.
-// 	public:
-// 	cgi_parsing(std::unordered_map<std::string, std::string> headers, char **environ, ServerStruct &serverinfo, std::shared_ptr<Request> _request, const std::string &path);
-// 	~cgi_parsing(void);
-// 	char	**get_envpp();
-// 	char	**get_argv();
-// 	char	*get_stdin();
-// };
-
 #include "CgiParsing.hpp"
 
 std::vector<std::string>	meta_variables_names = {"AUTH_TYPE" , "CONTENT_LENGTH" ,
@@ -29,9 +15,11 @@ bool	CgiParsing::dismantle_body(std::string body, std::string boundary)
 	std::string	contentDisposition;
 	std::string	contentType;
 
-	std::cout << "BOUNDARY:" << boundary << std::endl;
-	std::cout << "BODY:" << std::endl << body << std::endl;
-	std::cout << "End of BODY." << std::endl;
+	if (boundary.empty())
+		;
+	// std::cout << "BOUNDARY:" << boundary << std::endl;
+	// std::cout << "BODY:" << std::endl << body << std::endl;
+	// std::cout << "End of BODY." << std::endl;
 	// contentDisposition = body.substr(body.find("Content-Disposition: "), body.substr(body.find("Content-Disposition: ")).find("\n"));
 	// std::cout << "CONTENT-DISPOSITION:" << contentDisposition << std::endl;
 	// contentType = body.substr(body.find("Content-Type: "), body.substr(body.find("Content-Type: ")).find("\n"));
@@ -54,9 +42,9 @@ CgiParsing::CgiParsing(std::unordered_map<std::string, std::string> headers, cha
 	//config specified
 	customizable_variables_names.push_back("");
 
-	std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>GHFSGD<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+	// std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>GHFSGD<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
 	i = -1;
-	std::cout << "ADD to ENVPP" << std::endl;
+	// std::cout << "ADD to ENVPP" << std::endl;
 	// if (!interpreter.compare("/usr/bin/php-cgi"))
 	// 	add_to_envpp("REDIRECT_STATUS", "", ""); //Security restriction thrown
 	//MAGIC env variables for PHP REDIRECT_STATUS=true SCRIPT_FILENAME=/var/www/... REQUEST_METHOD=POST GATEWAY_INTERFACE=CGI/1.1
@@ -72,16 +60,16 @@ CgiParsing::CgiParsing(std::unordered_map<std::string, std::string> headers, cha
 	// 	add_to_envpp(((std::string)*(environ + i)).substr(0, ((std::string)*(environ + i)).find("=")), ((std::string)*(environ + i)).substr(((std::string)*(environ + i)).find("=") + 1), "");
 	for (const auto& [key, value] : headers)
 		add_to_envpp(key, value, "");
-	std::cout << "ADD to URI" << std::endl;
+	// std::cout << "ADD to URI" << std::endl;
 	if (interpreter.compare(""))
 		add_to_uri(interpreter, "", "");
 	add_to_uri(path, "", "");
 	for (const auto& var : _request->get_requestArgs())
 		add_to_uri(var, "", "");
-	std::cout << "ADD to BODY" <<std::endl;
-	std::cout << _request->get_body();
+	// std::cout << "ADD to BODY" <<std::endl;
+	// std::cout << _request->get_body();
 	dismantle_body(_request->get_body(), _request->get_boundary());
-	std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>GHFSGD<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+	// std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>GHFSGD<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
 }
 
 CgiParsing::~CgiParsing(void)
@@ -111,21 +99,17 @@ bool	CgiParsing::add_to_envpp(std::string name, std::string value, std::string a
 	// std::cout << name << "=" << value;
 	if (validate_key(additive + name, customizable_variables_names))
 	{
-		std::cout << name << "=" << value;
+		// std::cout << name << "=" << value;
 		temp = additive + name;
 		for (auto & c: temp) c = toupper(c);
 		if (value.compare(""))
 			temp += "=" + value;
-		std::cout << temp << std::endl;
+		// std::cout << temp << std::endl;
 		std::replace( temp.begin(), temp.end(), '-', '_');
-		std::cout << temp << std::endl;
+		// std::cout << temp << std::endl;
 		meta_variables.push_back(temp);//uri[name] = value;
-		std::cout << " added" << std::endl;
-		return true;
-		// std::cout << name << "=" << value;
-		// meta_variables[name] = value;
 		// std::cout << " added" << std::endl;
-		// return true;
+		return true;
 	}
 	// std::cout << " failed" << std::endl;
 	return false;
@@ -137,12 +121,12 @@ bool	CgiParsing::add_to_uri(std::string name, std::string value, std::string add
 	// std::cout << name << "=" << value;
 	// if (!validate_key(additive + name, customizable_variables_names))
 	// {
-		std::cout << name << "=" << value;
+		// std::cout << name << "=" << value;
 		temp = additive + name;
 		if (value.compare(""))
 			temp += "=" + value;
 		uri.push_back(temp);//uri[name] = value;
-		std::cout << " added" << std::endl;
+		// std::cout << " added" << std::endl;
 		return true;
 	// }
 	// std::cout << " failed" << std::endl;

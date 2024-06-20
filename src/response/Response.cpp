@@ -84,7 +84,7 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 		body = list_dir(path, request->get_uri(), request->get_referer());
 	}
 
-  if (resourcePath.extension() != ".cgi" && resourcePath.extension() != "" && resourcePath.extension() != ".php") {
+  if (resourcePath.extension() != ".cgi" && resourcePath.extension() != "" && resourcePath.extension() != ".php" && resourcePath.extension() != ".py") {
 	std::cout << "IS NOT CGI\n";
     isCGI = false;
     path.append(resourcePath.string());
@@ -124,12 +124,12 @@ std::string
 Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 		std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++POSTING++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
 //   std::string resourcePath = request->get_uri();
-  std::cout << "1" << std::endl;
+//   std::cout << "1" << std::endl;
   std::string requestBody = request->get_body();
-  std::cout << "2" << std::endl;
+//   std::cout << "2" << std::endl;
   if (request->get_headers().empty())
   	std::string requestContentType = request->get_headers().at("content-type");
-  std::cout << "3" << std::endl;
+//   std::cout << "3" << std::endl;
   std::filesystem::path path = "html/";
   std::string body;
   std::filesystem::path resourcePath = request->get_uri();
