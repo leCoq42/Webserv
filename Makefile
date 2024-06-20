@@ -13,6 +13,11 @@ INCLUDES    := -I ./inc
 # Compiler Flags
 CFLAGS     	:= -Wall -Wextra -Werror -Wunreachable-code#-Ofast
 
+# Debug Flags
+ifdef DEBUG
+	CFLAGS += -g -D DEBUG
+endif
+
 # Source files
 SRC         := $(wildcard $(SRC_DIR)/**/*.cpp)
 
@@ -30,6 +35,11 @@ RESET_COLOR := \033[0m
 # Targets
 all: $(NAME)
 
+debug:
+	$(MAKE) DEBUG=1
+
+rebug: fclean debug
+
 $(NAME): $(OBJS) $(MAIN_OBJ)
 	$(CC) $(CFLAGS) $(INCLUDES) $^ -o $(NAME)
 	@echo "$(GREEN)$(NAME) executable created$(RESET_COLOR)"
@@ -40,13 +50,15 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 
 # Cleaning Targets
 clean:
-	find ./obj -name "*.o" -type f -delete 
+	@find ./obj -name "*.o" -type f -delete 
+	@$(RM) ./log/*
 	@echo "$(YELLOW)Object files deleted$(RESET_COLOR)"
+	@echo "$(YELLOW)Log deleted$(RESET_COLOR)"
 	
 fclean: clean
-	$(RM) $(NAME)
+	@$(RM) $(NAME)
 	@echo "$(RED)$(NAME) executable deleted$(RESET_COLOR)"
 
 re: fclean all
 
-.PHONY: all clean fclean re
+.PHONY: all clean fclean re debug
