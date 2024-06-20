@@ -1,4 +1,4 @@
-#include "Webserv.hpp"
+#include "webserv.hpp"
 #include <cstddef>
 #include <exception>
 #include <filesystem>
@@ -65,9 +65,9 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
   std::filesystem::path path = "html/";
   std::filesystem::path resourcePath = request->get_uri();
 
-//   if (resourcePath.empty() || resourcePath == "/") {
-//     resourcePath = "index.html";
-//   }
+  //   if (resourcePath.empty() || resourcePath == "/") {
+  //     resourcePath = "index.html";
+  //   }
 
   if (!resourcePath.empty() && resourcePath.has_extension()) {
     if (contentTypes.find(resourcePath.extension()) == contentTypes.end()) {
@@ -77,16 +77,16 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
       return false;
     }
     _contentType = contentTypes.at(resourcePath.extension());
+  } else if (true) // dir listing on off
+  {
+    isCGI = false;
+    path.append(resourcePath.string());
+    body = list_dir(path, request->get_uri(), request->get_referer());
   }
-  else if (true) //dir listing on off
-	{
-		isCGI = false;
-		path.append(resourcePath.string());
-		body = list_dir(path, request->get_uri(), request->get_referer());
-	}
 
-  if (resourcePath.extension() != ".cgi" && resourcePath.extension() != "" && resourcePath.extension() != ".php" && resourcePath.extension() != ".py") {
-	std::cout << "IS NOT CGI\n";
+  if (resourcePath.extension() != ".cgi" && resourcePath.extension() != "" &&
+      resourcePath.extension() != ".php" && resourcePath.extension() != ".py") {
+    std::cout << "IS NOT CGI\n";
     isCGI = false;
     path.append(resourcePath.string());
     std::ifstream file(path, std::ios::binary);
@@ -97,68 +97,68 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
     }
     buffer << file.rdbuf();
     body = buffer.str();
-  } else if (resourcePath.extension() == ".cgi"){
+  } else if (resourcePath.extension() == ".cgi") {
     isCGI = true;
     // path.append("cgi-bin/");
     path.append(resourcePath.string());
     cgi CGI(_contentType);
     body = CGI.executeCGI(path, "", _request, "");
-  } else if (resourcePath.extension() == ".php"){
+  } else if (resourcePath.extension() == ".php") {
     isCGI = true;
     // path.append("php-bin/");
     path.append(resourcePath.string());
     cgi CGI(_contentType);
     body = CGI.executeCGI(path, "", _request, "/usr/lib/cgi-bin/php");
-  } else if (resourcePath.extension() == ".py"){
+  } else if (resourcePath.extension() == ".py") {
     isCGI = true;
     // path.append("php-bin/");
     path.append(resourcePath.string());
     cgi CGI(_contentType);
     body = CGI.executeCGI(path, "", _request, "/usr/bin/python3");
   }
-  _responseString =
-      buildResponse(static_cast<int>(StatusCode::OK), "OK", body, isCGI); //when cgi double padded?
+  _responseString = buildResponse(static_cast<int>(StatusCode::OK), "OK", body,
+                                  isCGI); // when cgi double padded?
 
   return true;
 }
 
 std::string
 Response::handlePostRequest(const std::shared_ptr<Request> &request) {
-		std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++POSTING++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-//   std::string resourcePath = request->get_uri();
-//   std::cout << "1" << std::endl;
+  std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++POSTING++++++++"
+               "++++++++++++++++++++++++++++++++++++++++"
+            << std::endl;
+  //   std::string resourcePath = request->get_uri();
+  //   std::cout << "1" << std::endl;
   std::string requestBody = request->get_body();
 
-//   std::cout << "2" << std::endl;
+  //   std::cout << "2" << std::endl;
   if (request->get_headers().empty())
-  	std::string requestContentType = request->get_headers().at("content-type");
-//   std::cout << "3" << std::endl;
+    std::string requestContentType = request->get_headers().at("content-type");
+  //   std::cout << "3" << std::endl;
   std::filesystem::path path = "html/";
   std::string body;
   std::filesystem::path resourcePath = request->get_uri();
 
-	std::cout << resourcePath << std::endl;
-//   if (resourcePath.empty())
-//     resourcePath = "index.html";
-  if (!resourcePath.string().empty() && resourcePath.string()[0] == '/') 
+  std::cout << resourcePath << std::endl;
+  //   if (resourcePath.empty())
+  //     resourcePath = "index.html";
+  if (!resourcePath.string().empty() && resourcePath.string()[0] == '/')
     resourcePath = resourcePath.string().substr(1);
-	else if (resourcePath.extension() == ".php"){
-		// isCGI = true;
-		// path.append("php-bin/");
-		path.append(resourcePath.string());
-		cgi CGI(_contentType);
-		body = CGI.executeCGI(path, "", _request, "/usr/bin/php-cgi");
-	}
-	else if (resourcePath.extension() == ".py"){
-		// isCGI = true;
-		// path.append("php-bin/");
-		path.append(resourcePath.string());
-		cgi CGI(_contentType);
-		body = CGI.executeCGI(path, "", _request, "/usr/bin/python3");
-	}
-	else
-  		return buildResponse(static_cast<int>(204), "No Content", "");
-    // return buildResponse(static_cast<int>(400), "Bad Request", "");
+  else if (resourcePath.extension() == ".php") {
+    // isCGI = true;
+    // path.append("php-bin/");
+    path.append(resourcePath.string());
+    cgi CGI(_contentType);
+    body = CGI.executeCGI(path, "", _request, "/usr/bin/php-cgi");
+  } else if (resourcePath.extension() == ".py") {
+    // isCGI = true;
+    // path.append("php-bin/");
+    path.append(resourcePath.string());
+    cgi CGI(_contentType);
+    body = CGI.executeCGI(path, "", _request, "/usr/bin/python3");
+  } else
+    return buildResponse(static_cast<int>(204), "No Content", "");
+  // return buildResponse(static_cast<int>(400), "Bad Request", "");
 
   /* std::istringstream requestStream(requestBody); */
   /* std::string line; */
@@ -258,11 +258,10 @@ std::string Response::buildResponse(int status, const std::string &message,
   _responseString.append("HTTP/1.1 " + std::to_string(status) + " " + message +
                          "\r\n");
 
-	if (is_cgi)
-	{
-		_responseString.append(body);
-		return _responseString;
-	}
+  if (is_cgi) {
+    _responseString.append(body);
+    return _responseString;
+  }
   if (!body.empty()) {
     _responseString.append("Content-Length: " + std::to_string(body.length()) +
                            "\r\n");
@@ -276,9 +275,9 @@ std::string Response::buildResponse(int status, const std::string &message,
     _responseString.append("Content-Type: " + get_contentType() + "\r\n");
     _responseString.append("\r\n" + body);
   }
-//   } else {
-// 	_responseString.append("\r\n" + body);
-//   }
+  //   } else {
+  // 	_responseString.append("\r\n" + body);
+  //   }
   return _responseString;
 }
 

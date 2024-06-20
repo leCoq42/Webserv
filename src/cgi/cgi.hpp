@@ -1,11 +1,10 @@
 #pragma once
 
+#include "webserv.hpp" //"../request/Request.hpp"
 #include <iostream>
-#include <vector>
-#include <unistd.h>
 #include <memory>
-#include "../inc/Webserv.hpp" //"../request/Request.hpp"
-#include "CgiParsing.hpp"
+#include <unistd.h>
+#include <vector>
 
 class cgi {
 public:
@@ -28,7 +27,9 @@ public:
                   std::string &args);
   // void createEnv(std::vector<char *> &envp);
 
-  std::string executeCGI(const std::string &path, const std::string &args, std::shared_ptr<Request> _request, std::string interpreter);
+  std::string executeCGI(const std::string &path, const std::string &args,
+                         std::shared_ptr<Request> _request,
+                         std::string interpreter);
 
 private:
   std::string _contentType;

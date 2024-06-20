@@ -31,6 +31,7 @@
 
 // Include headers from src/cgi
 #include "../src/cgi/cgi.hpp"
+#include "../src/cgi/cgiParsing.hpp"
 
 // Include headers from src/utils
 #include "../src/utils/string_utils.hpp"

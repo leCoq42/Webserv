@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../inc/Webserv.hpp"
+#include "webserv.hpp"
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -75,8 +75,8 @@ private:
       {".gif", "image/gif"},
 
       {".cgi", "text/html"},
-		{".php", "text/html"},
-		{".py", "text/html"},
+      {".php", "text/html"},
+      {".py", "text/html"},
 
       {"x-www-form-urlencoded", "application/x-www-form-urlencoded"},
       {"form-data", "multipart/form-data"}};

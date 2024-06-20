@@ -12,6 +12,8 @@ public:
   Log();
   ~Log();
 
+  // TODO:copy constructor and operator= overload
+
   bool addLogFile(const std::string &fileName);
   void logError(const std::string &message);
   void logClientError(const std::string &message, char *clientIP, int clientFD);

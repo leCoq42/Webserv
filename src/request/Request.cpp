@@ -1,4 +1,4 @@
-#include "Webserv.hpp"
+#include "webserv.hpp"
 #include <cstddef>
 #include <iostream>
 #include <sstream>
@@ -7,28 +7,35 @@
 #include <unordered_map>
 #include <vector>
 
-//No changes only print crap
+// No changes only print crap
 
 #define MESSAGE_END "\n*-------------------------*\n"
 
 Request::Request() : _rawRequest(""), _isValid(0) {}
 
-auto print_key_value = [](const auto& key, const auto& value)
-{
-	std::cout << "Key:[" << key << "] Value:[" << value << "]\n";
+auto print_key_value = [](const auto &key, const auto &value) {
+  std::cout << "Key:[" << key << "] Value:[" << value << "]\n";
 };
 
 Request::Request(const std::string &rawStr) : _rawRequest(rawStr) {
   parseRequest();
   std::unordered_map<std::string, std::string> print_headers;
-	std::cout << "________________________________SHOW REQUEST___________________________________\n";
-	std::cout << "+++++URI:\n" << get_uri() << std::endl; //should be added as variable to launch of cgi process
-	std::cout << "+++++HEADERS:\n";
-	print_headers = get_headers(); //should be transferede to env variables of forked cgi process
-	for (const auto& [key, value] : print_headers)
-		print_key_value(key, value);
-	std::cout << "+++++BODY:\n" << get_body() << std::endl; //should be written to stdin of cgi process
-	std::cout << "________________________________________________________________________________\n";
+  std::cout << "________________________________SHOW "
+               "REQUEST___________________________________\n";
+  std::cout
+      << "+++++URI:\n"
+      << get_uri()
+      << std::endl; // should be added as variable to launch of cgi process
+  std::cout << "+++++HEADERS:\n";
+  print_headers = get_headers(); // should be transferede to env variables of
+                                 // forked cgi process
+  for (const auto &[key, value] : print_headers)
+    print_key_value(key, value);
+  std::cout << "+++++BODY:\n"
+            << get_body()
+            << std::endl; // should be written to stdin of cgi process
+  std::cout << "_______________________________________________________________"
+               "_________________\n";
 }
 
 Request::~Request() {}
@@ -37,7 +44,9 @@ Request::Request(const Request &src)
     : _rawRequest(src._rawRequest), _requestMethod(src._requestMethod),
       _uri(src._uri), _requestArgs(src._requestArgs),
       _htmlVersion(src._htmlVersion), _headers(src._headers),
-      _keepAlive(src._keepAlive), _body(src._body), _isValid(src._isValid) { extractCgiEnv(); }
+      _keepAlive(src._keepAlive), _body(src._body), _isValid(src._isValid) {
+  extractCgiEnv();
+}
 
 Request &Request::operator=(const Request &rhs) {
   Request temp(rhs);
@@ -56,14 +65,17 @@ void Request::swap(Request &lhs) {
   std::swap(_isValid, lhs._isValid);
 }
 
-//doesn't seem to be the standard but it is an security issue not to check this, https://www.htmlhelp.com/faq/cgifaq.2.html    https://datatracker.ietf.org/doc/html/rfc3875#section-4
-void	Request::extractCgiEnv() //whoops wrong place, also security issue :p
+// doesn't seem to be the standard but it is an security issue not to check
+// this, https://www.htmlhelp.com/faq/cgifaq.2.html
+// https://datatracker.ietf.org/doc/html/rfc3875#section-4
+void Request::extractCgiEnv() // whoops wrong place, also security issue :p
 {
-	if (get_headers().empty())
-		return ;
-	//Should check for accepted env variables, but dont think its specified to be that way.
-	for (const auto& [key, value] : get_headers())
-		print_key_value(key, value);
+  if (get_headers().empty())
+    return;
+  // Should check for accepted env variables, but dont think its specified to be
+  // that way.
+  for (const auto &[key, value] : get_headers())
+    print_key_value(key, value);
 }
 
 void Request::parseRequest() {
@@ -163,14 +175,18 @@ bool Request::parseRequestBody(const std::string &_rawRequest) {
 
   std::unordered_map<std::string, std::string>::iterator content_len_it =
       _headers.find("content-length");
-	////////
-	std::unordered_map<std::string, std::string>::iterator referer = _headers.find("referer");
-	if (!(referer == _headers.end()))
-		_referer = referer->second;
-	std::unordered_map<std::string, std::string>::iterator boundary = _headers.find("content-type");
-	if (!(boundary == _headers.end()))
-		_boundary = boundary->second.substr(boundary->second.find("boundary=") + 9); //magic value for length of "boundary="
-	////////
+  ////////
+  std::unordered_map<std::string, std::string>::iterator referer =
+      _headers.find("referer");
+  if (!(referer == _headers.end()))
+    _referer = referer->second;
+  std::unordered_map<std::string, std::string>::iterator boundary =
+      _headers.find("content-type");
+  if (!(boundary == _headers.end()))
+    _boundary =
+        boundary->second.substr(boundary->second.find("boundary=") +
+                                9); // magic value for length of "boundary="
+  ////////
   if (content_len_it == _headers.end())
     return false;
 

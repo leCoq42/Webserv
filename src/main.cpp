@@ -1,5 +1,4 @@
-#include "../inc/Webserv.hpp"
-#include "log/log.hpp"
+#include "webserv.hpp"
 #include <memory>
 
 void error_exit(int error_code) {
@@ -13,7 +12,6 @@ void error_exit(int error_code) {
     std::cout << "loading server struct went wrong" << std::endl;
   exit(1);
 }
-
 
 void parse(Parser *parser, std::list<ServerStruct> *server_structs,
            char **buffer, char **argv) {
@@ -36,25 +34,25 @@ void parse(Parser *parser, std::list<ServerStruct> *server_structs,
   }
 }
 
-int	main(int argc, char **argv)
-{
-	auto SS = std::make_shared<ServerConnection>();
-	ClientConnection CC(SS);
-	Parser					parser("#", "\n", "{", "}", " 	\n", "'", " 	\n", ";");
-	std::list<ServerStruct>	server_structs;
-	char					*buffer;
+int main(int argc, char **argv) {
+  auto SS = std::make_shared<ServerConnection>();
+  ClientConnection CC(SS);
+  Parser parser("#", "\n", "{", "}", " 	\n", "'", " 	\n", ";");
+  std::list<ServerStruct> server_structs;
+  char *buffer;
 
-	if (argc != 2)
-		error_exit(1);
-	parse(&parser, &server_structs, &buffer, argv);
-	std::cout << std::endl << std::endl;
-	for (const auto& server : server_structs)
-			SS->setUpServerConnection(server);
-	CC.setUpClientConnection();
-	delete buffer;
-	
-	// Log logger;
-	// for (int i = 0; i < 10; i++)	
-	// 	logger.logAccess("127.0.0.1", "GET /index.html HTTP/1.1", 200, 612, "-", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36" );
+  if (argc != 2)
+    error_exit(1);
+  parse(&parser, &server_structs, &buffer, argv);
+  std::cout << std::endl << std::endl;
+  for (const auto &server : server_structs)
+    SS->setUpServerConnection(server);
+  CC.setUpClientConnection();
+  delete buffer;
 
+  // Log logger;
+  // for (int i = 0; i < 10; i++)
+  // 	logger.logAccess("127.0.0.1", "GET /index.html HTTP/1.1", 200, 612, "-",
+  // "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like
+  // Gecko) Chrome/91.0.4472.124 Safari/537.36" );
 }
