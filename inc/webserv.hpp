@@ -18,10 +18,10 @@
 #include "../src/response/dir_listing.hpp"
 
 // Include headers from src/request
-#include "../src/request/Request.hpp"
+#include "../src/request/request.hpp"
 
 // Include headers from src/response
-#include "../src/response/Response.hpp"
+#include "../src/response/response.hpp"
 
 // Include headers from src/log
 #include "../src/log/log.hpp"
@@ -34,7 +34,7 @@
 #include "../src/cgi/cgiParsing.hpp"
 
 // Include headers from src/utils
-#include "../src/utils/string_utils.hpp"
+#include "../src/utils/stringUtils.hpp"
 
 // Include headers from src/connection
 #include "../src/connection/ClientConnection.hpp"
