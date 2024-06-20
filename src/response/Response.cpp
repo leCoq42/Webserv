@@ -98,7 +98,7 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
     body = CGI.executeCGI(path, "");
   }
   _responseString =
-  buildResponse(static_cast<int>(StatusCode::OK), "OK", body, isCGI);
+      buildResponse(static_cast<int>(StatusCode::OK), "OK", body, isCGI);
   return true;
 }
 
