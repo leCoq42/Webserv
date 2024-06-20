@@ -6,6 +6,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #define KEEP_ALIVE_TIMOUT 10
@@ -117,6 +118,7 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
   }
   _responseString =
       buildResponse(static_cast<int>(StatusCode::OK), "OK", body, isCGI); //when cgi double padded?
+
   return true;
 }
 
@@ -126,6 +128,7 @@ Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 //   std::string resourcePath = request->get_uri();
 //   std::cout << "1" << std::endl;
   std::string requestBody = request->get_body();
+
 //   std::cout << "2" << std::endl;
   if (request->get_headers().empty())
   	std::string requestContentType = request->get_headers().at("content-type");
