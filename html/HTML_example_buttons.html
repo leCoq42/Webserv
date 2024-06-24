@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Page Title</title>
+<title>File Upload Test</title>
 </head>
 <body>
-
-<h1>My First Heading</h1>
-<p>My first paragraph.</p>
 
 <!--Button linked to another page-->
 <button onclick = "window.location.href='/index.html';">Click Me!</button>
@@ -21,10 +18,9 @@
   </form> -->
 
 <!-- <form action="/test_stdin.py" method="post" enctype="multipart/form-data"></form> -->
-<form action="upload.php" method="post" enctype="multipart/form-data">
-  Select image to upload:
-  <input type="file" name="fileToUpload" id="fileToUpload">
-  <input type="submit" value="Upload Image" name="submit">
+<form action="/cgi-bin/fileUpload.cgi" method="post" enctype="multipart/form-data">
+  <p>Select image to upload: <input type="file" name="fileToUpload" /></p>
+  <p><input type="submit" value="Upload File" name="submit" /></p>
 </form>
 
 <!-- <form action="upload.php" method="post" enctype="multipart/form-data">

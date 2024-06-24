@@ -1,7 +1,6 @@
 #pragma once
 
 #include "webserv.hpp"
-#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -54,9 +53,10 @@ private:
   std::string _contentType;
 
   bool handleGetRequest(const std::shared_ptr<Request> &request);
-  std::string handlePostRequest(const std::shared_ptr<Request> &request);
-  std::string handleDeleteRequest(const std::shared_ptr<Request> &request);
+  bool handlePostRequest(const std::shared_ptr<Request> &request);
+  bool handleDeleteRequest(const std::shared_ptr<Request> &request);
 
+  void handle_multipart();
   std::unordered_map<std::string, std::string>
   get_args(std::string requestBody, std::string contentType);
   std::vector<std::string> get_parts(std::string requestBody,
@@ -80,4 +80,9 @@ private:
 
       {"x-www-form-urlencoded", "application/x-www-form-urlencoded"},
       {"form-data", "multipart/form-data"}};
+
+  static const inline std::unordered_map<std::string, std::string> interpreters{
+      {".cgi", ""},
+      {".py", "/usr/bin/python3"},
+      {".php", "/ usr / lib / cgi - bin / php"}};
 };

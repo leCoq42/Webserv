@@ -1,4 +1,5 @@
 #include "webserv.hpp"
+#include <algorithm>
 #include <cstddef>
 #include <exception>
 #include <filesystem>
@@ -61,130 +62,151 @@ void Response::handleRequest(const std::shared_ptr<Request> &request) {
 bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
   std::string body;
   std::stringstream buffer;
-  bool isCGI;
+  bool isCGI = false;
   std::filesystem::path path = "html/";
   std::filesystem::path resourcePath = request->get_uri();
 
-  //   if (resourcePath.empty() || resourcePath == "/") {
-  //     resourcePath = "index.html";
-  //   }
-
+  if (resourcePath.empty() || resourcePath == "/") {
+    resourcePath = "index.html";
+  }
   if (!resourcePath.empty() && resourcePath.has_extension()) {
-    if (contentTypes.find(resourcePath.extension()) == contentTypes.end()) {
+    std::unordered_map<std::string, std::string>::const_iterator res =
+        contentTypes.find(resourcePath.extension());
+    if (res == contentTypes.end()) {
       _responseString =
           buildResponse(static_cast<int>(StatusCode::UNSUPPORTED_MEDIA_TYPE),
                         "Unsupported Media Type", "");
       return false;
     }
-    _contentType = contentTypes.at(resourcePath.extension());
-  } else if (true) // dir listing on off
+    _contentType = res->second;
+    if (interpreters.find(resourcePath.extension()) == interpreters.end()) {
+      path.append(resourcePath.string());
+      std::ifstream file(path, std::ios::binary);
+      if (!file) {
+        _responseString = buildResponse(static_cast<int>(StatusCode::NOT_FOUND),
+                                        "Not Found", "");
+        return false;
+      }
+      buffer << file.rdbuf();
+      body = buffer.str();
+    } else {
+      isCGI = true;
+      // path.append("cgi-bin/"); path.append("php-bin/");?
+      path.append(resourcePath.string());
+      cgi CGI(_contentType);
+      body = CGI.executeCGI(path, "", _request,
+                            interpreters.at(resourcePath.extension()));
+    }
+  } else // else if (true)? // dir listing on off
   {
-    isCGI = false;
     path.append(resourcePath.string());
     body = list_dir(path, request->get_uri(), request->get_referer());
   }
 
-  if (resourcePath.extension() != ".cgi" && resourcePath.extension() != "" &&
-      resourcePath.extension() != ".php" && resourcePath.extension() != ".py") {
-    std::cout << "IS NOT CGI\n";
-    isCGI = false;
-    path.append(resourcePath.string());
-    std::ifstream file(path, std::ios::binary);
-    if (!file) {
-      _responseString = buildResponse(static_cast<int>(StatusCode::NOT_FOUND),
-                                      "Not Found", "");
-      return false;
-    }
-    buffer << file.rdbuf();
-    body = buffer.str();
-  } else if (resourcePath.extension() == ".cgi") {
-    isCGI = true;
-    // path.append("cgi-bin/");
-    path.append(resourcePath.string());
-    cgi CGI(_contentType);
-    body = CGI.executeCGI(path, "", _request, "");
-  } else if (resourcePath.extension() == ".php") {
-    isCGI = true;
-    // path.append("php-bin/");
-    path.append(resourcePath.string());
-    cgi CGI(_contentType);
-    body = CGI.executeCGI(path, "", _request, "/usr/lib/cgi-bin/php");
-  } else if (resourcePath.extension() == ".py") {
-    isCGI = true;
-    // path.append("php-bin/");
-    path.append(resourcePath.string());
-    cgi CGI(_contentType);
-    body = CGI.executeCGI(path, "", _request, "/usr/bin/python3");
-  }
   _responseString = buildResponse(static_cast<int>(StatusCode::OK), "OK", body,
                                   isCGI); // when cgi double padded?
-
   return true;
 }
 
-std::string
-Response::handlePostRequest(const std::shared_ptr<Request> &request) {
-  std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++POSTING++++++++"
-               "++++++++++++++++++++++++++++++++++++++++"
-            << std::endl;
-  //   std::string resourcePath = request->get_uri();
-  //   std::cout << "1" << std::endl;
+bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
   std::string requestBody = request->get_body();
-
-  //   std::cout << "2" << std::endl;
-  if (request->get_headers().empty())
-    std::string requestContentType = request->get_headers().at("content-type");
-  //   std::cout << "3" << std::endl;
-  std::filesystem::path path = "html/";
-  std::string body;
+  std::string requestContentType = request->get_contentType();
+  std::filesystem::path path = "./html/";
   std::filesystem::path resourcePath = request->get_uri();
+  std::string body;
+  bool isCGI = false;
 
-  std::cout << resourcePath << std::endl;
-  //   if (resourcePath.empty())
-  //     resourcePath = "index.html";
-  if (!resourcePath.string().empty() && resourcePath.string()[0] == '/')
+  if (!resourcePath.empty() && resourcePath.string()[0] == '/')
     resourcePath = resourcePath.string().substr(1);
-  else if (resourcePath.extension() == ".php") {
-    // isCGI = true;
-    // path.append("php-bin/");
-    path.append(resourcePath.string());
-    cgi CGI(_contentType);
-    body = CGI.executeCGI(path, "", _request, "/usr/bin/php-cgi");
-  } else if (resourcePath.extension() == ".py") {
-    // isCGI = true;
-    // path.append("php-bin/");
-    path.append(resourcePath.string());
-    cgi CGI(_contentType);
-    body = CGI.executeCGI(path, "", _request, "/usr/bin/python3");
-  } else
-    return buildResponse(static_cast<int>(204), "No Content", "");
-  // return buildResponse(static_cast<int>(400), "Bad Request", "");
+  if (resourcePath.empty())
+    resourcePath = "index.html";
 
-  /* std::istringstream requestStream(requestBody); */
-  /* std::string line; */
-  /* std::unordered_map<std::string, std::string> formData; */
-  /* while (std::getline(requestStream, line)) { */
-  /*   std::size_t seperatorPos = line.find('='); */
-  /*   if (seperatorPos != std::string::npos) { */
-  /*     std::string key = line.substr(0, seperatorPos); */
-  /*     std::string value = line.substr(seperatorPos + 1); */
-  /*     formData[key] = value; */
-  /*   } */
-  /* } */
+  std::cout << "ReourcePatH:" << resourcePath << std::endl;
 
-  // std::string response;
-  // std::unordered_map<std::string, std::string> bodyArgs =
-  //     get_args(requestBody, requestContentType);
-
-  return buildResponse(static_cast<int>(StatusCode::OK), "OK", body);
+  if (resourcePath.has_extension()) {
+    if (interpreters.find(resourcePath.extension()) != interpreters.end()) {
+      isCGI = true;
+      // path.append("php-bin/");
+      path.append(resourcePath.string());
+      cgi CGI(_contentType);
+      body = CGI.executeCGI(path, "", _request,
+                            interpreters.at(resourcePath.extension()));
+    } else {
+      buildResponse(static_cast<int>(StatusCode::NO_CONTENT), "No Content", "");
+      return true;
+    }
+  }
+  if (requestContentType == "multipart/form-data") {
+    handle_multipart();
+    return true;
+  }
+  buildResponse(static_cast<int>(StatusCode::OK), "OK", body, isCGI);
+  return true;
 };
 
-std::string
-Response::handleDeleteRequest(const std::shared_ptr<Request> &request) {
+const std::string UPLOAD_DIR = "./html/uploads/";
+void Response::handle_multipart() {
+  // std::string bound = "--" + boundary;
+  size_t pos = 0;
+  std::string body = _request->get_body();
+  std::string boundary = _request->get_boundary();
+
+  std::cout << "<multipart/form-data>" << std::endl;
+
+  while (pos < body.size()) {
+    size_t start = std::search(body.begin() + pos, body.end(), boundary.begin(),
+                               boundary.end()) -
+                   body.begin();
+    if (start == body.size())
+      break;
+
+    size_t end = std::search(body.begin() + start + boundary.length(),
+                             body.end(), boundary.begin(), boundary.end()) -
+                 body.begin();
+    if (end == body.size())
+      break;
+
+    std::string part(body.begin() + start + boundary.length(),
+                     body.begin() + end);
+    size_t header_end = part.find("\r\n\r\n");
+    std::string headers = part.substr(0, header_end);
+    std::string content = part.substr(header_end + 4);
+
+    size_t filename_pos = headers.find("filename=\"");
+    if (filename_pos != std::string::npos) {
+      size_t filename_end = headers.find("\"", filename_pos + 10);
+      std::string filename =
+          headers.substr(filename_pos + 10, filename_end - filename_pos - 10);
+
+      std::cout << "filename: " << filename << std::endl;
+      std::cout << "content: " << content << std::endl;
+
+      std::ofstream file(UPLOAD_DIR + filename, std::ios::binary);
+      if (file.is_open()) {
+        file.write(content.c_str(), content.length());
+        file.close();
+        buildResponse(static_cast<int>(StatusCode::OK),
+                      "File uploaded succesfully!", "");
+        // std::cout << "Content-Type: text/html/r/n/r/n";
+        // std::cout << "<html><body>File uploaded
+        // succesfully!</body></html>";
+      } else {
+        // std::cout << "Content-Type: text/html/r/n/r/n";
+        // std::cout << "<html><body>Error: file upload
+        // failed!</body></html>";
+        buildResponse(static_cast<int>(StatusCode::INTERNAL_SERVER_ERROR),
+                      "Error: file upload failed!", "");
+      }
+    }
+    pos = end;
+  }
+}
+
+bool Response::handleDeleteRequest(const std::shared_ptr<Request> &request) {
   std::filesystem::path Path = request->get_uri();
 
-  return buildResponse(static_cast<int>(StatusCode::OK), "OK",
-                       request->get_body());
+  buildResponse(static_cast<int>(StatusCode::OK), "OK", request->get_body());
+  return true;
 };
 
 std::unordered_map<std::string, std::string>

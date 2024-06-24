@@ -1,11 +1,14 @@
 #pragma once
 
+#include <cstddef>
 #include <iostream>
 #include <unordered_map>
 #include <vector>
 
-//doesn't seem to be the standard but it is an security issue not to check this, https://www.htmlhelp.com/faq/cgifaq.2.html   https://datatracker.ietf.org/doc/html/rfc3875#section-4 
-// std::string	specifiedCgiEnv[] = {}
+// doesn't seem to be the standard but it is an security issue not to check
+// this, https://www.htmlhelp.com/faq/cgifaq.2.html
+// https://datatracker.ietf.org/doc/html/rfc3875#section-4
+//  std::string	specifiedCgiEnv[] = {}
 
 class Request {
 public:
@@ -23,8 +26,10 @@ public:
   const std::string &get_rawRequest() const;
   const std::string &get_requestMethod() const;
   const std::string &get_uri() const;
-  const std::string &get_referer() const;
-  const std::string &get_boundary() const;
+  const std::string get_referer() const;
+  const std::string get_contentType() const;
+  size_t get_contentLen() const;
+  const std::string get_boundary() const;
   const std::vector<std::string> &get_requestArgs() const;
   const std::string &get_htmlVersion() const;
   const std::string &get_connection() const;
@@ -39,20 +44,18 @@ private:
   const std::string _rawRequest;
   std::string _requestMethod;
   std::string _uri;
-  std::string	_referer;
-  std::string	_boundary;
-  std::vector<std::string> _requestArgs;
   std::string _htmlVersion;
+  std::vector<std::string> _requestArgs;
   std::unordered_map<std::string, std::string> _headers;
-  std::unordered_map<std::string, std::string> _cgiEnv;
   bool _keepAlive;
   std::string _body;
   bool _isValid;
+  std::unordered_map<std::string, std::string> _cgiEnv;
 
   void parseRequest();
   std::vector<std::string> parse_requestArgs(const std::string uri);
   bool parseRequestLine(const std::string &line);
   bool parseRequestHeaders(std::istringstream &requestStream);
   bool parseRequestBody(const std::string &_rawRequest);
-  void	extractCgiEnv(void);
+  void extractCgiEnv(void);
 };

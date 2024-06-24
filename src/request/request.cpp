@@ -19,31 +19,35 @@ auto print_key_value = [](const auto &key, const auto &value) {
 
 Request::Request(const std::string &rawStr) : _rawRequest(rawStr) {
   parseRequest();
-  std::unordered_map<std::string, std::string> print_headers;
-  std::cout << "________________________________SHOW "
-               "REQUEST___________________________________\n";
-  std::cout
-      << "+++++URI:\n"
-      << get_uri()
-      << std::endl; // should be added as variable to launch of cgi process
-  std::cout << "+++++HEADERS:\n";
-  print_headers = get_headers(); // should be transferede to env variables of
-                                 // forked cgi process
-  for (const auto &[key, value] : print_headers)
-    print_key_value(key, value);
-  std::cout << "+++++BODY:\n"
-            << get_body()
-            << std::endl; // should be written to stdin of cgi process
-  std::cout << "_______________________________________________________________"
-               "_________________\n";
+#ifdef DEBUG
+  printRequest();
+#endif // DEBUG
+  // std::unordered_map<std::string, std::string> print_headers;
+  // std::cout << "________________________________SHOW "
+  //              "REQUEST___________________________________\n";
+  // std::cout
+  //     << "+++++URI:\n"
+  //     << get_uri()
+  //     << std::endl; // should be added as variable to launch of cgi process
+  // std::cout << "+++++HEADERS:\n";
+  // print_headers = get_headers(); // should be transferede to env variables of
+  //                                // forked cgi process
+  // for (const auto &[key, value] : print_headers)
+  //   print_key_value(key, value);
+  // std::cout << "+++++BODY:\n"
+  //           << get_body()
+  //           << std::endl; // should be written to stdin of cgi process
+  // std::cout <<
+  // "_______________________________________________________________"
+  //              "_________________\n";
 }
 
 Request::~Request() {}
 
 Request::Request(const Request &src)
     : _rawRequest(src._rawRequest), _requestMethod(src._requestMethod),
-      _uri(src._uri), _requestArgs(src._requestArgs),
-      _htmlVersion(src._htmlVersion), _headers(src._headers),
+      _uri(src._uri), _htmlVersion(src._htmlVersion),
+      _requestArgs(src._requestArgs), _headers(src._headers),
       _keepAlive(src._keepAlive), _body(src._body), _isValid(src._isValid) {
   extractCgiEnv();
 }
@@ -91,7 +95,6 @@ void Request::parseRequest() {
   std::istringstream requestStream(_rawRequest);
   std::getline(requestStream, line, '\r');
   requestStream.get();
-  // std::cout << "line: " << line << std::endl;
 
   if (!parseRequestLine(line)) {
     _isValid = false;
@@ -105,6 +108,11 @@ void Request::parseRequest() {
     _isValid = false;
     return;
   }
+
+  // if (_requestMethod == "POST") {
+  //   parsePostArgs();
+  // }
+
   parseRequestBody(_rawRequest);
 
   if (_headers.find("connection") != _headers.end()) {
@@ -112,11 +120,12 @@ void Request::parseRequest() {
       _keepAlive = true;
     }
   }
-  std::cout << "KA test: " << _keepAlive << std::endl; // return 0 all the time
 
   _isValid = checkRequestValidity();
   return;
 }
+
+// bool Request::parsePostArgs() { return true; }
 
 std::vector<std::string> Request::parse_requestArgs(const std::string uri) {
   size_t pos;
@@ -171,38 +180,12 @@ bool Request::parseRequestHeaders(std::istringstream &requestStream) {
 
 bool Request::parseRequestBody(const std::string &_rawRequest) {
   size_t body_start;
-  size_t content_len;
-
-  std::unordered_map<std::string, std::string>::iterator content_len_it =
-      _headers.find("content-length");
-  ////////
-  std::unordered_map<std::string, std::string>::iterator referer =
-      _headers.find("referer");
-  if (!(referer == _headers.end()))
-    _referer = referer->second;
-  std::unordered_map<std::string, std::string>::iterator boundary =
-      _headers.find("content-type");
-  if (!(boundary == _headers.end()))
-    _boundary =
-        boundary->second.substr(boundary->second.find("boundary=") +
-                                9); // magic value for length of "boundary="
-  ////////
-  if (content_len_it == _headers.end())
-    return false;
-
-  try {
-    content_len = std::stoul(content_len_it->second);
-  } catch (const std::invalid_argument &e) {
-    return false;
-  } catch (const std::out_of_range &e) {
-    return false;
-  }
 
   body_start = _rawRequest.find("\r\n\r\n");
   if (body_start == std::string::npos) {
     return false;
   }
-  _body = _rawRequest.substr(body_start + 4, content_len);
+  _body = _rawRequest.substr(body_start + 4, get_contentLen());
   return true;
 }
 
@@ -222,20 +205,72 @@ bool Request::checkRequestValidity() const {
 }
 
 const std::string &Request::get_rawRequest() const { return _rawRequest; }
+
 const std::string &Request::get_requestMethod() const { return _requestMethod; }
+
 const std::string &Request::get_uri() const { return _uri; }
-const std::string &Request::get_referer() const { return _referer; }
-const std::string &Request::get_boundary() const { return _boundary; }
+
+const std::string Request::get_referer() const {
+  auto referer = _headers.find("referer");
+  if (referer == _headers.end())
+    return "";
+  return referer->second;
+}
+
+const std::string Request::get_contentType() const {
+  auto res = _headers.find("content-type");
+  if (res == _headers.end())
+    return "";
+  std::string contentType = res->second;
+  size_t pos = contentType.find(";");
+  if (pos != std::string::npos) {
+    contentType = contentType.substr(0, pos);
+  }
+  return contentType;
+}
+
+size_t Request::get_contentLen() const {
+  auto contentLenStr = _headers.find("content-length");
+  if (contentLenStr == _headers.end())
+    return 0;
+
+  try {
+    size_t contentLen = std::stoul(contentLenStr->second);
+    return contentLen;
+  } catch (const std::invalid_argument &e) {
+    return 0;
+  } catch (const std::out_of_range &e) {
+    return 0;
+  }
+}
+
+const std::string Request::get_boundary() const {
+  std::string ret;
+
+  auto boundary = _headers.find("content-type");
+  if (boundary != _headers.end()) {
+    ret = boundary->second.substr(boundary->second.find("boundary=") + 9);
+  } else {
+    ret = "";
+  }
+  return ret;
+}
+
 const std::string &Request::get_body() const { return _body; }
+
 const bool &Request::get_keepAlive() const { return _keepAlive; }
+
 const std::string &Request::get_htmlVersion() const { return _htmlVersion; }
+
 const std::vector<std::string> &Request::get_requestArgs() const {
   return _requestArgs;
 }
+
 const std::unordered_map<std::string, std::string> &
 Request::get_headers() const {
   return _headers;
 }
+
 const bool &Request::get_validity() const { return _isValid; }
 
 void Request::printRequest() const {
@@ -256,6 +291,15 @@ void Request::printRequest() const {
     std::cout << it.first << ": " << it.second << std::endl;
   }
 
+  if (get_requestMethod() == "POST") {
+    std::cout << "< POST header getters test: >" << std::endl;
+    std::cout << "Referer: " << get_referer() << std::endl;
+    std::cout << "ContentType: " << get_contentType() << std::endl;
+    std::cout << "Boundary: " << get_boundary() << std::endl;
+    std::cout << "ContentLen: " << get_contentLen() << std::endl;
+  }
+
+  std::cout << "<Keep-Alive>" << std::endl;
   bool keepAlive = get_keepAlive();
   (keepAlive ? std::cout << "Keep-Alive: true" << std::endl
              : std::cout << "Keep-Alive: false" << std::endl);
