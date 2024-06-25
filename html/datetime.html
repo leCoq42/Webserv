@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datetime</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f8ff;
+        }
+        .container {
+            text-align: center;
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        #datetime {
+            font-size: 2rem;
+            color: #4a90e2;
+            margin: 1rem 0;
+            padding: 1rem;
+            border: 2px solid #4a90e2;
+            border-radius: 10px;
+            background-color: #f5f9ff;
+            transition: all 0.3s ease;
+        }
+        #datetime:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
+        }
+        #refresh {
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        #refresh:hover {
+            background-color: #3a7bc8;
+        }
+        .button {
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin: 0.5rem;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .button:hover {
+            background-color: #3a7bc8;
+        }
+        #home {
+            background-color: #28a745;
+        }
+        #home:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Current Date and Time</h1>
+        <div id="datetime">Loading...</div>
+        <button id="refresh">Refresh</button>
+		<a href="index.html" id="home" class="button">Return to Home</a>
+    </div>
+
+    <script>
+        function fetchDateTime() {
+            fetch('/cgi-bin/datetime.cgi')
+                .then(response => response.text())
+                .then(data => {
+                    const parser = new DOMParser();
+                    const htmlDoc = parser.parseFromString(data, 'text/html');
+                    const dateTimeText = htmlDoc.body.textContent.trim();
+                    document.getElementById('datetime').textContent = dateTimeText;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('datetime').textContent = 'Error fetching date and time';
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchDateTime);
+        document.getElementById('refresh').addEventListener('click', fetchDateTime);
+    </script>
+</body>
+</html>

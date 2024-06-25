@@ -1,4 +1,6 @@
-#include "Webserv.hpp"
+#include "ClientConnection.hpp"
+#include "request.hpp"
+#include "response.hpp"
 #include <memory>
 
 ClientConnection::ClientConnection() {}

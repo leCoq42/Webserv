@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Webserv.hpp"
+#include "webserv.hpp"
 
 std::string trim(const std::string &str, const std::string &tokens);
 

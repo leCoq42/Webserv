@@ -8,7 +8,7 @@ HEADERS     := inc/Webserv.hpp
 CC          := c++ --std=c++20
 
 # Include Paths
-INCLUDES    := -I ./inc
+INCLUDES    := -I inc/
 
 # Compiler Flags
 CFLAGS     	:= -Wall -Wextra -Werror -Wunreachable-code#-Ofast
