@@ -1,7 +1,7 @@
 #pragma once
 
 // Include headers from src/parser_0/inc
-#include "../src/parser_0/inc/parser.hpp"
+// #include "../src/parser_0/inc/parser.hpp"
 
 // // Include headers from src/parser_0/server_struct
 // #include "../src/parser_0/ConfigContent.hpp"
@@ -15,27 +15,27 @@
 // #include "../src/parser_0/ParserStruct.hpp"
 
 // Include headers from src/response_dir_listing
-#include "../src/response/dir_listing.hpp"
+// #include "../src/response/dir_listing.hpp"
 
 // Include headers from src/request
-#include "../src/request/request.hpp"
+// #include "../src/request/request.hpp"
 
 // Include headers from src/response
-#include "../src/response/response.hpp"
+// #include "../src/response/response.hpp"
 
 // Include headers from src/log
-#include "../src/log/log.hpp"
+// #include "../src/log/log.hpp"
 
 // Include headers from src/dir_listing
-#include "../src/response/dir_listing.hpp"
+// #include "../src/response/dir_listing.hpp"
 
 // Include headers from src/cgi
-#include "../src/cgi/cgi.hpp"
-#include "../src/cgi/cgiParsing.hpp"
+// #include "../src/cgi/cgi.hpp"
+// #include "../src/cgi/cgiParsing.hpp"
 
 // Include headers from src/utils
-#include "../src/utils/stringUtils.hpp"
+// #include "../src/utils/stringUtils.hpp"
 
 // Include headers from src/connection
-#include "../src/connection/ClientConnection.hpp"
-#include "../src/connection/ServerConnection.hpp"
+// #include "../src/connection/ClientConnection.hpp"
+// #include "../src/connection/ServerConnection.hpp"

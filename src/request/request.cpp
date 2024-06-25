@@ -1,4 +1,6 @@
-#include "webserv.hpp"
+#include "request.hpp"
+#include "defines.h"
+#include "stringUtils.hpp"
 #include <cstddef>
 #include <iostream>
 #include <sstream>
@@ -6,10 +8,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-// No changes only print crap
-
-#define MESSAGE_END "\n*-------------------------*\n"
 
 Request::Request() : _rawRequest(""), _isValid(0) {}
 
@@ -19,27 +17,7 @@ auto print_key_value = [](const auto &key, const auto &value) {
 
 Request::Request(const std::string &rawStr) : _rawRequest(rawStr) {
   parseRequest();
-#ifdef DEBUG
   printRequest();
-#endif // DEBUG
-  // std::unordered_map<std::string, std::string> print_headers;
-  // std::cout << "________________________________SHOW "
-  //              "REQUEST___________________________________\n";
-  // std::cout
-  //     << "+++++URI:\n"
-  //     << get_uri()
-  //     << std::endl; // should be added as variable to launch of cgi process
-  // std::cout << "+++++HEADERS:\n";
-  // print_headers = get_headers(); // should be transferede to env variables of
-  //                                // forked cgi process
-  // for (const auto &[key, value] : print_headers)
-  //   print_key_value(key, value);
-  // std::cout << "+++++BODY:\n"
-  //           << get_body()
-  //           << std::endl; // should be written to stdin of cgi process
-  // std::cout <<
-  // "_______________________________________________________________"
-  //              "_________________\n";
 }
 
 Request::~Request() {}
@@ -109,10 +87,6 @@ void Request::parseRequest() {
     return;
   }
 
-  // if (_requestMethod == "POST") {
-  //   parsePostArgs();
-  // }
-
   parseRequestBody(_rawRequest);
 
   if (_headers.find("connection") != _headers.end()) {
@@ -124,8 +98,6 @@ void Request::parseRequest() {
   _isValid = checkRequestValidity();
   return;
 }
-
-// bool Request::parsePostArgs() { return true; }
 
 std::vector<std::string> Request::parse_requestArgs(const std::string uri) {
   size_t pos;
@@ -274,25 +246,28 @@ Request::get_headers() const {
 const bool &Request::get_validity() const { return _isValid; }
 
 void Request::printRequest() const {
-  std::cout << "< raw request: >\n" << get_rawRequest() << MESSAGE_END;
-  std::cout << "< Request: >" << std::endl;
+  std::cout << MSG_BORDER << "[Request]" << MSG_BORDER << std::endl;
+  std::cout << get_rawRequest() << std::endl;
+
+#ifdef DEBUG
+  std::cout << MSG_BORDER << "[Parsed Request]" << MSG_BORDER << std::endl;
   std::cout << "request method: " << get_requestMethod() << std::endl;
   std::cout << "uri: " << get_uri() << std::endl;
   std::cout << "html version: " << get_htmlVersion() << std::endl;
 
-  std::cout << "< URI args: >" << std::endl;
+  std::cout << "<URI Args>" << std::endl;
   for (auto it : _requestArgs) {
     std::cout << it << std::endl;
   }
 
-  std::cout << "< Headers: >" << std::endl;
+  std::cout << "<Headers>" << std::endl;
   std::unordered_map<std::string, std::string> headers = get_headers();
   for (auto it : headers) {
     std::cout << it.first << ": " << it.second << std::endl;
   }
 
   if (get_requestMethod() == "POST") {
-    std::cout << "< POST header getters test: >" << std::endl;
+    std::cout << "<POST Header Getters>" << std::endl;
     std::cout << "Referer: " << get_referer() << std::endl;
     std::cout << "ContentType: " << get_contentType() << std::endl;
     std::cout << "Boundary: " << get_boundary() << std::endl;
@@ -304,12 +279,13 @@ void Request::printRequest() const {
   (keepAlive ? std::cout << "Keep-Alive: true" << std::endl
              : std::cout << "Keep-Alive: false" << std::endl);
 
-  std::cout << "< Body: >" << std::endl;
+  std::cout << "<Body>" << std::endl;
   std::string body = get_body();
   (body.empty()) ? std::cout << "Empty Body" << std::endl
                  : std::cout << body << std::endl;
 
-  std::cout << "< Request Validity check: >" << std::endl;
+  std::cout << "<Request Validity>" << std::endl;
   (checkRequestValidity() == true) ? (std::cout << "Valid!" << std::endl)
                                    : (std::cout << "Invalid!" << std::endl);
+#endif // DEBUG
 }

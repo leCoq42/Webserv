@@ -1,4 +1,7 @@
-#include "webserv.hpp"
+#include "response.hpp"
+#include "cgi.hpp"
+#include "defines.h"
+#include "dir_listing.hpp"
 #include <algorithm>
 #include <cstddef>
 #include <exception>
@@ -18,9 +21,7 @@ Response::Response() : _request(nullptr), _responseString("") {}
 Response::Response(std::shared_ptr<Request> request)
     : _request(request), _responseString(""), _contentType("") {
   handleRequest(request);
-  std::cout << std::endl;
-  std::cout << "<Response:>" << std::endl;
-  std::cout << _responseString << std::endl;
+  printResponse();
 }
 
 Response::~Response(){};
@@ -276,15 +277,10 @@ std::vector<std::string> Response::get_parts(std::string requestBody,
 }
 
 std::string Response::buildResponse(int status, const std::string &message,
-                                    const std::string &body, bool is_cgi) {
+                                    const std::string &body, bool isCGI) {
   _responseString.append("HTTP/1.1 " + std::to_string(status) + " " + message +
                          "\r\n");
-
-  if (is_cgi) {
-    _responseString.append(body);
-    return _responseString;
-  }
-  if (!body.empty()) {
+  if (!body.empty() && !isCGI) {
     _responseString.append("Content-Length: " + std::to_string(body.length()) +
                            "\r\n");
   }
@@ -293,13 +289,12 @@ std::string Response::buildResponse(int status, const std::string &message,
         "Keep-Alive: timeout=" + std::to_string(KEEP_ALIVE_TIMOUT) +
         ", max=" + std::to_string(KEEP_ALIVE_N) + "\r\n");
   }
-  if (!is_cgi) {
+  if (isCGI) {
+    _responseString.append(body);
+  } else {
     _responseString.append("Content-Type: " + get_contentType() + "\r\n");
     _responseString.append("\r\n" + body);
   }
-  //   } else {
-  // 	_responseString.append("\r\n" + body);
-  //   }
   return _responseString;
 }
 
@@ -307,6 +302,6 @@ std::string Response::get_response() { return _responseString; }
 std::string Response::get_contentType() { return _contentType; }
 
 void Response::printResponse() {
-  std::cout << "< Response: >" << std::endl;
-  std::cout << _responseString;
+  std::cout << MSG_BORDER << "[Response]" << MSG_BORDER << std::endl;
+  std::cout << _responseString << std::endl;
 }

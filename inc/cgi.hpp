@@ -1,10 +1,7 @@
 #pragma once
 
-#include "webserv.hpp" //"../request/Request.hpp"
-#include <iostream>
+#include "request.hpp"
 #include <memory>
-#include <unistd.h>
-#include <vector>
 
 class cgi {
 public:

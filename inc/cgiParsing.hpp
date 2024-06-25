@@ -1,25 +1,12 @@
 #pragma once
 
-#include "webserv.hpp"
-
 // welke moet ik even kijken
-#include <cstring>
-#include <iostream>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <vector>
+#include "request.hpp"
+#include <memory>
+#include <unordered_map>
 
 // REFERENCE :( chapter 4:
 // http://www.faqs.org/rfcs/rfc3875.html
-
-// debug
-#include <cstdlib>
-// debug
-#include <cerrno>
-#include <clocale>
-#include <cmath>
-#include <cstring>
-#include <iostream>
 
 class CgiParsing {
 private:

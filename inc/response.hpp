@@ -1,6 +1,8 @@
 #pragma once
 
-#include "webserv.hpp"
+#include "request.hpp"
+#include <iostream>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 

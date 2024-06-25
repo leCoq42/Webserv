@@ -1,4 +1,8 @@
-#include "webserv.hpp"
+#include "cgiParsing.hpp"
+#include "cgi.hpp"
+#include <algorithm>
+#include <iostream>
+#include <vector>
 
 std::vector<std::string> meta_variables_names = {
     "AUTH_TYPE",      "CONTENT_LENGTH",  "CONTENT_TYPE", "GATEWAY_INTERFACE",

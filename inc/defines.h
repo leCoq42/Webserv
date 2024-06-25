@@ -1,5 +1,6 @@
-#include "../request/Request.hpp"
-#include "Response.hpp"
+#pragma once
+
+#define MSG_BORDER "---------------------------"
 
 #define GET_EXAMPLE                                                            \
   "GET /index.html HTTP/1.1\r\n\
@@ -23,22 +24,3 @@ POST /submit-form HTTP/1.1\r\n\
 Content-Type: application/x-www-form-urlencoded\r\n\
 Content-Length: 27\r\n\r\n\
 username=johndoe&password=12345"
-
-#define MESSAGE_END "\n*-------------------------*\n"
-
-void test_parser();
-
-int main() { test_parser(); }
-
-void test_parser() {
-  std::shared_ptr<Request> request = std::make_shared<Request>(POST_EXAMPLE);
-  // std::shared_ptr<Request> request_cpy = request;
-
-  request->printRequest();
-  // request_cpy->printRequest();
-
-  Response response(request);
-  // Response cpy = response;
-  // cpy.printResponse();
-  // response.printResponse();
-}

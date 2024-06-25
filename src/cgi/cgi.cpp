@@ -8,9 +8,8 @@
 // REFERENCE :( chapter 4:
 // http://www.faqs.org/rfcs/rfc3875.html
 
-// debug
-#include <cstdlib>
-// debug
+#include "cgi.hpp"
+#include "cgiParsing.hpp"
 #include <cerrno>
 #include <clocale>
 #include <cmath>

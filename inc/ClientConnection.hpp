@@ -1,15 +1,8 @@
 #pragma once
 
 #include "ServerConnection.hpp"
-#include <algorithm>
-#include <cstring>
-#include <iostream>
-#include <iterator>
 #include <memory>
-#include <netinet/tcp.h>
 #include <sys/poll.h>
-#include <sys/socket.h>
-#include <unistd.h>
 #include <vector>
 
 struct ClientInfo {

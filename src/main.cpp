@@ -1,4 +1,9 @@
-#include "webserv.hpp"
+#include "ClientConnection.hpp"
+#include "Parser.hpp"
+#include "ServerConnection.hpp"
+#include "ServerStruct.hpp"
+#include "fileHandler.hpp"
+#include <iostream>
 #include <memory>
 
 void error_exit(int error_code) {
