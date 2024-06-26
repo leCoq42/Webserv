@@ -24,6 +24,7 @@ public:
   void logServerConnection(const std::string &message,
                            const std::string &serverName, int socket, int port);
   void logResponse(int status, const std::string &message);
+  void  logAdd(const std::string &message);
 
 private:
   std::string getTimeStamp();

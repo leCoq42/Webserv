@@ -41,12 +41,12 @@ debug:
 rebug: fclean debug
 
 $(NAME): $(OBJS) $(MAIN_OBJ)
-	$(CC) $(CFLAGS) $(INCLUDES) $^ -o $(NAME)
+	$(CC)  $(INCLUDES) $^ -o $(NAME)
 	@echo "$(GREEN)$(NAME) executable created$(RESET_COLOR)"
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC)  $(INCLUDES) -c $< -o $@
 
 # Cleaning Targets
 clean:

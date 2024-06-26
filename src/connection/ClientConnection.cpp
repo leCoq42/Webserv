@@ -1,6 +1,7 @@
 #include "ClientConnection.hpp"
 #include "request.hpp"
 #include "response.hpp"
+#include "signals.hpp"
 #include <memory>
 
 ClientConnection::ClientConnection() {}
@@ -207,9 +208,14 @@ void ClientConnection::setUpClientConnection() {
           // i--;
         }
       }
-    } else if (poll_count == 0)
+    } 
+    else if (poll_count == 0)
       continue;
     else
       logError("Failed to poll");
+    if (globalSignalReceived == 1) {
+		  logAdd("Signal received, closing server connection");
+		  break;
   }
+	}
 }

@@ -57,6 +57,17 @@ void Log::logError(const std::string &message) {
   }
 }
 
+// General log functions
+void Log::logAdd(const std::string &message) {
+  if (_logFile.is_open()) {
+    _logFile << getTimeStamp() << " [info]  " << message << std::endl;
+    _logFile.flush();
+  } else {
+    std::cerr << getTimeStamp() << " [error] Unable to write to error log file"
+              << std::endl;
+  }
+}
+
 // Client connection log functions
 void Log::logClientError(const std::string &message, char *clientIP,
                          int clientFD) {

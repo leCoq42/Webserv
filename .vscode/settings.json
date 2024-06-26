@@ -77,6 +77,7 @@
         "ratio": "cpp",
         "stack": "cpp",
         "variant": "cpp",
-        "codecvt": "cpp"
+        "codecvt": "cpp",
+        "csignal": "cpp"
     }
 }
