@@ -5,9 +5,8 @@ ServerConnection::ServerConnection() {}
 
 ServerConnection::~ServerConnection() {
   for (size_t i = 0; i < _connectedServers.size(); i++) {
-    logServerConnection("Closing server", _connectedServers[i].serverID,
-                        _connectedServers[i].serverFD,
-                        _connectedServers[i].serverPort);
+    logServerConnection("Closing server", _connectedServers[i].serverID, _connectedServers[i].serverFD, _connectedServers[i].serverPort);
+    close(_connectedServers[i].serverFD);
   }
 }
 
