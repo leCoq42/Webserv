@@ -9,6 +9,10 @@ class LocationStruct: public ProtoStruct
 	ConfigContent	try_files;
 	ConfigContent	host;
 	ConfigContent	index;
+	ConfigContent	autoindex;
+	ConfigContent	_return;
+	ConfigContent	root;
+	ConfigContent	allow_methods;
 	LocationStruct(void);
 	LocationStruct(ParserItem *head);
 	LocationStruct(const LocationStruct &to_copy);

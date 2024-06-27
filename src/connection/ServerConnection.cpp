@@ -14,6 +14,7 @@ void ServerConnection::initServerInfo(ServerStruct serverStruct, ServerInfo &inf
   struct sockaddr_in server_addr;
   memset(&server_addr, 0, sizeof(server_addr));
 
+	_config = serverStruct;
   info.serverPort = atoi(it->c_str());
   info.serverID = serverStruct.id;
   server_addr.sin_family = AF_INET;

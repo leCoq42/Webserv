@@ -14,6 +14,9 @@ class ServerStruct: public ProtoStruct
 	ConfigContent	names;
 	ConfigContent	root;
 	ConfigContent	location;
+	ConfigContent	error_page; //list
+	ConfigContent	_return; //list
+	ConfigContent	allow_methods;
 	ServerStruct(void);
 	ServerStruct(ParserStruct *parser_struct, int nth_server);
 	ServerStruct(const ServerStruct &to_copy);

@@ -16,10 +16,10 @@
 #define KEEP_ALIVE_TIMOUT 10
 #define KEEP_ALIVE_N 100
 
-Response::Response() : _request(nullptr), _responseString("") {}
+Response::Response(ServerStruct &config) : _request(nullptr), _responseString(""), config(config), security(config) {}
 
-Response::Response(std::shared_ptr<Request> request)
-    : _request(request), _responseString(""), _contentType("") {
+Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
+    : _request(request), _responseString(""), _contentType(""), config(config), security(config) {
   handleRequest(request);
   printResponse();
 }
@@ -28,7 +28,7 @@ Response::~Response(){};
 
 Response::Response(const Response &src)
     : _request(src._request), _responseString(src._responseString),
-      _contentType(src._contentType) {}
+      _contentType(src._contentType), config(src.config), security(src.config) {}
 
 Response &Response::operator=(const Response &rhs) {
   Response temp(rhs);
@@ -43,8 +43,13 @@ void Response::swap(Response &lhs) {
 }
 
 void Response::handleRequest(const std::shared_ptr<Request> &request) {
+	int		return_code = 0;
   std::string request_method = request->get_requestMethod();
   try {
+	request_path = security.isFilePermissioned(request->get_uri(), return_code);
+	if (return_code)
+		request_path = security.getErrorPage(return_code); // wrong place
+	std::cout << "\nPATH:" << request_path << std::endl;
     if (request_method == "GET")
       handleGetRequest(request);
     else if (request_method == "POST")
@@ -64,15 +69,15 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
   std::string body;
   std::stringstream buffer;
   bool isCGI = false;
-  std::filesystem::path path = "html/";
-  std::filesystem::path resourcePath = request->get_uri();
+//   std::filesystem::path path = "html/";
+//   std::filesystem::path resourcePath = request->get_uri();
 
-  if (resourcePath.empty() || resourcePath == "/") {
-    resourcePath = "index.html";
-  }
-  if (!resourcePath.empty() && resourcePath.has_extension()) {
+//   if (resourcePath.empty() || resourcePath == "/") {
+//     resourcePath = "index.html";
+//   }
+  if (!request_path.empty() && request_path.has_extension()) {
     std::unordered_map<std::string, std::string>::const_iterator res =
-        contentTypes.find(resourcePath.extension());
+        contentTypes.find(request_path.extension());
     if (res == contentTypes.end()) {
       _responseString =
           buildResponse(static_cast<int>(StatusCode::UNSUPPORTED_MEDIA_TYPE),
@@ -80,9 +85,9 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
       return false;
     }
     _contentType = res->second;
-    if (interpreters.find(resourcePath.extension()) == interpreters.end()) {
-      path.append(resourcePath.string());
-      std::ifstream file(path, std::ios::binary);
+    if (interpreters.find(request_path.extension()) == interpreters.end()) {
+    //   path.append(resourcePath.string());
+      std::ifstream file(request_path, std::ios::binary);
       if (!file) {
         _responseString = buildResponse(static_cast<int>(StatusCode::NOT_FOUND),
                                         "Not Found", "");
@@ -93,15 +98,15 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
     } else {
       isCGI = true;
       // path.append("cgi-bin/"); path.append("php-bin/");?
-      path.append(resourcePath.string());
+    //   path.append(resourcePath.string());
       cgi CGI(_contentType);
-      body = CGI.executeCGI(path, "", _request,
-                            interpreters.at(resourcePath.extension()));
+      body = CGI.executeCGI(request_path, "", _request,
+                            interpreters.at(request_path.extension()));
     }
   } else // else if (true)? // dir listing on off
   {
-    path.append(resourcePath.string());
-    body = list_dir(path, request->get_uri(), request->get_referer());
+    // path.append(resourcePath.string());
+    body = list_dir(request_path, request->get_uri(), request->get_referer());
   }
 
   _responseString = buildResponse(static_cast<int>(StatusCode::OK), "OK", body,
