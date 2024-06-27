@@ -3,6 +3,7 @@
 #include "ServerConnection.hpp"
 #include "ServerStruct.hpp"
 #include "fileHandler.hpp"
+#include "signals.hpp"
 #include <iostream>
 #include <memory>
 
@@ -48,6 +49,7 @@ int main(int argc, char **argv) {
 
   if (argc != 2)
     error_exit(1);
+  initSignals();
   parse(&parser, &server_structs, &buffer, argv);
   std::cout << std::endl << std::endl;
   for (const auto &server : server_structs)

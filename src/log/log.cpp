@@ -47,22 +47,23 @@ std::string Log::getTimeStamp() {
 }
 
 // General log functions
-void Log::logError(const std::string &message) {
+void Log::logAdd(const std::string &message) {
   if (_logFile.is_open()) {
-    _logFile << getTimeStamp() << " [error] " << message << std::endl;
+    _logFile << getTimeStamp() << " [info]  " << message << std::endl;
     _logFile.flush();
-  } else {
+  } 
+  else {
     std::cerr << getTimeStamp() << " [error] Unable to write to error log file"
               << std::endl;
   }
 }
 
-// General log functions
-void Log::logAdd(const std::string &message) {
+void Log::logError(const std::string &message) {
   if (_logFile.is_open()) {
-    _logFile << getTimeStamp() << " [info]  " << message << std::endl;
+    _logFile << getTimeStamp() << " [error] " << message << std::endl;
     _logFile.flush();
-  } else {
+  } 
+  else {
     std::cerr << getTimeStamp() << " [error] Unable to write to error log file"
               << std::endl;
   }
@@ -75,7 +76,8 @@ void Log::logClientError(const std::string &message, char *clientIP,
     _logFile << getTimeStamp() << " [error] " << "Client IP " << clientIP << " "
              << message << " on socket " << clientFD << std::endl;
     _logFile.flush();
-  } else {
+  } 
+  else {
     std::cerr << getTimeStamp() << " [error] Unable to write to error log file"
               << std::endl;
   }
@@ -87,7 +89,8 @@ void Log::logClientConnection(const std::string &message, std::string clientIP,
     _logFile << getTimeStamp() << " [info]  " << "Client IP " << clientIP << " "
              << message << " on socket " << clientFD << std::endl;
     _logFile.flush();
-  } else {
+  } 
+  else {
     std::cerr << getTimeStamp() << " [error] Unable to write to access log file"
               << std::endl;
   }
@@ -100,7 +103,8 @@ void Log::logServerError(const std::string &message,
     _logFile << getTimeStamp() << " [error] " << message << " on server "
              << serverName << "on port " << port << std::endl;
     _logFile.flush();
-  } else {
+  } 
+  else {
     std::cerr << getTimeStamp() << " [error] Unable to write to error log file"
               << std::endl;
   }
@@ -111,10 +115,11 @@ void Log::logServerConnection(const std::string &message,
                               int port) {
   if (_logFile.is_open()) {
     _logFile << getTimeStamp() << " [info]  " << message << " " << serverName
-             << "on socket " << socket << " is now listening on port " << port
+             << "on socket " << socket << " listening on port " << port
              << std::endl;
     _logFile.flush();
-  } else {
+  } 
+  else {
     std::cerr << getTimeStamp() << " [error] Unable to write to access log file"
               << std::endl;
   }
@@ -126,7 +131,8 @@ void Log::logResponse(int status, const std::string &message) {
     _logFile << getTimeStamp() << " [response] " << " Statuscode " << status
              << "  " << message << " has been send to client" << std::endl;
     _logFile.flush();
-  } else {
+  } 
+  else {
     std::cerr << getTimeStamp() << " [error] Unable to write to access log file"
               << std::endl;
   }
