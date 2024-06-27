@@ -70,7 +70,7 @@ void ClientConnection::handleInputEvent(int index) {
   // _connectedClients[connectedClientFD].keepAlive =
   // request.parseRequest(_connectedClients[getIndexByClientFD(index)]); // Fix
   // the error by using getIndexByClientFD(index) instead of connectedClientFD
-  Response response(request);
+  Response response(request, ptrServerConnection->_config);
 
   const std::string httpResponse =
       response.get_response(); //"here is the response from the server\n";

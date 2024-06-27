@@ -32,9 +32,26 @@ std::list<std::string>	split_content(std::string content)
 	return (list);
 }
 
+int	ProtoStruct::getNextContent(ParserItem *current, std::string name, ConfigContent *&variable)
+{
+	while (current)
+	{
+		if (!current->getName().compare(name))
+		{
+			variable = new ConfigContent();
+			variable->content_list = split_content(current->getContent());
+			if (current->child && !name.compare("location"))
+				variable->childs = new LocationStruct(current);
+			return (getNextContent(current->next, name, variable->next));//found = true;// return (1); //problematic
+		}
+		current = current->next;
+	}
+	return (1);
+}
+
 int	ProtoStruct::getContent(std::string name, ConfigContent &variable)
 {
-	ParserItem	*current;
+	ParserItem		*current;
 
 	current = this->head->child;
 	while (current)
@@ -44,7 +61,7 @@ int	ProtoStruct::getContent(std::string name, ConfigContent &variable)
 			variable.content_list = split_content(current->getContent());
 			if (current->child && !name.compare("location"))
 				variable.childs = new LocationStruct(current);
-			return (1);
+			return (getNextContent(current->next, name, variable.next));//found = true;// return (1); //problematic
 		}
 		current = current->next;
 	}

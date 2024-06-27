@@ -1,6 +1,7 @@
 #pragma once
 
 #include "request.hpp"
+#include "FileAcces.hpp"
 #include <iostream>
 #include <memory>
 #include <unordered_map>
@@ -35,8 +36,8 @@ enum class StatusCode {
 
 class Response {
 public:
-  Response();
-  Response(std::shared_ptr<Request> request);
+  Response(ServerStruct &config);
+  Response(std::shared_ptr<Request> request, ServerStruct &config);
   ~Response();
 
   Response(const Response &src);
@@ -53,6 +54,9 @@ private:
   std::shared_ptr<Request> _request;
   std::string _responseString;
   std::string _contentType;
+  ServerStruct	&config;
+  FileAcces		security;
+  std::filesystem::path	request_path;
 
   bool handleGetRequest(const std::shared_ptr<Request> &request);
   bool handlePostRequest(const std::shared_ptr<Request> &request);
