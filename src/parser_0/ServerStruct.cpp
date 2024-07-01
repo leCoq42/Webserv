@@ -14,6 +14,7 @@ ServerStruct::ServerStruct(ParserStruct *parser_struct, int nth_server)
 	this->head = parser_struct->go_to_nth(nth_server);
 	this->id = this->head->getContent();
 	this->getContent("listen", this->port);
+	this->port.combine();
 	this->getContent("host", this->host);
 	this->getContent("server_name", this->names);
 	this->getContent("root", this->root);

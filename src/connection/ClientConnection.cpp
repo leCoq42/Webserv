@@ -70,7 +70,9 @@ void ClientConnection::handleInputEvent(int index) {
   // _connectedClients[connectedClientFD].keepAlive =
   // request.parseRequest(_connectedClients[getIndexByClientFD(index)]); // Fix
   // the error by using getIndexByClientFD(index) instead of connectedClientFD
-  Response response(request, ptrServerConnection->_config);
+//   std::cout << "Adress congig:" << _serverConfigs[index] << std::endl;
+//   _serverConfigs[connectedClientFD]->show_self();
+  Response response(request, *_connectedClients[connectedClientFD]._config); //changed to get server config
 
   const std::string httpResponse =
       response.get_response(); //"here is the response from the server\n";
@@ -97,12 +99,14 @@ void ClientConnection::addSocketsToPollfdContainer() {
     server_pollfd.fd = ptrServerConnection->_connectedServers[i].serverFD;
     server_pollfd.events = POLLIN;
     _serverClientSockets.push_back(server_pollfd);
+	_serverConfigs.push_back(ptrServerConnection->_connectedServers[i]._config); // addded
   }
   for (size_t i = 0; i < _connectedClients.size(); ++i) {
     pollfd client_pollfd;
     client_pollfd.fd = _connectedClients[i].clientFD;
     client_pollfd.events = POLLIN;
     _serverClientSockets.push_back(client_pollfd);
+	_serverConfigs.push_back(ptrServerConnection->_connectedServers[i]._config); // addded this is poop just for synchronisation
   }
 }
 
@@ -123,7 +127,7 @@ ClientInfo ClientConnection::initClientInfo(int clientFD,
   return clientInfo;
 }
 
-void ClientConnection::acceptClients(int serverFD) {
+void ClientConnection::acceptClients(int serverFD, int index) {
   struct sockaddr_in clientAddr;
   socklen_t clientAddrLen = sizeof(clientAddr);
   int clientFD =
@@ -136,6 +140,7 @@ void ClientConnection::acceptClients(int serverFD) {
       0)
     logError("Failed to read client IP");
   _connectedClients.push_back(initClientInfo(clientFD, clientAddr));
+  _connectedClients.back()._config = _serverConfigs[index]; //_serverClientSockets[serverFD]; // added
   logClientConnection("accepted connection", _connectedClients.back().clientIP,
                       clientFD);
 }
@@ -147,12 +152,15 @@ void ClientConnection::removeClientSocket(int clientFD) {
                       clientFD);
   int indexConnectedClients = getIndexByClientFD(clientFD);
   _connectedClients.erase(indexConnectedClients + _connectedClients.begin());
+  int	i = 0; //added
   for (auto it = _serverClientSockets.begin(); it != _serverClientSockets.end();
        ++it) {
     if (it->fd == clientFD) {
-      _serverClientSockets.erase(it);
+      _serverClientSockets.erase(it); //?
+	  _serverConfigs.erase(_serverConfigs.begin() + i); //added
       break;
     }
+	i++; // added
   }
 }
 
@@ -189,6 +197,7 @@ void ClientConnection::checkConnectedClientsStatus() {
 void ClientConnection::setUpClientConnection() {
   while (true) {
     _serverClientSockets.clear();
+	_serverConfigs.clear(); //added
     addSocketsToPollfdContainer();
     int poll_count =
         poll(_serverClientSockets.data(), _serverClientSockets.size(), 100);
@@ -197,7 +206,7 @@ void ClientConnection::setUpClientConnection() {
       for (size_t i = 0; i < _serverClientSockets.size(); i++) {
         if (_serverClientSockets[i].revents & POLLIN) {
           if (isServerSocket(_serverClientSockets[i].fd))
-            acceptClients(_serverClientSockets[i].fd);
+            acceptClients(_serverClientSockets[i].fd, i);
           else
             handleInputEvent(i);
         }

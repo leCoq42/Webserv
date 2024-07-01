@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
   initSignals();
   parse(&parser, &server_structs, &buffer, argv);
   std::cout << std::endl << std::endl;
-  for (const auto &server : server_structs)
+  for (auto &server : server_structs)
     SS->setUpServerConnection(server);
   CC.setUpClientConnection();
   delete[] buffer;

@@ -10,11 +10,14 @@ ServerConnection::~ServerConnection() {
   }
 }
 
-void ServerConnection::initServerInfo(ServerStruct serverStruct, ServerInfo &info, std::list<std::string>::iterator it) {
+void ServerConnection::initServerInfo(ServerStruct &serverStruct, ServerInfo &info, std::list<std::string>::iterator it) {
   struct sockaddr_in server_addr;
   memset(&server_addr, 0, sizeof(server_addr));
 
-	_config = serverStruct;
+	// _config = serverStruct;
+	info._config = &serverStruct; //added points to serverstruct
+	std::cout << "SERVERINFO:" <<  std::endl;
+	info._config->show_self(); // added
   info.serverPort = atoi(it->c_str());
   info.serverID = serverStruct.id;
   server_addr.sin_family = AF_INET;
@@ -50,7 +53,7 @@ void ServerConnection::listenIncomingConnections(ServerInfo &info) {
   }
 }
 
-void ServerConnection::setUpServerConnection(ServerStruct serverStruct) {
+void ServerConnection::setUpServerConnection(ServerStruct &serverStruct) {
   std::list<std::string>::iterator it = serverStruct.port.content_list.begin();
   for (; it != serverStruct.port.content_list.end(); ++it) {
     if (atoi(it->c_str()) > 0 && atoi(it->c_str()) < 65536) {
