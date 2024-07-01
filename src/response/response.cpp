@@ -150,12 +150,14 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
   return true;
 };
 
-const std::string UPLOAD_DIR = "./html/uploads/";
+// const std::string UPLOAD_DIR = "./html/uploads/";
 void Response::handle_multipart() {
   // std::string bound = "--" + boundary;
   size_t pos = 0;
   std::string body = _request->get_body();
   std::string boundary = _request->get_boundary();
+  std::cout << "\nMULTIPART KEEP ALIVE!!!\n\n";
+  _request->keepAlive(true); // added
 
   std::cout << "<multipart/form-data>" << std::endl;
 
@@ -169,8 +171,8 @@ void Response::handle_multipart() {
     size_t end = std::search(body.begin() + start + boundary.length(),
                              body.end(), boundary.begin(), boundary.end()) -
                  body.begin();
-    if (end == body.size())
-      break;
+    // if (end == body.size())
+    //   break;
 
     std::string part(body.begin() + start + boundary.length(),
                      body.begin() + end);
@@ -178,18 +180,27 @@ void Response::handle_multipart() {
     std::string headers = part.substr(0, header_end);
     std::string content = part.substr(header_end + 4);
 
-    size_t filename_pos = headers.find("filename=\"");
+    size_t filename_pos = headers.find("filename=\""); //this is tricky not necessarily called like this
+	// if (!filename.compare("")) //hacky shit
+	// 	filename = "temp.txt";
+	std::string filename;
     if (filename_pos != std::string::npos) {
       size_t filename_end = headers.find("\"", filename_pos + 10);
-      std::string filename =
+      filename =
           headers.substr(filename_pos + 10, filename_end - filename_pos - 10);
+	}
+	else
+	// (!filename.compare("")) //hacky shit
+		filename = "temp.txt";
 
       std::cout << "filename: " << filename << std::endl;
       std::cout << "content: " << content << std::endl;
 
-      std::ofstream file(UPLOAD_DIR + filename, std::ios::binary);
+	  _request->set_bufferFile((std::string)request_path.parent_path().append(filename));
+	  _request->set_startContentLength(body.length());//content.length());
+      std::ofstream file((std::string)request_path.parent_path().append(filename), std::ios::binary);
       if (file.is_open()) {
-        file.write(content.c_str(), content.length());
+        file.write(content.c_str(), content.length());//body.c_str(), body.length());//content.c_str(), content.length());
         file.close();
         buildResponse(static_cast<int>(StatusCode::OK),
                       "File uploaded succesfully!", "");
@@ -203,7 +214,7 @@ void Response::handle_multipart() {
         buildResponse(static_cast<int>(StatusCode::INTERNAL_SERVER_ERROR),
                       "Error: file upload failed!", "");
       }
-    }
+    // }
     pos = end;
   }
 }

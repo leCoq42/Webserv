@@ -37,11 +37,14 @@ void ClientConnection::manageKeepAlive(int index) {
   if (_connectedClients[indexConnectedClients].keepAlive == true)
     _serverClientSockets[index].events = POLLIN | POLLOUT;
   else
+  {
     removeClientSocket(_serverClientSockets[index].fd);
+  }
 }
 
 void ClientConnection::handleInputEvent(int index) {
-  char buffer[1024];
+  char 			buffer[1024];
+  std::string	buffer_str;
   uint32_t connectedClientFD = getIndexByClientFD(index);
 
   ssize_t bytesRead =
@@ -63,7 +66,17 @@ void ClientConnection::handleInputEvent(int index) {
 
   buffer[bytesRead] = '\0';
 
-  auto request = std::make_shared<Request>(buffer);
+  if (!_connectedClients[connectedClientFD].unchunker._totalLength)
+  {
+	if (!_connectedClients[connectedClientFD].unchunker.add_to_file(buffer, bytesRead))
+		return ;
+	buffer_str = _connectedClients[connectedClientFD].unchunker.getCombinedBuffer();
+	// _connectedClients[connectedClientFD].unchunker.first_request->keepAlive(false);
+  }
+  else
+	buffer_str = buffer;
+
+	std::shared_ptr<Request> request = std::make_shared<Request>(buffer_str.c_str());
   // Use outcommented code to for parsing and sending response. If keepAlive is
   // set to false, the client will be disconnected. If keepAlive is set to true,
   // the client will stay connected till chunked request is done.
@@ -74,8 +87,28 @@ void ClientConnection::handleInputEvent(int index) {
 //   _serverConfigs[connectedClientFD]->show_self();
   Response response(request, *_connectedClients[connectedClientFD]._config); //changed to get server config
 
+	_connectedClients[connectedClientFD].keepAlive = request->get_keepAlive(); //always keep alive
+	std::cout << "REQUEST POST FILE:" << request->get_bufferFile() << std::endl;
+	if (request->get_bufferFile().compare(""))
+	{
+		std::cout << "THERE IS AN BUFFER_FILE\n";
+		_connectedClients[connectedClientFD].unchunker = Chunked(request);
+		if (!_connectedClients[connectedClientFD].unchunker._totalLength)
+		{
+			//skip response, right place?
+			std::cout<< "skip response WILL IT STAY ALIVE" << _connectedClients.size() << std::endl;
+			manageKeepAlive(index);
+			std::cout<< "skip response IT STAYs ALIVE" << _connectedClients.size() << std::endl;
+			return ;
+		}
+		else
+			_connectedClients[connectedClientFD].keepAlive = false;
+	}
+
   const std::string httpResponse =
       response.get_response(); //"here is the response from the server\n";
+	if (_connectedClients[connectedClientFD].unchunker._totalLength)
+		_connectedClients[connectedClientFD].keepAlive = false;
   ssize_t bytesSent = send(_serverClientSockets[index].fd, httpResponse.c_str(),
                            httpResponse.length(), 0);
   if (bytesSent == -1) {
@@ -88,7 +121,7 @@ void ClientConnection::handleInputEvent(int index) {
         _connectedClients[getIndexByClientFD(_serverClientSockets[index].fd)]
             .clientIP,
         _serverClientSockets[index].fd);
-    _serverClientSockets[index].revents = POLLERR;
+    // _serverClientSockets[index].revents = POLLERR; //Not necesarily
   }
   manageKeepAlive(index);
 }
@@ -123,7 +156,7 @@ ClientInfo ClientConnection::initClientInfo(int clientFD,
   clientInfo.timeOut = 100; // will be configurable later
   clientInfo.lastRequestTime = currentTime;
   clientInfo.numRequests = 0; // can be perhaps be deleted
-  clientInfo.maxRequests = 3; // will be configurable later
+  clientInfo.maxRequests = 1000; // will be configurable later, yes missed this one
   return clientInfo;
 }
 
@@ -146,6 +179,8 @@ void ClientConnection::acceptClients(int serverFD, int index) {
 }
 
 void ClientConnection::removeClientSocket(int clientFD) {
+	if (!_connectedClients.size()) //hacky fix
+		return ;
   close(clientFD);
   logClientConnection("closed connection",
                       _connectedClients[getIndexByClientFD(clientFD)].clientIP,
@@ -212,8 +247,8 @@ void ClientConnection::setUpClientConnection() {
         }
         if (_serverClientSockets[i].revents & POLLOUT)
           handlePollOutEvent(i);
-        if (_serverClientSockets[i].revents & (POLLHUP | POLLERR)) {
-          handlePollErrorEvent(i);
+        if (_serverClientSockets[i].revents & (POLLHUP | POLLERR)) { //Could be problematic
+		  handlePollErrorEvent(i);
           // i--;
         }
       }

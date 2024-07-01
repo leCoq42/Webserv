@@ -9,13 +9,13 @@
 #include <unordered_map>
 #include <vector>
 
-Request::Request() : _rawRequest(""), _isValid(0) {}
+Request::Request() : _rawRequest(""), _isValid(0), _keepAlive(false) {}
 
 auto print_key_value = [](const auto &key, const auto &value) {
   std::cout << "Key:[" << key << "] Value:[" << value << "]\n";
 };
 
-Request::Request(const std::string &rawStr) : _rawRequest(rawStr) {
+Request::Request(const std::string &rawStr) : _rawRequest(rawStr), _keepAlive(false) {
   parseRequest();
   printRequest();
 }
@@ -91,7 +91,7 @@ void Request::parseRequest() {
 
   if (_headers.find("connection") != _headers.end()) {
     if (_headers["connection"].compare("keep-alive") == 0) {
-      _keepAlive = true;
+      _keepAlive = false; //was true
     }
   }
 
@@ -229,6 +229,25 @@ const std::string Request::get_boundary() const {
 }
 
 const std::string &Request::get_body() const { return _body; }
+
+void		Request::set_bufferFile(std::string buffer_file) //added
+{
+	_bufferFile = buffer_file;
+}
+
+const std::string &Request::get_bufferFile() const {	return (_bufferFile);	}//added
+
+void		Request::keepAlive(bool keepAlive) //added
+{
+	_keepAlive = keepAlive;
+}
+
+const size_t &Request::get_startContentLength() const {	return (_startContentLength);	}//added
+
+void	Request::set_startContentLength(size_t content_length)//added
+{
+	_startContentLength = content_length;
+}
 
 const bool &Request::get_keepAlive() const { return _keepAlive; }
 

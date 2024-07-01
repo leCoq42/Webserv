@@ -2,6 +2,7 @@
 
 #include "ServerConnection.hpp"
 #include "ServerStruct.hpp" //added
+#include "Chunked.hpp"
 #include <memory>
 #include <sys/poll.h>
 #include <vector>
@@ -15,6 +16,7 @@ struct ClientInfo {
   size_t numRequests;
   size_t maxRequests;
   ServerStruct			*_config;
+  Chunked		unchunker;
 };
 
 class ClientConnection : ServerConnection, public virtual Log {
