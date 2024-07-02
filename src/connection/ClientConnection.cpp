@@ -22,11 +22,9 @@ ClientConnection::~ClientConnection() {
 int ClientConnection::getIndexByClientFD(int clientFD) {
   int index = 0;
   for (size_t i = 0; i < _connectedClients.size(); i++) {
-	std::cout << "getIndexByClientFD" << _connectedClients[i].clientFD << "==" << clientFD << "->" << i << std::endl;
     if (_connectedClients[i].clientFD == clientFD)
       index = i;
   }
-  std::cout << "selected index:" << index << std::endl;
   return (index);
 }
 
@@ -52,7 +50,6 @@ void ClientConnection::handleInputEvent(int index) {
 
   ssize_t bytesRead =
       recv(_serverClientSockets[index].fd, buffer, sizeof(buffer), 0);
-	std::cout << "BYTES READ:" << bytesRead << " index:" << connectedClientFD << " iter:" << index << std::endl;
   if (bytesRead == -1) {
     logClientError("Failed to receive data from client",
                    _connectedClients[connectedClientFD].clientIP,
