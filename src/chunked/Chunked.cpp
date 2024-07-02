@@ -3,7 +3,6 @@
 Chunked::Chunked()
 {
 	//request buffer might go out of scope and get deleted
-	std::cout << "FYCK ME\n";
 	_contentLength = 0;//first_request.get_contentLen();
 	_bufferedLength = 0;//first_request.get_rawRequest().length();
 	_justStarted = true;
@@ -33,7 +32,6 @@ Chunked::Chunked(const Chunked &to_copy)
 
 Chunked	&Chunked::operator=(const Chunked &to_copy)
 {
-	std::cout << "FYCK M4567\n";
 	_firstRequest = to_copy._firstRequest;
 	if (_firstRequest)
 	{
@@ -52,7 +50,6 @@ Chunked	&Chunked::operator=(const Chunked &to_copy)
 	//_fileName = ""://first_request.get_bufferFile();
 		_totalLength = true;
 	}
-	std::cout << "FYCK jfhfgh\n";
 	return (*this);
 }
 
@@ -66,7 +63,6 @@ bool	Chunked::add_to_file(char *buffer, size_t buffer_len)
 	buffer_file.open(_fileName, std::ios_base::app); // append instead of overwrite
 	until = buf_str.find(_boundary);
 	// std::cout << buf_str.substr(until) << "_" << _boundary  << std::endl;
-	std::cout << "FUCK " << until << std::endl;
 	_bufferedLength += buffer_len;//buf_str.length();
 	if (until != std::string::npos)
 	{
