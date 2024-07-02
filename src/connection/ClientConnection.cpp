@@ -15,6 +15,7 @@ ClientConnection::~ClientConnection() {
     logClientConnection("connection closed", _connectedClients[i].clientIP,
                         _connectedClients[i].clientFD);
     close(_connectedClients[i].clientFD);
+	_connectedClients[i].unchunker.close_file();
   }
 }
 
@@ -49,6 +50,7 @@ void ClientConnection::handleInputEvent(int index) {
 
   ssize_t bytesRead =
       recv(_serverClientSockets[index].fd, buffer, sizeof(buffer), 0);
+	std::cout << "BYTES READ:" << bytesRead << std::endl;
   if (bytesRead == -1) {
     logClientError("Failed to receive data from client",
                    _connectedClients[connectedClientFD].clientIP,
@@ -56,7 +58,7 @@ void ClientConnection::handleInputEvent(int index) {
     return;
   }
   if (bytesRead == 0 &&
-      _connectedClients[connectedClientFD].keepAlive == false) {
+      ((_connectedClients[connectedClientFD].keepAlive == false) || !_connectedClients[connectedClientFD].unchunker._totalLength)){ //edited
     logClientError("Client disconnected",
                    _connectedClients[connectedClientFD].clientIP,
                    _serverClientSockets[index].fd);
@@ -68,6 +70,15 @@ void ClientConnection::handleInputEvent(int index) {
 
   if (!_connectedClients[connectedClientFD].unchunker._totalLength)
   {
+	Request	request = Request(buffer);
+	if (request.get_validity()) //hacky and most often okay, but not always...
+	{
+		logClientError("Post interrupted",
+                   _connectedClients[connectedClientFD].clientIP,
+                   _serverClientSockets[index].fd);
+    	_serverClientSockets[index].revents = POLLERR;
+		return ; //might have to remove chunked and then just go one with the valid one
+	}
 	if (!_connectedClients[connectedClientFD].unchunker.add_to_file(buffer, bytesRead))
 		return ;
 	buffer_str = _connectedClients[connectedClientFD].unchunker.getCombinedBuffer();
@@ -239,6 +250,7 @@ void ClientConnection::setUpClientConnection() {
     checkConnectedClientsStatus();
     if (poll_count > 0) {
       for (size_t i = 0; i < _serverClientSockets.size(); i++) {
+		std::cout << _serverClientSockets[i].revents << std::endl;
         if (_serverClientSockets[i].revents & POLLIN) {
           if (isServerSocket(_serverClientSockets[i].fd))
             acceptClients(_serverClientSockets[i].fd, i);

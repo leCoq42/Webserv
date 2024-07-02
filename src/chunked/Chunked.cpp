@@ -2,14 +2,12 @@
 
 Chunked::Chunked()
 {
-	//request buffer might go out of scope and get deleted
-	std::cout << "FYCK ME\n";
+	//request buffer might go out of scope and get deleted, shared pointer
 	_contentLength = 0;//first_request.get_contentLen();
 	_bufferedLength = 0;//first_request.get_rawRequest().length();
 	_justStarted = true;
 	//_fileName = ""://first_request.get_bufferFile();
 	_totalLength = true;
-	std::cout << "FYCK be\n";
 }
 
 Chunked::Chunked(std::shared_ptr<Request>  first_request): _firstRequest(first_request)
@@ -31,13 +29,16 @@ Chunked::Chunked(const Chunked &to_copy)
 	*this = to_copy;
 }
 
+Chunked::~Chunked()
+{
+}
+
 Chunked	&Chunked::operator=(const Chunked &to_copy)
 {
-	std::cout << "FYCK M4567\n";
 	_firstRequest = to_copy._firstRequest;
 	if (_firstRequest)
 	{
-		//request buffer might go out of scope and get deleted
+		//request buffer might go out of scope and get deleted, shared pointer
 		_contentLength = _firstRequest->get_contentLen();
 		_bufferedLength = to_copy._bufferedLength;//_firstRequest->get_rawRequest().length();
 		_fileName = _firstRequest->get_bufferFile();
@@ -52,7 +53,6 @@ Chunked	&Chunked::operator=(const Chunked &to_copy)
 	//_fileName = ""://first_request.get_bufferFile();
 		_totalLength = true;
 	}
-	std::cout << "FYCK jfhfgh\n";
 	return (*this);
 }
 
@@ -65,27 +65,19 @@ bool	Chunked::add_to_file(char *buffer, size_t buffer_len)
 	buf_str = buffer;
 	buffer_file.open(_fileName, std::ios_base::app); // append instead of overwrite
 	until = buf_str.find(_boundary);
-	// std::cout << buf_str.substr(until) << "_" << _boundary  << std::endl;
-	std::cout << "FUCK " << until << std::endl;
 	_bufferedLength += buffer_len;//buf_str.length();
 	if (until != std::string::npos)
-	{
-		std::cout << "SUBSTR SHIT\n" << buf_str.substr(until) << "_" << _boundary  << std::endl;
-		buf_str = buf_str.substr(0, until - 3);
-	}
-	// std::cout << buf_str << std::endl << _boundary << std::endl;
-	// if (_bufferedLength + buf_str.length() > _contentLength)
-	// 	buffer_file << buf_str.substr(0, _contentLength - _bufferedLength);
-	// else
-		buffer_file << buf_str;
-	// _bufferedLength += buf_str.length();
+		buf_str = buf_str.substr(0, until - 4);
+	buffer_file << buf_str;
 	std::cout << buffer_len << "written bytes:" << _bufferedLength << "/" << _contentLength << std::endl;
-	if (_bufferedLength >= _contentLength) //don't match for some reason, headers has to be subtracted
+	if (_bufferedLength == _contentLength) //don't match for some reason, headers has to be subtracted
 	{
 		_totalLength = true;
 		return true;
 		// return false;
 	}
+	else if (_bufferedLength > _contentLength)
+		return true;
 	return false;
 }
 
