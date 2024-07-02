@@ -8,7 +8,6 @@ Chunked::Chunked()
 	_justStarted = true;
 	//_fileName = ""://first_request.get_bufferFile();
 	_totalLength = true;
-	std::cout << "FYCK be\n";
 }
 
 Chunked::Chunked(std::shared_ptr<Request>  first_request): _firstRequest(first_request)
