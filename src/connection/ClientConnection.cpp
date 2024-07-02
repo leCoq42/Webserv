@@ -70,6 +70,7 @@ void ClientConnection::handleInputEvent(int index) {
   if (!_connectedClients[connectedClientFD].unchunker._totalLength)
   {
 	Request	request = Request(buffer);
+	std::cout << "TOTAL LENGTH NOT REACHED" << request.get_validity() << std::endl;
 	if (request.get_validity()) //hacky and most often okay, but not always...
 	{
 		logClientError("Post interrupted",
@@ -199,6 +200,7 @@ void ClientConnection::removeClientSocket(int clientFD) {
                       _connectedClients[getIndexByClientFD(clientFD)].clientIP,
                       clientFD);
   int indexConnectedClients = getIndexByClientFD(clientFD);
+  _connectedClients[indexConnectedClients].unchunker.close_file();
   _connectedClients.erase(indexConnectedClients + _connectedClients.begin());
   int	i = 0; //added
   for (auto it = _serverClientSockets.begin(); it != _serverClientSockets.end();
