@@ -22,9 +22,11 @@ ClientConnection::~ClientConnection() {
 int ClientConnection::getIndexByClientFD(int clientFD) {
   int index = 0;
   for (size_t i = 0; i < _connectedClients.size(); i++) {
+	std::cout << "getIndexByClientFD" << _connectedClients[i].clientFD << "==" << clientFD << "->" << i << std::endl;
     if (_connectedClients[i].clientFD == clientFD)
       index = i;
   }
+  std::cout << "selected index:" << index << std::endl;
   return (index);
 }
 
@@ -46,11 +48,11 @@ void ClientConnection::manageKeepAlive(int index) {
 void ClientConnection::handleInputEvent(int index) {
   char 			buffer[1024];
   std::string	buffer_str;
-  uint32_t connectedClientFD = getIndexByClientFD(index);
+  uint32_t connectedClientFD = getIndexByClientFD(_serverClientSockets[index].fd);
 
   ssize_t bytesRead =
       recv(_serverClientSockets[index].fd, buffer, sizeof(buffer), 0);
-	std::cout << "BYTES READ:" << bytesRead << std::endl;
+	std::cout << "BYTES READ:" << bytesRead << " index:" << connectedClientFD << " iter:" << index << std::endl;
   if (bytesRead == -1) {
     logClientError("Failed to receive data from client",
                    _connectedClients[connectedClientFD].clientIP,
@@ -77,6 +79,9 @@ void ClientConnection::handleInputEvent(int index) {
                    _connectedClients[connectedClientFD].clientIP,
                    _serverClientSockets[index].fd);
     	_serverClientSockets[index].revents = POLLERR;
+		_connectedClients[connectedClientFD].unchunker.close_file();
+		_connectedClients[connectedClientFD].unchunker._totalLength = true;
+		buffer_str = buffer;
 		return ; //might have to remove chunked and then just go one with the valid one
 	}
 	if (!_connectedClients[connectedClientFD].unchunker.add_to_file(buffer, bytesRead))
