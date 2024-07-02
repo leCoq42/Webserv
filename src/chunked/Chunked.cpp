@@ -3,6 +3,7 @@
 Chunked::Chunked()
 {
 	//request buffer might go out of scope and get deleted, shared pointer
+	//request buffer might go out of scope and get deleted
 	_contentLength = 0;//first_request.get_contentLen();
 	_bufferedLength = 0;//first_request.get_rawRequest().length();
 	_justStarted = true;
