@@ -2,18 +2,14 @@
 
 Chunked::Chunked()
 {
-	//request buffer might go out of scope and get deleted, shared pointer
-	//request buffer might go out of scope and get deleted
-	_contentLength = 0;//first_request.get_contentLen();
-	_bufferedLength = 0;//first_request.get_rawRequest().length();
+	_contentLength = 0;
+	_bufferedLength = 0;
 	_justStarted = true;
-	//_fileName = ""://first_request.get_bufferFile();
 	_totalLength = true;
 }
 
 Chunked::Chunked(std::shared_ptr<Request>  first_request): _firstRequest(first_request)
 {
-	//request buffer might go out of scope and get deleted
 	_contentLength = first_request->get_contentLen();
 	_bufferedLength = first_request->get_startContentLength();//first_request->get_rawRequest().length();
 	_fileName = first_request->get_bufferFile();
@@ -22,7 +18,6 @@ Chunked::Chunked(std::shared_ptr<Request>  first_request): _firstRequest(first_r
 		_totalLength = true;
 	else
 		_totalLength = false;
-	// _justStarted = true;
 }
 
 Chunked::Chunked(const Chunked &to_copy)
@@ -39,19 +34,17 @@ Chunked	&Chunked::operator=(const Chunked &to_copy)
 	_firstRequest = to_copy._firstRequest;
 	if (_firstRequest)
 	{
-		//request buffer might go out of scope and get deleted, shared pointer
 		_contentLength = _firstRequest->get_contentLen();
 		_bufferedLength = to_copy._bufferedLength;//_firstRequest->get_rawRequest().length();
 		_fileName = _firstRequest->get_bufferFile();
-		// _justStarted = to_copy._justStarted;
 		_boundary = _firstRequest->get_boundary();
 		_totalLength = false;
 	}
 	else
 	{
-		_contentLength = 0;//first_request.get_contentLen();
-		_bufferedLength = 0;//first_request.get_rawRequest().length();
-	//_fileName = ""://first_request.get_bufferFile();
+		_contentLength = 0;
+		_bufferedLength = 0;
+		_fileName = "":
 		_totalLength = true;
 	}
 	return (*this);
@@ -75,7 +68,6 @@ bool	Chunked::add_to_file(char *buffer, size_t buffer_len)
 	{
 		_totalLength = true;
 		return true;
-		// return false;
 	}
 	else if (_bufferedLength > _contentLength)
 		return true;
@@ -90,5 +82,9 @@ void	Chunked::close_file(void)
 
 std::string	Chunked::getCombinedBuffer(void)
 {
-	return ("hummm");
+}
+
+std::string	Chunked::get_fileName(void)
+{
+	return (_fileName);
 }

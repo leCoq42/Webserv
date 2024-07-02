@@ -25,4 +25,5 @@ class Chunked
 	void	close_file(); //depending on _totalLength either closes or deletes
 	bool	add_to_file(char *buffer, size_t buffer_len); //appends content to bufferFile, true when full length is reached
 	std::string	getCombinedBuffer(void);
+	std::string	get_fileName(void);
 };

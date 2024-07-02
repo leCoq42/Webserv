@@ -46,6 +46,7 @@ void ClientConnection::manageKeepAlive(int index) {
 void ClientConnection::handleInputEvent(int index) {
   char 			buffer[1024];
   std::string	buffer_str;
+  std::string	upload_file;
   uint32_t connectedClientFD = getIndexByClientFD(_serverClientSockets[index].fd);
 
   ssize_t bytesRead =
@@ -67,6 +68,7 @@ void ClientConnection::handleInputEvent(int index) {
 
   buffer[bytesRead] = '\0';
 
+	upload_file = "";
   if (!_connectedClients[connectedClientFD].unchunker._totalLength)
   {
 	Request	request = Request(buffer);
@@ -84,7 +86,8 @@ void ClientConnection::handleInputEvent(int index) {
 	}
 	if (!_connectedClients[connectedClientFD].unchunker.add_to_file(buffer, bytesRead))
 		return ;
-	buffer_str = _connectedClients[connectedClientFD].unchunker.getCombinedBuffer();
+	upload_file = _connectedClients[connectedClientFD].unchunker.get_fileName();
+	buffer_str = _connectedClients[connectedClientFD].unchunker._firstRequest->get_rawRequest();
 	// _connectedClients[connectedClientFD].unchunker.first_request->keepAlive(false);
   }
   else
@@ -98,8 +101,7 @@ void ClientConnection::handleInputEvent(int index) {
   // request.parseRequest(_connectedClients[getIndexByClientFD(index)]); // Fix
   // the error by using getIndexByClientFD(index) instead of connectedClientFD
 //   std::cout << "Adress congig:" << _serverConfigs[index] << std::endl;
-//   _serverConfigs[connectedClientFD]->show_self();
-  Response response(request, *_connectedClients[connectedClientFD]._config); //changed to get server config
+  Response response(request, *_connectedClients[connectedClientFD]._config, upload_file); //changed to get server config
 
 	_connectedClients[connectedClientFD].keepAlive = request->get_keepAlive(); //always keep alive
 	std::cout << "REQUEST POST FILE:" << request->get_bufferFile() << std::endl;
@@ -170,7 +172,7 @@ ClientInfo ClientConnection::initClientInfo(int clientFD,
   clientInfo.timeOut = 100; // will be configurable later
   clientInfo.lastRequestTime = currentTime;
   clientInfo.numRequests = 0; // can be perhaps be deleted
-  clientInfo.maxRequests = 1000; // will be configurable later, yes missed this one
+  clientInfo.maxRequests = 1000; // will be configurable later, yes missed this one might have to be more then this
   return clientInfo;
 }
 

@@ -18,8 +18,8 @@
 
 Response::Response(ServerStruct &config) : _request(nullptr), _responseString(""), config(config), security(config) {}
 
-Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
-    : _request(request), _responseString(""), _contentType(""), config(config), security(config) {
+Response::Response(std::shared_ptr<Request> request, ServerStruct &config, std::string filename)
+    : _request(request), _responseString(""), _contentType(""), config(config), security(config), _bufferFile(filename) {
   handleRequest(request);
   printResponse();
 }
@@ -50,11 +50,11 @@ void Response::handleRequest(const std::shared_ptr<Request> &request) {
 	if (return_code)
 		request_path = security.getErrorPage(return_code); // wrong place
 	std::cout << "\nPATH:" << request_path << std::endl;
-    if (request_method == "GET")
+    if (request_method == "GET" && security.allowedMethod("GET"))
       handleGetRequest(request);
-    else if (request_method == "POST")
+    else if (request_method == "POST" && security.allowedMethod("POST"))
       handlePostRequest(request);
-    else if (request_method == "DELETE")
+    else if (request_method == "DELETE" && security.allowedMethod("DELETE"))
       handleDeleteRequest(request);
     else
       buildResponse(static_cast<int>(StatusCode::METHOD_NOT_ALLOWED),
@@ -160,7 +160,8 @@ void Response::handle_multipart() {
   _request->keepAlive(true); // added
 
   std::cout << "<multipart/form-data>" << std::endl;
-
+	if (!_bufferFile.compare("")) //unrully long code barely readable, probably cut out the part that's usefull aswell. but it's hard to split out
+{
   while (pos < body.size()) {
     size_t start = std::search(body.begin() + pos, body.end(), boundary.begin(),
                                boundary.end()) -
@@ -214,8 +215,15 @@ void Response::handle_multipart() {
         buildResponse(static_cast<int>(StatusCode::INTERNAL_SERVER_ERROR),
                       "Error: file upload failed!", "");
       }
+	  pos = end;
+  }
     // }
-    pos = end;
+  }
+  else
+  {
+	//should be able to run cgi as well
+	buildResponse(static_cast<int>(StatusCode::OK),
+                      "File uploaded succesfully!", "");
   }
 }
 
