@@ -1,34 +1,20 @@
 server A {
-        listen                8080 8081 8082 8083;
-        server_name           our-site.org www.our-site.org;
-        return                301 https://$host$request_url;
-}
-hoi		pizza {
-	pizza 	{
-		lolaatje {
-			doei pizza;
+		listen				8080;
+		listen				8081;
+		listen				8082;
+		listen				8083;
+		server_name			our-site.org www.our-site.org;
+		error_page			404 error/404.html;
+		error_page			402 /error/402.html;
+		return				301 https://$host$request_url;
+		allow_methods		GET POST DELETE;
+		root				YoupiBanane;
+		location	/{
+			allow_methods		GET;
+			autoindex			on;
 		}
-	}
-}
-balo hoi;
-bon ;
-pimpamplet ;
-server B {
-		listen                8084 8085 ssl hoi;
-
-        root                  /srv/html;
-        index                 index.html;
-
-        server_name           our-site.org www.our-site.org;
-                                                   
-        ssl_certificate       our-site.org.crt;
-        ssl_certificate_key   our-site.org.key;
-        ssl_protocols         TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
-        ssl_ciphers           HIGH:!aNULL:!MD5;
-        ssl_session_timeout   15m;
-
-        location / {
-                try_files		$uri $uri/ '=404 \n';
-				index			index.html;
-        }
+		location	/directory{
+			autoindex			off;
+			index				youpi.bad_extension;
+		}
 }
