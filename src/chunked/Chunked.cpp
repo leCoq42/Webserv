@@ -44,12 +44,13 @@ Chunked	&Chunked::operator=(const Chunked &to_copy)
 	{
 		_contentLength = 0;
 		_bufferedLength = 0;
-		_fileName = "":
+		_fileName = "";
 		_totalLength = true;
 	}
 	return (*this);
 }
 
+//Opens specified buffer_file to write the incoming raw request in. First request is done in multipart handler in response.cpp. sequential requests are added here
 bool	Chunked::add_to_file(char *buffer, size_t buffer_len)
 {
 	std::string	buf_str;
@@ -74,14 +75,17 @@ bool	Chunked::add_to_file(char *buffer, size_t buffer_len)
 	return false;
 }
 
+//Deletes the file if it should be closed because of disconnected client or something but the full body wasn't received yet.
 void	Chunked::close_file(void)
 {
 	if (!_totalLength)
 		std::remove(_fileName.c_str());
 }
 
+//depriciated
 std::string	Chunked::getCombinedBuffer(void)
 {
+	return ("");
 }
 
 std::string	Chunked::get_fileName(void)

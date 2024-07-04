@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <vector>
 
-Request::Request() : _rawRequest(""), _isValid(0), _keepAlive(false) {}
+Request::Request() : _rawRequest(""), _keepAlive(false), _isValid(0) {}
 
 auto print_key_value = [](const auto &key, const auto &value) {
   std::cout << "Key:[" << key << "] Value:[" << value << "]\n";

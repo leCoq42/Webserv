@@ -19,7 +19,7 @@
 Response::Response(ServerStruct &config) : _request(nullptr), _responseString(""), config(config), security(config) {}
 
 Response::Response(std::shared_ptr<Request> request, ServerStruct &config, std::string filename)
-    : _request(request), _responseString(""), _contentType(""), config(config), security(config), _bufferFile(filename) {
+    : _request(request), _responseString(""), _contentType(""), _bufferFile(filename), config(config), security(config) {
   handleRequest(request);
   printResponse();
 }
@@ -69,12 +69,7 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
   std::string body;
   std::stringstream buffer;
   bool isCGI = false;
-//   std::filesystem::path path = "html/";
-//   std::filesystem::path resourcePath = request->get_uri();
 
-//   if (resourcePath.empty() || resourcePath == "/") {
-//     resourcePath = "index.html";
-//   }
   if (!request_path.empty() && request_path.has_extension()) {
     std::unordered_map<std::string, std::string>::const_iterator res =
         contentTypes.find(request_path.extension());
@@ -86,7 +81,6 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
     }
     _contentType = res->second;
     if (interpreters.find(request_path.extension()) == interpreters.end()) {
-    //   path.append(resourcePath.string());
       std::ifstream file(request_path, std::ios::binary);
       if (!file) {
         _responseString = buildResponse(static_cast<int>(StatusCode::NOT_FOUND),
@@ -97,15 +91,13 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
       body = buffer.str();
     } else {
       isCGI = true;
-      // path.append("cgi-bin/"); path.append("php-bin/");?
-    //   path.append(resourcePath.string());
       cgi CGI(_contentType);
       body = CGI.executeCGI(request_path, "", _request,
                             interpreters.at(request_path.extension()));
     }
-  } else // else if (true)? // dir listing on off
+  }
+  else // else if (true)? // dir listing on off
   {
-    // path.append(resourcePath.string());
     body = list_dir(request_path, request->get_uri(), request->get_referer());
   }
 
@@ -132,7 +124,6 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
   if (resourcePath.has_extension()) {
     if (interpreters.find(resourcePath.extension()) != interpreters.end()) {
       isCGI = true;
-      // path.append("php-bin/");
       path.append(resourcePath.string());
       cgi CGI(_contentType);
       body = CGI.executeCGI(path, "", _request,
@@ -150,7 +141,6 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
   return true;
 };
 
-// const std::string UPLOAD_DIR = "./html/uploads/";
 void Response::handle_multipart() {
   // std::string bound = "--" + boundary;
   size_t pos = 0;
@@ -181,7 +171,7 @@ void Response::handle_multipart() {
     std::string headers = part.substr(0, header_end);
     std::string content = part.substr(header_end + 4);
 
-    size_t filename_pos = headers.find("filename=\""); //this is tricky not necessarily called like this
+    size_t filename_pos = headers.find("filename=\""); //this is tricky might not necessarily called like this
 	// if (!filename.compare("")) //hacky shit
 	// 	filename = "temp.txt";
 	std::string filename;

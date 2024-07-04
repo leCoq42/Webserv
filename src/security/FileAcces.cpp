@@ -20,6 +20,7 @@ FileAcces::~FileAcces()
 
 }
 
+//Swaps out root if different root is given. And checks if path is within root.
 std::filesystem::path	FileAcces::root_or_path(std::filesystem::path path, std::filesystem::path current_root, std::filesystem::path root, LocationStruct	*current)
 {
 	std::filesystem::path	root_swapped_path;
@@ -42,6 +43,7 @@ std::filesystem::path	FileAcces::root_or_path(std::filesystem::path path, std::f
 	return (current_root);
 }
 
+//Checks if location is present in config file. and will rewrite the path according to the config file setup. 
 std::filesystem::path	FileAcces::find_location(std::filesystem::path path, std::string uri, int &return_code)
 {
 	ConfigContent	*current;
@@ -89,9 +91,9 @@ std::filesystem::path	FileAcces::find_location(std::filesystem::path path, std::
 	return (root_or_path(root, root, root, NULL));
 }
 
+//Use this function to check if requested uri is okay to try and reach. it will return an edited path according to config files
 std::filesystem::path	FileAcces::isFilePermissioned(std::string uri, int &return_code)
 {
-	int 					i;
 	std::filesystem::path	path;
 
 
@@ -104,6 +106,7 @@ std::filesystem::path	FileAcces::isFilePermissioned(std::string uri, int &return
 	return (path);
 }
 
+//Get configured error_page path by inputting error number
 std::filesystem::path	FileAcces::getErrorPage(int return_code)
 {
 	ConfigContent	*current;
@@ -120,6 +123,7 @@ std::filesystem::path	FileAcces::getErrorPage(int return_code)
 	return ("/");
 }
 
+//check if method is allowed for this specific location
 bool	FileAcces::allowedMethod(std::string method)
 {
 	for (std::string content : current_allowed_methods)

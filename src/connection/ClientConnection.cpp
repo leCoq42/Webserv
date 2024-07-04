@@ -43,8 +43,14 @@ void ClientConnection::manageKeepAlive(int index) {
   }
 }
 
+//Intended workings
+// When an request is incomplete and goes through handlemultipart and is not completely received. Chunked object has to save the initial request, since sequential requests don't have headers.
+// and the response should be hold off? Until the last sequential request is received and passed through Chunked.add_to_file(). When that happens Chunked object will set _totalLength on true. Indicating that the full body was received. 
+// Then the response should be build again with the bufferedfile given so handlemultipart will have the whole body. Request could also be build with the whole body, body size might be too big for request object at the moment.
+// When the response is build again after Chunked _totalLength is true. Response will have acces to the full request BODY (without headers and boundaries) through the given filename. CGI should be able to be run then as well.
+// I think the filename has to be given to argv, (might be happening already).
 void ClientConnection::handleInputEvent(int index) {
-  char 			buffer[1024];
+  char 			buffer[1024]; //unsure what size this should be. 
   std::string	buffer_str;
   std::string	upload_file;
   uint32_t connectedClientFD = getIndexByClientFD(_serverClientSockets[index].fd);
@@ -91,7 +97,9 @@ void ClientConnection::handleInputEvent(int index) {
 	// _connectedClients[connectedClientFD].unchunker.first_request->keepAlive(false);
   }
   else
+  {
 	buffer_str = buffer;
+  }
 
 	std::shared_ptr<Request> request = std::make_shared<Request>(buffer_str.c_str());
   // Use outcommented code to for parsing and sending response. If keepAlive is
@@ -172,7 +180,7 @@ ClientInfo ClientConnection::initClientInfo(int clientFD,
   clientInfo.timeOut = 100; // will be configurable later
   clientInfo.lastRequestTime = currentTime;
   clientInfo.numRequests = 0; // can be perhaps be deleted
-  clientInfo.maxRequests = 1000; // will be configurable later, yes missed this one might have to be more then this
+  clientInfo.maxRequests = 1000; // will be configurable later, yes missed this one might have to be more then this (chunked takes them off so will limit total upload size)
   return clientInfo;
 }
 
@@ -256,7 +264,6 @@ void ClientConnection::setUpClientConnection() {
     checkConnectedClientsStatus();
     if (poll_count > 0) {
       for (size_t i = 0; i < _serverClientSockets.size(); i++) {
-		std::cout << _serverClientSockets[i].revents << std::endl;
         if (_serverClientSockets[i].revents & POLLIN) {
           if (isServerSocket(_serverClientSockets[i].fd))
             acceptClients(_serverClientSockets[i].fd, i);

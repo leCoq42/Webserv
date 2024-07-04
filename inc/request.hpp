@@ -35,11 +35,11 @@ public:
   const std::string &get_connection() const;
   const std::string &get_body() const;
   const std::unordered_map<std::string, std::string> &get_headers() const;
-  void		set_bufferFile(std::string buffer_file); //added
-  const std::string &get_bufferFile() const;
-  void		keepAlive(bool keepAlive); //added
-	void	set_startContentLength(size_t content_length);
-	const size_t	&get_startContentLength(void) const;
+  void		set_bufferFile(std::string buffer_file);	//added
+  const std::string &get_bufferFile() const;			//added
+  void		keepAlive(bool keepAlive);					//added
+	void	set_startContentLength(size_t content_length);	//added
+	const size_t	&get_startContentLength(void) const;	//added
   const bool &get_keepAlive() const;
   const bool &get_validity() const;
 

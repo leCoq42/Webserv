@@ -15,8 +15,8 @@ struct ClientInfo {
   long int lastRequestTime;
   size_t numRequests;
   size_t maxRequests;
-  ServerStruct			*_config;
-  Chunked		unchunker;
+  ServerStruct			*_config;		//port/server config for multiple server setup
+  Chunked		unchunker;				//unchunker object to save multipart requests into an bufferfile
 };
 
 class ClientConnection : ServerConnection, public virtual Log {
