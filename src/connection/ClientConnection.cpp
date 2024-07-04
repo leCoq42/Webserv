@@ -54,7 +54,7 @@ void ClientConnection::manageKeepAlive(int index) {
 // When the response is build again after Chunked _totalLength is true. Response will have acces to the full request BODY (without headers and boundaries) through the given filename. CGI should be able to be run then as well.
 // I think the filename has to be given to argv, (might be happening already).
 void ClientConnection::handleInputEvent(int index) {
-  char 			buffer[1024*1024]; //unsure what size this should be. 
+  char 			buffer[1024*1024]; //unsure what size this should be. //move to client info, empty when request is handled 
   std::string	buffer_str;
   std::string	upload_file;
   ssize_t		bytesRead = 0;
@@ -76,6 +76,8 @@ buffer_str = "";
 		}
 		if (buffer_str.find("\r\n\r\n") != std::string::npos)
 			break;
+		else // 
+			return; //
 		n = recv(_serverClientSockets[index].fd, &buffer[buffer_str.length()], sizeof(buffer) - buffer_str.length(), MSG_DONTWAIT);
 	}
 	buffer[bytesRead] = '\0';
