@@ -35,11 +35,11 @@ public:
   const std::string &get_connection() const;
   const std::string &get_body() const;
   const std::unordered_map<std::string, std::string> &get_headers() const;
-  void		set_bufferFile(std::string buffer_file); //added
+  void set_bufferFile(std::string buffer_file); //added
   const std::string &get_bufferFile() const; //added
-  void		keepAlive(bool keepAlive); //added
-  void	set_startContentLength(size_t content_length); //added
-  const size_t	&get_startContentLength(void) const; //added
+  void keepAlive(bool keepAlive); //added
+  void set_startContentLength(size_t content_length); //added
+  const size_t &get_startContentLength() const; //added
   const bool &get_keepAlive() const;
   const bool &get_validity() const;
 
@@ -53,14 +53,14 @@ private:
   std::vector<std::string> _requestArgs;
   std::unordered_map<std::string, std::string> _headers;
   bool _keepAlive;
-  std::string _body;
   bool _isValid;
+  std::string _body;
   std::unordered_map<std::string, std::string> _cgiEnv;
   std::string	_bufferFile;//added
   size_t		_startContentLength;
 
   void parseRequest();
-  std::vector<std::string> parse_requestArgs(const std::string uri);
+  std::vector<std::string> parseUriArgs(const std::string uri);
   bool parseRequestLine(const std::string &line);
   bool parseRequestHeaders(std::istringstream &requestStream);
   bool parseRequestBody(const std::string &_rawRequest);
