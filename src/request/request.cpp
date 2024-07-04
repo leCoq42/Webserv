@@ -14,7 +14,7 @@ auto print_key_value = [](const auto &key, const auto &value) {
   std::cout << "Key:[" << key << "] Value:[" << value << "]\n";
 };
 
-Request::Request() : _rawRequest(""), _keepAlive(false), _isValid(0) {}
+Request::Request() : _rawRequest(""), _requestMethod(""), _requestPath(""), _htmlVersion(""), _keepAlive(false), _isValid(0), _body(""), _bufferFile("") {}
 
 Request::Request(const std::string &rawStr) : _rawRequest(rawStr), _keepAlive(false) {
   parseRequest();
@@ -23,12 +23,14 @@ Request::Request(const std::string &rawStr) : _rawRequest(rawStr), _keepAlive(fa
 
 Request::~Request() {}
 
-Request::Request(const Request &src)
-    : _rawRequest(src._rawRequest), _requestMethod(src._requestMethod),
-      _requestPath(src._requestPath), _htmlVersion(src._htmlVersion),
-      _requestArgs(src._requestArgs), _headers(src._headers),
-      _keepAlive(src._keepAlive), _body(src._body), _isValid(src._isValid) {
-  extractCgiEnv();
+Request::Request(const Request &src) :
+	_rawRequest(src._rawRequest), _requestMethod(src._requestMethod),
+	_requestPath(src._requestPath), _htmlVersion(src._htmlVersion),
+	_requestArgs(src._requestArgs), _headers(src._headers),
+	_keepAlive(src._keepAlive), _isValid(src._isValid), _body(src._body),
+	_cgiEnv(src._cgiEnv), _bufferFile(src._bufferFile), _startContentLength(src._startContentLength)
+{
+	extractCgiEnv();
 }
 
 Request &Request::operator=(const Request &rhs) {
@@ -38,14 +40,17 @@ Request &Request::operator=(const Request &rhs) {
 }
 
 void Request::swap(Request &lhs) {
-  std::swap(_requestMethod, lhs._requestMethod);
-  std::swap(_requestPath, lhs._requestPath);
-  std::swap(_requestArgs, lhs._requestArgs);
-  std::swap(_htmlVersion, lhs._htmlVersion);
-  std::swap(_headers, lhs._headers);
-  std::swap(_keepAlive, lhs._keepAlive);
-  std::swap(_body, lhs._body);
-  std::swap(_isValid, lhs._isValid);
+	std::swap(_requestMethod, lhs._requestMethod);
+	std::swap(_requestPath, lhs._requestPath);
+	std::swap(_htmlVersion, lhs._htmlVersion);
+	std::swap(_requestArgs, lhs._requestArgs);
+	std::swap(_headers, lhs._headers);
+	std::swap(_keepAlive, lhs._keepAlive);
+	std::swap(_isValid, lhs._isValid);
+	std::swap(_body, lhs._body);
+	std::swap(_cgiEnv, lhs._cgiEnv);
+	std::swap(_bufferFile, lhs._bufferFile);
+	std::swap(_startContentLength, lhs._startContentLength);
 }
 
 // doesn't seem to be the standard but it is an security issue not to check
@@ -81,7 +86,7 @@ void Request::parseRequest() {
   }
 
   _requestPath = trim(_requestPath, "/");
-  _requestArgs = parse_requestArgs(_requestPath);
+  _requestArgs = parseUriArgs(_requestPath);
 
   if (!parseRequestHeaders(requestStream)) {
     _isValid = false;
@@ -100,7 +105,7 @@ void Request::parseRequest() {
   return;
 }
 
-std::vector<std::string> Request::parse_requestArgs(const std::string uri) {
+std::vector<std::string> Request::parseUriArgs(const std::string uri) {
   size_t pos;
   std::vector<std::string> args;
   std::string argStr;

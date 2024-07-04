@@ -1,4 +1,4 @@
-# Directories and File Names
+#Directories and File Names
 NAME        := webserv
 SRC_DIR     := src
 CGI_DIR     := cgi_src
@@ -9,20 +9,20 @@ RM          := rm -rf
 HEADERS     := inc/Webserv.hpp
 CC          := c++ --std=c++20
 
-# Include Paths
+#Include Paths
 INCLUDES	:= -I inc/
 
-# Compiler Flags
+#Compiler Flags
 CFLAGS		:= -Wall -Wextra -Werror -Wunreachable-code#-Ofast
 
-# Debug Flags
+#Debug Flags
 ifdef DEBUG
 	CFLAGS += -g -D DEBUG
 endif
 
-# Source files
+#Source files
 SRC         := $(wildcard $(SRC_DIR)/**/*.cpp)
-CGI_SRC		:= $(wildcard $(CGI_DIR)/*.cpp)
+CGI_SRC     := $(wildcard $(CGI_DIR)/*.cpp)
 
 # Object files
 MAIN_OBJ    := $(addprefix $(BUILD_DIR)/, $(MAIN:%.cpp=%.o))
@@ -33,11 +33,11 @@ CGI_OBJS	:= $(addprefix $(BUILD_DIR)/, $(CGI_SRC:$(CGI_DIR)/%.cpp=%.o))
 CGI_TARGETS := $(patsubst $(CGI_DIR)/%.cpp,$(CGI_BIN_DIR)/%.cgi,$(CGI_SRC))
 
 # Colors
-RED		  	:= \033[31m
-BLUE	  	:= \033[34m
+RED			:= \033[31m
+BLUE		:= \033[34m
 YELLOW		:= \033[33m
 GREEN    	:= \033[32m
-RESET_COLOR := \033[0m
+RESET_COLOR	:= \033[0m
 
 # Targets
 all: $(NAME) $(CGI_TARGETS)
