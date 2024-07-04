@@ -24,7 +24,7 @@ private:
   std::shared_ptr<ServerConnection> ptrServerConnection;
   std::vector<ClientInfo> _connectedClients;
   std::vector<pollfd> _serverClientSockets;
-  std::vector<ServerStruct*>	_serverConfigs; //added synchronous to pollfd vector
+  std::vector<ServerStruct*> _serverConfigs; //added synchronous to pollfd vector
 
 public:
   ClientConnection();
