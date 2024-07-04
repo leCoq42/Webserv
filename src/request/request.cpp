@@ -9,11 +9,12 @@
 #include <unordered_map>
 #include <vector>
 
-Request::Request() : _rawRequest(""), _keepAlive(false), _isValid(0) {}
 
 auto print_key_value = [](const auto &key, const auto &value) {
   std::cout << "Key:[" << key << "] Value:[" << value << "]\n";
 };
+
+Request::Request() : _rawRequest(""), _keepAlive(false), _isValid(0) {}
 
 Request::Request(const std::string &rawStr) : _rawRequest(rawStr), _keepAlive(false) {
   parseRequest();
@@ -24,7 +25,7 @@ Request::~Request() {}
 
 Request::Request(const Request &src)
     : _rawRequest(src._rawRequest), _requestMethod(src._requestMethod),
-      _uri(src._uri), _htmlVersion(src._htmlVersion),
+      _requestPath(src._requestPath), _htmlVersion(src._htmlVersion),
       _requestArgs(src._requestArgs), _headers(src._headers),
       _keepAlive(src._keepAlive), _body(src._body), _isValid(src._isValid) {
   extractCgiEnv();
@@ -38,7 +39,7 @@ Request &Request::operator=(const Request &rhs) {
 
 void Request::swap(Request &lhs) {
   std::swap(_requestMethod, lhs._requestMethod);
-  std::swap(_uri, lhs._uri);
+  std::swap(_requestPath, lhs._requestPath);
   std::swap(_requestArgs, lhs._requestArgs);
   std::swap(_htmlVersion, lhs._htmlVersion);
   std::swap(_headers, lhs._headers);
@@ -79,8 +80,8 @@ void Request::parseRequest() {
     return;
   }
 
-  _uri = trim(_uri, "/");
-  _requestArgs = parse_requestArgs(_uri);
+  _requestPath = trim(_requestPath, "/");
+  _requestArgs = parse_requestArgs(_requestPath);
 
   if (!parseRequestHeaders(requestStream)) {
     _isValid = false;
@@ -106,7 +107,7 @@ std::vector<std::string> Request::parse_requestArgs(const std::string uri) {
 
   pos = uri.find("?");
   if (pos != std::string::npos) {
-    _uri = uri.substr(0, pos);
+    _requestPath = uri.substr(0, pos);
     if (pos + 1) {
       argStr = uri.substr(pos + 1);
       args = split(argStr, "?");
@@ -117,7 +118,7 @@ std::vector<std::string> Request::parse_requestArgs(const std::string uri) {
 
 bool Request::parseRequestLine(const std::string &line) {
   std::istringstream lineStream(line);
-  if (!(lineStream >> _requestMethod >> _uri >> _htmlVersion))
+  if (!(lineStream >> _requestMethod >> _requestPath >> _htmlVersion))
     return false;
   return true;
 }
@@ -163,7 +164,7 @@ bool Request::parseRequestBody(const std::string &_rawRequest) {
 
 // TODO: max length of GET request 2048 bytes?
 bool Request::checkRequestValidity() const {
-  if (_requestMethod.empty() || _htmlVersion.empty() || _uri.empty())
+  if (_requestMethod.empty() || _htmlVersion.empty())
     return false;
   if (_requestMethod != "GET" && _requestMethod != "POST" &&
       _requestMethod != "DELETE")
@@ -180,7 +181,7 @@ const std::string &Request::get_rawRequest() const { return _rawRequest; }
 
 const std::string &Request::get_requestMethod() const { return _requestMethod; }
 
-const std::string &Request::get_uri() const { return _uri; }
+const std::string &Request::get_uri() const { return _requestPath; }
 
 const std::string Request::get_referer() const {
   auto referer = _headers.find("referer");
@@ -271,7 +272,7 @@ void Request::printRequest() const {
 #ifdef DEBUG
   std::cout << MSG_BORDER << "[Parsed Request]" << MSG_BORDER << std::endl;
   std::cout << "request method: " << get_requestMethod() << std::endl;
-  std::cout << "uri: " << get_uri() << std::endl;
+  std::cout << "request path: " << get_uri() << std::endl;
   std::cout << "html version: " << get_htmlVersion() << std::endl;
 
   std::cout << "<URI Args>" << std::endl;
