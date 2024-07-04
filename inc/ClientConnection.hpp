@@ -11,6 +11,7 @@ struct ClientInfo {
   char clientIP[INET_ADDRSTRLEN];
   int clientFD;
   bool keepAlive;
+  bool	unchunking;
   long int timeOut;
   long int lastRequestTime;
   size_t numRequests;

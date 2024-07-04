@@ -4,7 +4,7 @@ Chunked::Chunked()
 {
 	_contentLength = 0;
 	_bufferedLength = 0;
-	_justStarted = true;
+	_justStarted = false;
 	_totalLength = true;
 }
 
@@ -14,10 +14,12 @@ Chunked::Chunked(std::shared_ptr<Request>  first_request): _firstRequest(first_r
 	_bufferedLength = first_request->get_startContentLength();//first_request->get_rawRequest().length();
 	_fileName = first_request->get_bufferFile();
 	_boundary = first_request->get_boundary();
+	std::cout << _bufferedLength << "==" << _contentLength << std::endl;
 	if (_bufferedLength >= _contentLength)
 		_totalLength = true;
 	else
 		_totalLength = false;
+	_justStarted = false;
 }
 
 Chunked::Chunked(const Chunked &to_copy)
@@ -32,13 +34,17 @@ Chunked::~Chunked()
 Chunked	&Chunked::operator=(const Chunked &to_copy)
 {
 	_firstRequest = to_copy._firstRequest;
+	_justStarted = to_copy._justStarted;
 	if (_firstRequest)
 	{
 		_contentLength = _firstRequest->get_contentLen();
 		_bufferedLength = to_copy._bufferedLength;//_firstRequest->get_rawRequest().length();
 		_fileName = _firstRequest->get_bufferFile();
 		_boundary = _firstRequest->get_boundary();
-		_totalLength = false;
+		if (to_copy._bufferedLength >= to_copy._contentLength)
+			_totalLength = true;
+		else
+			_totalLength = false;
 	}
 	else
 	{
@@ -57,6 +63,7 @@ bool	Chunked::add_to_file(char *buffer, size_t buffer_len)
 	std::ofstream buffer_file;
 	size_t		until;
 
+	_justStarted = false;
 	buf_str = buffer;
 	buffer_file.open(_fileName, std::ios_base::app); // append instead of overwrite
 	until = buf_str.find(_boundary);
@@ -78,6 +85,7 @@ bool	Chunked::add_to_file(char *buffer, size_t buffer_len)
 //Deletes the file if it should be closed because of disconnected client or something but the full body wasn't received yet.
 void	Chunked::close_file(void)
 {
+	_justStarted = false;
 	if (!_totalLength)
 		std::remove(_fileName.c_str());
 }
