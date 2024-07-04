@@ -76,8 +76,8 @@ buffer_str = "";
 		}
 		if (buffer_str.find("\r\n\r\n") != std::string::npos)
 			break;
-		else // 
-			return; //
+		//else // 
+		//	return; //
 		n = recv(_serverClientSockets[index].fd, &buffer[buffer_str.length()], sizeof(buffer) - buffer_str.length(), MSG_DONTWAIT);
 	}
 	buffer[bytesRead] = '\0';
