@@ -71,23 +71,23 @@ std::string cgi::executeCGI(const std::string &path, const std::string &args,
     close(pipefd_out[1]);
     close(pipefd_in[0]);
 
-    // add argv variables: might have to be at the envpp
+    // add argv variables: might have to be at the envpp, from std::string vector in CgiParsing object to char * vector
     for (const std::string &arg : vars.get_argv()) {
       argv.push_back(const_cast<char *>(arg.c_str()));
     }
     argv.push_back(NULL);
-    // std::cerr << "LAUNCH\n";
+    // std::cerr << "DEBUG SHOW ARGVS PASSED:\n";
     // int i = -1;
     // while (argv[++i])
     // 	std::cerr << argv[i] << std::endl;
     // std::cerr << "LAUNCH2" << std::endl;
 
-    // add envp variables:
+    // add envp variables: , from std::string vector in CgiParsing object to char * vector
     for (const std::string &arg : vars.get_envp()) {
       envpp_new.push_back(const_cast<char *>(arg.c_str()));
     }
     envpp_new.push_back(NULL);
-    // std::cerr << "ENV\n";
+    // std::cerr << "DEBUG SHOW ENV PASSED:\n";
     // i = -1;
     // while (envpp_new[++i])
     // 	std::cerr << envpp_new[i] << std::endl;
@@ -104,9 +104,8 @@ std::string cgi::executeCGI(const std::string &path, const std::string &args,
     close(pipefd_out[1]);
     close(pipefd_in[0]);
 
-    // std::cout << "TO BE WRITTEN:" << vars.get_stdin() << "WRITTEN" <<
-    // std::endl;
-    write(pipefd_in[1], vars.get_stdin().c_str(), vars.get_stdin().length());
+    // std::cout << "TO BE WRITTEN IN STDIN OF EXECVE:" << vars.get_stdin() << "__WRITTEN__" << std::endl;
+    write(pipefd_in[1], vars.get_stdin().c_str(), vars.get_stdin().length()); //WRITES TO STDIN
     close(pipefd_in[1]);
     // for chunking check if body is empty otherwise keep.
     char buffer[BUFF_SIZE];

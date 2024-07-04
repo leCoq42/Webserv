@@ -1,6 +1,8 @@
 #pragma once
 
 #include "ServerConnection.hpp"
+#include "ServerStruct.hpp" //added
+#include "Chunked.hpp"
 #include <memory>
 #include <sys/poll.h>
 #include <vector>
@@ -13,6 +15,8 @@ struct ClientInfo {
   long int lastRequestTime;
   size_t numRequests;
   size_t maxRequests;
+  ServerStruct			*_config;		//port/server config for multiple server setup
+  Chunked		unchunker;				//unchunker object to save multipart requests into an bufferfile
 };
 
 class ClientConnection : ServerConnection, public virtual Log {
@@ -20,6 +24,7 @@ private:
   std::shared_ptr<ServerConnection> ptrServerConnection;
   std::vector<ClientInfo> _connectedClients;
   std::vector<pollfd> _serverClientSockets;
+  std::vector<ServerStruct*>	_serverConfigs; //added synchronous to pollfd vector
 
 public:
   ClientConnection();
@@ -27,7 +32,7 @@ public:
   ~ClientConnection();
 
   void handleInputEvent(int index);
-  void acceptClients(int server_fd);
+  void acceptClients(int server_fd, int index);
   void addSocketsToPollfdContainer();
   void setUpClientConnection();
   void removeClientSocket(int clientFD);

@@ -18,8 +18,8 @@
 
 Response::Response(ServerStruct &config) : _request(nullptr), _responseString(""), config(config), security(config) {}
 
-Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
-    : _request(request), _responseString(""), _contentType(""), config(config), security(config) {
+Response::Response(std::shared_ptr<Request> request, ServerStruct &config, std::string filename)
+    : _request(request), _responseString(""), _contentType(""), _bufferFile(filename), config(config), security(config) {
   handleRequest(request);
   printResponse();
 }
@@ -50,11 +50,11 @@ void Response::handleRequest(const std::shared_ptr<Request> &request) {
 	if (return_code)
 		request_path = security.getErrorPage(return_code); // wrong place
 	std::cout << "\nPATH:" << request_path << std::endl;
-    if (request_method == "GET")
+    if (request_method == "GET" && security.allowedMethod("GET"))
       handleGetRequest(request);
-    else if (request_method == "POST")
+    else if (request_method == "POST" && security.allowedMethod("POST"))
       handlePostRequest(request);
-    else if (request_method == "DELETE")
+    else if (request_method == "DELETE" && security.allowedMethod("DELETE"))
       handleDeleteRequest(request);
     else
       buildResponse(static_cast<int>(StatusCode::METHOD_NOT_ALLOWED),
@@ -69,12 +69,7 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
   std::string body;
   std::stringstream buffer;
   bool isCGI = false;
-//   std::filesystem::path path = "html/";
-//   std::filesystem::path resourcePath = request->get_uri();
 
-//   if (resourcePath.empty() || resourcePath == "/") {
-//     resourcePath = "index.html";
-//   }
   if (!request_path.empty() && request_path.has_extension()) {
     std::unordered_map<std::string, std::string>::const_iterator res =
         contentTypes.find(request_path.extension());
@@ -86,7 +81,6 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
     }
     _contentType = res->second;
     if (interpreters.find(request_path.extension()) == interpreters.end()) {
-    //   path.append(resourcePath.string());
       std::ifstream file(request_path, std::ios::binary);
       if (!file) {
         _responseString = buildResponse(static_cast<int>(StatusCode::NOT_FOUND),
@@ -97,15 +91,13 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
       body = buffer.str();
     } else {
       isCGI = true;
-      // path.append("cgi-bin/"); path.append("php-bin/");?
-    //   path.append(resourcePath.string());
       cgi CGI(_contentType);
       body = CGI.executeCGI(request_path, "", _request,
                             interpreters.at(request_path.extension()));
     }
-  } else // else if (true)? // dir listing on off
+  }
+  else // else if (true)? // dir listing on off
   {
-    // path.append(resourcePath.string());
     body = list_dir(request_path, request->get_uri(), request->get_referer());
   }
 
@@ -132,7 +124,6 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
   if (resourcePath.has_extension()) {
     if (interpreters.find(resourcePath.extension()) != interpreters.end()) {
       isCGI = true;
-      // path.append("php-bin/");
       path.append(resourcePath.string());
       cgi CGI(_contentType);
       body = CGI.executeCGI(path, "", _request,
@@ -150,15 +141,17 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
   return true;
 };
 
-const std::string UPLOAD_DIR = "./html/uploads/";
 void Response::handle_multipart() {
   // std::string bound = "--" + boundary;
   size_t pos = 0;
   std::string body = _request->get_body();
   std::string boundary = _request->get_boundary();
+  std::cout << "\nMULTIPART KEEP ALIVE!!!\n\n";
+  _request->keepAlive(true); // added
 
   std::cout << "<multipart/form-data>" << std::endl;
-
+	if (!_bufferFile.compare("")) //unrully long code barely readable, probably cut out the part that's usefull aswell. but it's hard to split out
+{
   while (pos < body.size()) {
     size_t start = std::search(body.begin() + pos, body.end(), boundary.begin(),
                                boundary.end()) -
@@ -169,8 +162,8 @@ void Response::handle_multipart() {
     size_t end = std::search(body.begin() + start + boundary.length(),
                              body.end(), boundary.begin(), boundary.end()) -
                  body.begin();
-    if (end == body.size())
-      break;
+    // if (end == body.size())
+    //   break;
 
     std::string part(body.begin() + start + boundary.length(),
                      body.begin() + end);
@@ -178,18 +171,27 @@ void Response::handle_multipart() {
     std::string headers = part.substr(0, header_end);
     std::string content = part.substr(header_end + 4);
 
-    size_t filename_pos = headers.find("filename=\"");
+    size_t filename_pos = headers.find("filename=\""); //this is tricky might not necessarily called like this
+	// if (!filename.compare("")) //hacky shit
+	// 	filename = "temp.txt";
+	std::string filename;
     if (filename_pos != std::string::npos) {
       size_t filename_end = headers.find("\"", filename_pos + 10);
-      std::string filename =
+      filename =
           headers.substr(filename_pos + 10, filename_end - filename_pos - 10);
+	}
+	else
+	// (!filename.compare("")) //hacky shit
+		filename = "temp.txt";
 
       std::cout << "filename: " << filename << std::endl;
       std::cout << "content: " << content << std::endl;
 
-      std::ofstream file(UPLOAD_DIR + filename, std::ios::binary);
+	  _request->set_bufferFile((std::string)request_path.parent_path().append(filename));
+	  _request->set_startContentLength(body.length());//content.length());
+      std::ofstream file((std::string)request_path.parent_path().append(filename), std::ios::binary);
       if (file.is_open()) {
-        file.write(content.c_str(), content.length());
+        file.write(content.c_str(), content.length());//body.c_str(), body.length());//content.c_str(), content.length());
         file.close();
         buildResponse(static_cast<int>(StatusCode::OK),
                       "File uploaded succesfully!", "");
@@ -203,8 +205,15 @@ void Response::handle_multipart() {
         buildResponse(static_cast<int>(StatusCode::INTERNAL_SERVER_ERROR),
                       "Error: file upload failed!", "");
       }
-    }
-    pos = end;
+	  pos = end;
+  }
+    // }
+  }
+  else
+  {
+	//should be able to run cgi as well
+	buildResponse(static_cast<int>(StatusCode::OK),
+                      "File uploaded succesfully!", "");
   }
 }
 

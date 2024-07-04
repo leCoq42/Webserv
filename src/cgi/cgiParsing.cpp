@@ -11,6 +11,7 @@ std::vector<std::string> meta_variables_names = {
     "SCRIPT_NAME",    "SERVER_NAME",     "SERVER_PORT",  "SERVER_PROTOCOL",
     "SERVER_SOFTWARE"};
 
+//started/unfinished function for editing the body for stdin, for example trimming boundaries and or removing additional headers
 bool CgiParsing::dismantle_body(std::string body, std::string boundary) {
   std::string contentDisposition;
   std::string contentType;
@@ -41,20 +42,13 @@ CgiParsing::CgiParsing(
 {
   int i;
 
-  if (environ)
-    ;
+	//Prefixes that are acceptable to be put into envp, see rfc documentation on specifications of what is accepted
   customizable_variables_names.push_back("X_");
-  // config specified
   customizable_variables_names.push_back("");
 
-  // std::cout <<
-  // ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>GHFSGD<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-  // << std::endl;
   i = -1;
-  // std::cout << "ADD to ENVPP" << std::endl;
-  // if (!interpreter.compare("/usr/bin/php-cgi"))
-  // 	add_to_envpp("REDIRECT_STATUS", "", ""); //Security restriction thrown
-  // MAGIC env variables for PHP REDIRECT_STATUS=true
+
+  // MAGIC env variables for PHP REDIRECT_STATUS=true, PHP gives an security error if these headers ar not included
   // SCRIPT_FILENAME=/var/www/... REQUEST_METHOD=POST GATEWAY_INTERFACE=CGI/1.1
   if (!_request->get_requestMethod().compare("POST")) {
     add_to_envpp("REQUEST_METHOD", _request->get_requestMethod(), "");
@@ -62,25 +56,29 @@ CgiParsing::CgiParsing(
   }
   add_to_envpp("REDIRECT_STATUS", "true", "");
   add_to_envpp("SCRIPT_FILENAME", path, "");
-  // add_to_envpp("GATEWAY_INTERFACE", "CGI/1.1", "");
-  // while (*(environ + ++i))
-  // 	add_to_envpp(((std::string)*(environ + i)).substr(0,
-  // ((std::string)*(environ + i)).find("=")), ((std::string)*(environ +
-  // i)).substr(((std::string)*(environ + i)).find("=") + 1), "");
+
+	if (environ) //environ is passed to function, but dont think it's desired to pass it to execve
+	{
+	// while (*(environ + ++i))
+	// 	add_to_envpp(((std::string)*(environ + i)).substr(0,
+	// ((std::string)*(environ + i)).find("=")), ((std::string)*(environ +
+	// i)).substr(((std::string)*(environ + i)).find("=") + 1), "");
+		;
+	}
+
+	//try to add all headers to envp, gets checked over what is permissioned
   for (const auto &[key, value] : headers)
     add_to_envpp(key, value, "");
-  // std::cout << "ADD to URI" << std::endl;
+
+  // adding variables to argv 
   if (interpreter.compare(""))
     add_to_uri(interpreter, "", "");
   add_to_uri(path, "", "");
   for (const auto &var : _request->get_requestArgs())
     add_to_uri(var, "", "");
-  // std::cout << "ADD to BODY" <<std::endl;
-  // std::cout << _request->get_body();
+
+	//Disect body if needed
   dismantle_body(_request->get_body(), _request->get_boundary());
-  // std::cout <<
-  // ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>GHFSGD<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-  // << std::endl;
 }
 
 CgiParsing::~CgiParsing(void) {}
@@ -102,43 +100,35 @@ bool validate_key(std::string key,
   return false;
 }
 
+// adds variable to envpp if permissed. additive is a specified prefix
 bool CgiParsing::add_to_envpp(std::string name, std::string value,
                               std::string additive) {
   std::string temp;
-  // std::cout << name << "=" << value;
   if (validate_key(additive + name, customizable_variables_names)) {
-    // std::cout << name << "=" << value;
     temp = additive + name;
     for (auto &c : temp)
       c = toupper(c);
     if (value.compare(""))
       temp += "=" + value;
-    // std::cout << temp << std::endl;
     std::replace(temp.begin(), temp.end(), '-', '_');
-    // std::cout << temp << std::endl;
     meta_variables.push_back(temp); // uri[name] = value;
-    // std::cout << " added" << std::endl;
     return true;
   }
-  // std::cout << " failed" << std::endl;
   return false;
 }
 
+// adds variable to argv. additive is specified prefix. commented part is to put rejected env variables in the argv
 bool CgiParsing::add_to_uri(std::string name, std::string value,
                             std::string additive) {
   std::string temp;
-  // std::cout << name << "=" << value;
   // if (!validate_key(additive + name, customizable_variables_names))
   // {
-  // std::cout << name << "=" << value;
   temp = additive + name;
   if (value.compare(""))
     temp += "=" + value;
   uri.push_back(temp); // uri[name] = value;
-  // std::cout << " added" << std::endl;
   return true;
   // }
-  // std::cout << " failed" << std::endl;
   // return false;
 }
 

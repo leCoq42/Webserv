@@ -37,7 +37,7 @@ enum class StatusCode {
 class Response {
 public:
   Response(ServerStruct &config);
-  Response(std::shared_ptr<Request> request, ServerStruct &config);
+  Response(std::shared_ptr<Request> request, ServerStruct &config, std::string filename);
   ~Response();
 
   Response(const Response &src);
@@ -54,6 +54,7 @@ private:
   std::shared_ptr<Request> _request;
   std::string _responseString;
   std::string _contentType;
+  std::string	_bufferFile;
   ServerStruct	&config;
   FileAcces		security;
   std::filesystem::path	request_path;
