@@ -1,6 +1,8 @@
 # Directories and File Names
 NAME        := webserv
 SRC_DIR     := src
+CGI_DIR     := cgi_src
+CGI_BIN_DIR := html/cgi-bin
 BUILD_DIR   := obj
 MAIN        := main.cpp
 RM          := rm -rf
@@ -70,7 +72,8 @@ clean:
 	
 fclean: clean
 	@$(RM) $(NAME)
-	@echo "$(RED)$(NAME) executable deleted$(RESET_COLOR)"
+	@$(RM) $(CGI_BIN_DIR)/*.cgi
+	@echo "$(YELLOW)$(NAME) executable deleted$(RESET_COLOR)"
 
 re: fclean all
 
