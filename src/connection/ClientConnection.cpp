@@ -69,16 +69,17 @@ void	reset_buffer(ClientInfo &client, bool end_of_request)
 // When the response is build again after Chunked _totalLength is true. Response will have acces to the full request BODY (without headers and boundaries) through the given filename. CGI should be able to be run then as well.
 // I think the filename has to be given to argv, (might be happening already).
 void ClientConnection::handleInputEvent(int index) {
-  std::string	buffer_str;
-  std::string	upload_file;
-  uint32_t		connectedClientFD = getIndexByClientFD(_serverClientSockets[index].fd);
-  ssize_t		bytesRead = _connectedClients[connectedClientFD].bytesRead;
+	std::string	buffer_str;
+	std::string	upload_file;
+	uint32_t		connectedClientFD = getIndexByClientFD(_serverClientSockets[index].fd);
+	ssize_t		bytesRead = _connectedClients[connectedClientFD].bytesRead;
 
 	int n = 0;
 	n = recv(_serverClientSockets[index].fd, _connectedClients[connectedClientFD].buffer, sizeof(_connectedClients[connectedClientFD].buffer) - bytesRead, MSG_DONTWAIT);
 	errno = 0;
 	buffer_str = "";
-	if (n > 0)
+	std::cout << "test" << std::endl;
+	if (n >= 0)
 	{
 		bytesRead += n;
 		_connectedClients[connectedClientFD].bytesRead = bytesRead;
@@ -88,7 +89,7 @@ void ClientConnection::handleInputEvent(int index) {
 	else
 		return ;
 	if (buffer_str.find("\r\n\r\n") == std::string::npos && !_connectedClients[connectedClientFD].unchunking)
-		return ; 
+		return ;
 	_connectedClients[connectedClientFD].unchunking = false;
 
 	//doesn't happen anymore:
@@ -294,7 +295,7 @@ void ClientConnection::checkConnectedClientsStatus() {
 	}
 }
 
-void ClientConnection::setUpClientConnection()
+void ClientConnection::setupClientConnection()
 {
 	while (true)
 	{
@@ -324,13 +325,13 @@ void ClientConnection::setUpClientConnection()
 				}
 			}
 		}
-		else if (poll_count == 0)
-			continue;
-		else if (globalSignalReceived == 1)
+		if (globalSignalReceived == 1)
 		{
 			logAdd("Signal received, closing server connection");
 			break;
 		}
+		else if (poll_count == 0)
+			continue;
 		else
 			logError("Failed to poll");
 	}

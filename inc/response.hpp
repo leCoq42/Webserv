@@ -55,9 +55,9 @@ private:
   std::string _responseString;
   std::string _contentType;
   std::string	_bufferFile;
-  ServerStruct	&config;
-  FileAcces		security;
-  std::filesystem::path	request_path;
+  ServerStruct	&_config;
+  FileAcces		_security;
+  std::filesystem::path	_requestPath;
 
   bool handleGetRequest(const std::shared_ptr<Request> &request);
   bool handlePostRequest(const std::shared_ptr<Request> &request);

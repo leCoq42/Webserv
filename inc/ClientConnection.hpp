@@ -37,7 +37,7 @@ public:
   void handleInputEvent(int index);
   void acceptClients(int server_fd, int index);
   void addSocketsToPollfdContainer();
-  void setUpClientConnection();
+  void setupClientConnection();
   void removeClientSocket(int clientFD);
   bool isServerSocket(int fd);
   void handlePollOutEvent(size_t index);

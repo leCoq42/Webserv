@@ -54,6 +54,6 @@ int main(int argc, char **argv) {
   std::cout << std::endl << std::endl;
   for (auto &server : server_structs)
     SS->setUpServerConnection(server);
-  CC.setUpClientConnection();
+  CC.setupClientConnection();
   delete[] buffer;
 }
