@@ -309,7 +309,7 @@ std::string Response::buildResponse(int status, const std::string &message,
     _responseString.append("Content-Type: " + get_contentType() + "\r\n");
     _responseString.append("\r\n" + body);
   }
-  _request->set_status(status::HANDLED);
+//   _request->set_status(status::HANDLED);
   return _responseString;
 }
 
