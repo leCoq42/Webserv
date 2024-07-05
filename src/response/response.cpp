@@ -1,6 +1,6 @@
 #include "response.hpp"
 #include "cgi.hpp"
-#include "defines.h"
+#include "defines.hpp"
 #include "dir_listing.hpp"
 #include <algorithm>
 #include <cstddef>

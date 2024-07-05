@@ -8,7 +8,7 @@
 
 class	Response;
 
-class	FileAcces
+class	FileAccess
 {
 	private:
 	std::filesystem::path				root;
@@ -19,14 +19,15 @@ class	FileAcces
 	std::vector<std::filesystem::path>	uploadedFiles;
 	std::vector<std::filesystem::path>	configPaths;
 	std::vector<LocationStruct>			configLocations;
+
 	public:
-	FileAcces(ServerStruct &config);
-	~FileAcces();
+	FileAccess(ServerStruct &config);
+	~FileAccess();
 	std::filesystem::path	root_or_path(std::filesystem::path path, std::filesystem::path current_root, std::filesystem::path root, LocationStruct	*current);
 	std::filesystem::path	isFilePermissioned(std::string uri, int &return_code);
 	std::filesystem::path	find_location(std::filesystem::path path, std::string uri, int &return_code);
 	std::filesystem::path	getErrorPage(int return_code);
 	bool					allowedMethod(std::string method);
-	void	addFile(std::filesystem::path file);
-	void	show_all_allowed(void);
+	void					addFile(std::filesystem::path file);
+	void					show_all_allowed(void);
 };

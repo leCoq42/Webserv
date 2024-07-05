@@ -51,13 +51,13 @@ public:
   void printResponse();
 
 private:
-  std::shared_ptr<Request> _request;
-  std::string _responseString;
-  std::string _contentType;
-  std::string	_bufferFile;
-  ServerStruct	&_config;
-  FileAcces		_security;
-  std::filesystem::path	_requestPath;
+  std::shared_ptr<Request>	_request;
+  std::string				_responseString;
+  std::string				_contentType;
+  std::string				_bufferFile;
+  ServerStruct				&_config;
+  FileAccess				_security;
+  std::filesystem::path		_requestPath;
 
   bool handleGetRequest(const std::shared_ptr<Request> &request);
   bool handlePostRequest(const std::shared_ptr<Request> &request);
