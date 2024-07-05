@@ -16,10 +16,10 @@
 #define KEEP_ALIVE_TIMOUT 10
 #define KEEP_ALIVE_N 100
 
-Response::Response(ServerStruct &config) : _request(nullptr), _responseString(""), config(config), security(config) {}
+Response::Response(ServerStruct &config) : _request(nullptr), _responseString(""), _config(config), _security(config) {}
 
 Response::Response(std::shared_ptr<Request> request, ServerStruct &config, std::string filename)
-    : _request(request), _responseString(""), _contentType(""), _bufferFile(filename), config(config), security(config) {
+    : _request(request), _responseString(""), _contentType(""), _bufferFile(filename), _config(config), _security(config) {
 	handleRequest(request);
 	printResponse();
 }
@@ -28,7 +28,7 @@ Response::~Response(){};
 
 Response::Response(const Response &src)
     : _request(src._request), _responseString(src._responseString),
-      _contentType(src._contentType), config(src.config), security(src.config) {}
+      _contentType(src._contentType), _config(src._config), _security(src._config) {}
 
 Response &Response::operator=(const Response &rhs) {
 	Response temp(rhs);
@@ -47,15 +47,15 @@ void Response::handleRequest(const std::shared_ptr<Request> &request)
 	int	return_code = 0;
 	std::string request_method = request->get_requestMethod();
 	try {
-		request_path = security.isFilePermissioned(request->get_uri(), return_code);
+		_requestPath = _security.isFilePermissioned(request->get_uri(), return_code);
 		if (return_code)
-			request_path = security.getErrorPage(return_code); // wrong place
-		std::cout << "\nPATH:" << request_path << std::endl;
-		if (request_method == "GET" && security.allowedMethod("GET"))
+			_requestPath = _security.getErrorPage(return_code); // wrong place
+		std::cout << "\nPATH:" << _requestPath << std::endl;
+		if (request_method == "GET" && _security.allowedMethod("GET"))
 			handleGetRequest(request);
-		else if (request_method == "POST" && security.allowedMethod("POST"))
+		else if (request_method == "POST" && _security.allowedMethod("POST"))
 			handlePostRequest(request);
-		else if (request_method == "DELETE" && security.allowedMethod("DELETE"))
+		else if (request_method == "DELETE" && _security.allowedMethod("DELETE"))
 			handleDeleteRequest(request);
 		else
 			buildResponse(static_cast<int>(StatusCode::METHOD_NOT_ALLOWED),
@@ -73,10 +73,10 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 	std::stringstream buffer;
 	bool isCGI = false;
 
-	if (!request_path.empty() && request_path.has_extension())
+	if (!_requestPath.empty() && _requestPath.has_extension())
 	{
 		std::unordered_map<std::string, std::string>::const_iterator res =
-			contentTypes.find(request_path.extension());
+			contentTypes.find(_requestPath.extension());
 		if (res == contentTypes.end())
 		{
 			_responseString =
@@ -85,9 +85,9 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 			return false;
 		}
 		_contentType = res->second;
-		if (interpreters.find(request_path.extension()) == interpreters.end())
+		if (interpreters.find(_requestPath.extension()) == interpreters.end())
 		{
-			std::ifstream file(request_path, std::ios::binary);
+			std::ifstream file(_requestPath, std::ios::binary);
 			if (!file)
 			{
 				_responseString = buildResponse(static_cast<int>(StatusCode::NOT_FOUND),
@@ -101,13 +101,13 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 		{
 			isCGI = true;
 			cgi CGI(_contentType);
-			body = CGI.executeCGI(request_path, "", _request,
-									interpreters.at(request_path.extension()));
+			body = CGI.executeCGI(_requestPath, "", _request,
+									interpreters.at(_requestPath.extension()));
 		}
 	}
 	else // else if (true)? // dir listing on off
 	{
-		body = list_dir(request_path, request->get_uri(), request->get_referer());
+		body = list_dir(_requestPath, request->get_uri(), request->get_referer());
 	}
 	_responseString = buildResponse(static_cast<int>(StatusCode::OK), "OK", body,
 									isCGI); // when cgi double padded?
@@ -200,9 +200,9 @@ void Response::handle_multipart() {
 			std::cout << "filename: " << filename << std::endl;
 			std::cout << "content: " << content << std::endl;
 
-			_request->set_bufferFile((std::string)request_path.parent_path().append(filename));
+			_request->set_bufferFile((std::string)_requestPath.parent_path().append(filename));
 			_request->set_startContentLength(body.length());//content.length());
-			std::ofstream file((std::string)request_path.parent_path().append(filename), std::ios::binary);
+			std::ofstream file((std::string)_requestPath.parent_path().append(filename), std::ios::binary);
 			if (file.is_open())
 			{
 				file.write(content.c_str(), content.length());//body.c_str(), body.length());//content.c_str(), content.length());
