@@ -78,7 +78,8 @@ void ClientConnection::handleInputEvent(int index) {
 	n = recv(_serverClientSockets[index].fd, _connectedClients[connectedClientFD].buffer, sizeof(_connectedClients[connectedClientFD].buffer) - bytesRead, MSG_DONTWAIT);
 	errno = 0;
 	buffer_str = "";
-	if (n > 0)
+	std::cout << "test" << std::endl;
+	if (n >= 0)
 	{
 		bytesRead += n;
 		_connectedClients[connectedClientFD].bytesRead = bytesRead;
@@ -88,7 +89,7 @@ void ClientConnection::handleInputEvent(int index) {
 	else
 		return ;
 	if (buffer_str.find("\r\n\r\n") == std::string::npos && !_connectedClients[connectedClientFD].unchunking)
-		return ; 
+		return ;
 	_connectedClients[connectedClientFD].unchunking = false;
 
 	//doesn't happen anymore:
@@ -294,7 +295,7 @@ void ClientConnection::checkConnectedClientsStatus() {
 	}
 }
 
-void ClientConnection::setUpClientConnection()
+void ClientConnection::setupClientConnection()
 {
 	while (true)
 	{
@@ -324,13 +325,13 @@ void ClientConnection::setUpClientConnection()
 				}
 			}
 		}
-		else if (poll_count == 0)
-			continue;
-		else if (globalSignalReceived == 1)
+		if (globalSignalReceived == 1)
 		{
 			logAdd("Signal received, closing server connection");
 			break;
 		}
+		else if (poll_count == 0)
+			continue;
 		else
 			logError("Failed to poll");
 	}
