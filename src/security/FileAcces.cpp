@@ -34,7 +34,7 @@ std::filesystem::path	FileAcces::root_or_path(std::filesystem::path path, std::f
 	{
 		non_root = path.string().substr(path.string().find_first_of(root) + ((std::string)root).length() + 1);
 		root_swapped_path = current_root;
-		root_swapped_path.append(non_root);
+		// root_swapped_path.append(non_root);
 	}
 	else
 		root_swapped_path = path;

@@ -46,12 +46,16 @@ void Response::handleRequest(const std::shared_ptr<Request> &request)
 {
 	int	return_code = 0;
 	std::string request_method = request->get_requestMethod();
+
 	try {
 		_requestPath = _security.isFilePermissioned(request->get_uri(), return_code);
-		if (return_code)
-			_requestPath = _security.getErrorPage(return_code); // wrong place
 		std::cout << "\nPATH:" << _requestPath << std::endl;
-		if (request_method == "GET" && _security.allowedMethod("GET"))
+		if (return_code)
+		{
+			_requestPath = _security.getErrorPage(return_code); // wrong place
+			buildResponse(static_cast<int>(return_code), "Not Found", "");
+		}
+		else if (request_method == "GET" && _security.allowedMethod("GET"))
 			handleGetRequest(request);
 		else if (request_method == "POST" && _security.allowedMethod("POST"))
 			handlePostRequest(request);
@@ -127,7 +131,7 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 	if (resourcePath.empty())
 		resourcePath = "index.html";
 
-	std::cout << "ReourcePatH:" << resourcePath << std::endl;
+	std::cout << "ReourcePath:" << resourcePath << std::endl;
 
 	if (resourcePath.has_extension())
 	{
