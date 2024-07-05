@@ -61,7 +61,7 @@ void ClientConnection::handleInputEvent(int index) {
   std::string	buffer_str;
   std::string	upload_file;
   ssize_t		bytesRead = 0;
-  uint32_t		connectedClientFD = getIndexByClientFD(_serverClientSockets[index].fd);
+  uint32_t connectedClientFD = getIndexByClientFD(_serverClientSockets[index].fd);
 
 	_connectedClients[connectedClientFD].unchunking = false;
 
