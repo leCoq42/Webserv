@@ -259,16 +259,28 @@ const bool &Request::get_keepAlive() const { return _keepAlive; }
 
 const std::string &Request::get_htmlVersion() const { return _htmlVersion; }
 
-const std::vector<std::string> &Request::get_requestArgs() const {
+const std::vector<std::string> &Request::get_requestArgs() const
+{
   return _requestArgs;
 }
 
-const std::unordered_map<std::string, std::string> &
-Request::get_headers() const {
+const std::unordered_map<std::string, std::string> &Request::get_headers() const
+{
   return _headers;
 }
 
 const bool &Request::get_validity() const { return _isValid; }
+
+
+const status	&Request::check_requestStatus() const
+{
+	return _requestStatus;
+}
+
+void	Request::set_requestStatus(status status)
+{
+	_requestStatus = status;
+}
 
 void Request::printRequest() const {
   std::cout << MSG_BORDER << "[Request]" << MSG_BORDER << std::endl;
