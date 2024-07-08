@@ -18,7 +18,6 @@ FileAccess::FileAccess(ServerStruct &config): config(config)
 
 FileAccess::~FileAccess()
 {
-
 }
 
 //Swaps out root if different root is given. And checks if path is within root.
@@ -52,7 +51,7 @@ std::filesystem::path	FileAccess::find_location(std::filesystem::path path, std:
 	current = &config.location;
 	current_root = root;
 	uri.insert(0, "/");
-	std::cout << "\nfind location:" << uri << "}{" << uri.substr(0, uri.find_last_of("/")) << std::endl;
+	std::cout << "find location:" << uri << "}{" << uri.substr(0, uri.find_last_of("/")) << std::endl;
 	if (path.string().find_last_of(root) != std::string::npos)
 	{
 		while (current)
@@ -146,5 +145,5 @@ void	FileAccess::show_all_allowed(void)
 	i = uploadedFiles.size();
 	while (i--)
 		std::cout << uploadedFiles[i] << std::endl;
-	std::cout << "Root:" << root;
+	std::cout << "Root:" << root << std::endl;
 }
