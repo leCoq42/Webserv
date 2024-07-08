@@ -2,6 +2,7 @@
 #include "request.hpp"
 #include "response.hpp"
 #include "signals.hpp"
+#include <cerrno>
 #include <memory>
 
 ClientConnection::ClientConnection() {}
@@ -71,14 +72,13 @@ void	reset_buffer(ClientInfo &client, bool end_of_request)
 void ClientConnection::handleInputEvent(int index) {
 	std::string	buffer_str;
 	std::string	upload_file;
-	uint32_t		connectedClientFD = getIndexByClientFD(_serverClientSockets[index].fd);
+	uint32_t	connectedClientFD = getIndexByClientFD(_serverClientSockets[index].fd);
 	ssize_t		bytesRead = _connectedClients[connectedClientFD].bytesRead;
 
 	int n = 0;
-	n = recv(_serverClientSockets[index].fd, _connectedClients[connectedClientFD].buffer, sizeof(_connectedClients[connectedClientFD].buffer) - bytesRead, MSG_DONTWAIT);
 	errno = 0;
+	n = recv(_serverClientSockets[index].fd, &_connectedClients[connectedClientFD].buffer[bytesRead], sizeof(_connectedClients[connectedClientFD].buffer) - bytesRead, MSG_DONTWAIT);
 	buffer_str = "";
-	std::cout << "test" << std::endl;
 	if (n >= 0)
 	{
 		bytesRead += n;
@@ -86,19 +86,20 @@ void ClientConnection::handleInputEvent(int index) {
 		_connectedClients[connectedClientFD].buffer[bytesRead] = '\0';
 		buffer_str = _connectedClients[connectedClientFD].buffer;
 	}
-	else
-		return ;
-	if (buffer_str.find("\r\n\r\n") == std::string::npos && !_connectedClients[connectedClientFD].unchunking)
-		return ;
-	_connectedClients[connectedClientFD].unchunking = false;
-
-	//doesn't happen anymore:
-	if (bytesRead == -1) {
+	else if (n < 0 && errno != EAGAIN)
+	{
 		logClientError("Failed to receive data from client",
 					_connectedClients[connectedClientFD].clientIP,
 					_serverClientSockets[index].fd);
 		return;
 	}
+	else
+		return ;
+
+	if (buffer_str.find("\r\n\r\n") == std::string::npos && !_connectedClients[connectedClientFD].unchunking)
+		return ;
+	_connectedClients[connectedClientFD].unchunking = false;
+
 	if (bytesRead == 0 &&
 		((_connectedClients[connectedClientFD].keepAlive == true) || !_connectedClients[connectedClientFD].unchunker._totalLength)){ //edited
 		logClientError("Client disconnected",
@@ -222,6 +223,7 @@ void ClientConnection::acceptClients(int serverFD, int index) {
 	struct sockaddr_in clientAddr;
 	socklen_t clientAddrLen = sizeof(clientAddr);
 	int clientFD = accept(serverFD, (struct sockaddr *)&clientAddr, &clientAddrLen);
+
 	if (clientFD == -1)
 	{
 		logError("Failed to connect on server");
@@ -237,8 +239,9 @@ void ClientConnection::acceptClients(int serverFD, int index) {
 
 void ClientConnection::removeClientSocket(int clientFD)
 {
-	if (!_connectedClients.size()) //hacky fix
+	if (_connectedClients.empty()) //hacky fix
 		return ;
+
 	close(clientFD);
 	logClientConnection("closed connection",
 						_connectedClients[getIndexByClientFD(clientFD)].clientIP,
@@ -246,7 +249,8 @@ void ClientConnection::removeClientSocket(int clientFD)
 	int indexConnectedClients = getIndexByClientFD(clientFD);
 	_connectedClients[indexConnectedClients].unchunker.close_file();
 	_connectedClients.erase(indexConnectedClients + _connectedClients.begin());
-	int	i = 0; //added
+
+	int i = 0; //added
 	for (auto it = _serverClientSockets.begin(); it != _serverClientSockets.end(); ++it)
 	{
 		if (it->fd == clientFD)
@@ -299,6 +303,7 @@ void ClientConnection::setupClientConnection()
 {
 	while (true)
 	{
+		errno = 0;
 		_serverClientSockets.clear();
 		_serverConfigs.clear(); //added
 		addSocketsToPollfdContainer();
@@ -330,9 +335,9 @@ void ClientConnection::setupClientConnection()
 			logAdd("Signal received, closing server connection");
 			break;
 		}
-		else if (poll_count == 0)
-			continue;
+		else if (poll_count < 0)
+			logError("Failed to poll.");
 		else
-			logError("Failed to poll");
+			continue;
 	}
 }

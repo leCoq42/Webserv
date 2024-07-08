@@ -8,7 +8,7 @@ class ServerStruct: public ProtoStruct
 	ParserStruct	*source;
 	public:
 	int				nth_server;
-	std::string				id;
+	std::string		id;
 	ConfigContent	port;
 	ConfigContent	host;
 	ConfigContent	names;
@@ -17,12 +17,13 @@ class ServerStruct: public ProtoStruct
 	ConfigContent	error_page; //list
 	ConfigContent	_return; //list
 	ConfigContent	allow_methods;
-	ServerStruct(void);
+
+	ServerStruct();
 	ServerStruct(ParserStruct *parser_struct, int nth_server);
 	ServerStruct(const ServerStruct &to_copy);
+	~ServerStruct();
 	ServerStruct	&operator=(const ServerStruct &to_copy);
-	~ServerStruct(void);
-	void	show_self(void);
+	void			show_self(void);
 };
 
 int	load_in_servers(ParserStruct *PS, std::list<ServerStruct> &server_structs);

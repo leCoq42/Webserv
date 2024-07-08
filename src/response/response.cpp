@@ -1,6 +1,6 @@
 #include "response.hpp"
 #include "cgi.hpp"
-#include "defines.h"
+#include "defines.hpp"
 #include "dir_listing.hpp"
 #include <algorithm>
 #include <cstddef>
@@ -24,7 +24,8 @@ Response::Response(std::shared_ptr<Request> request, ServerStruct &config, std::
 	printResponse();
 }
 
-Response::~Response(){};
+Response::~Response()
+{}
 
 Response::Response(const Response &src)
     : _request(src._request), _responseString(src._responseString),
@@ -156,7 +157,7 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 	}
 	buildResponse(static_cast<int>(StatusCode::OK), "OK", body, isCGI);
 	return true;
-};
+}
 
 void Response::handle_multipart() {
 	// std::string bound = "--" + boundary;
