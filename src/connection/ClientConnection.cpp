@@ -223,6 +223,7 @@ void ClientConnection::acceptClients(int serverFD, int index) {
 	struct sockaddr_in clientAddr;
 	socklen_t clientAddrLen = sizeof(clientAddr);
 	int clientFD = accept(serverFD, (struct sockaddr *)&clientAddr, &clientAddrLen);
+
 	if (clientFD == -1)
 	{
 		logError("Failed to connect on server");
@@ -238,8 +239,9 @@ void ClientConnection::acceptClients(int serverFD, int index) {
 
 void ClientConnection::removeClientSocket(int clientFD)
 {
-	if (!_connectedClients.size()) //hacky fix
+	if (_connectedClients.empty()) //hacky fix
 		return ;
+
 	close(clientFD);
 	logClientConnection("closed connection",
 						_connectedClients[getIndexByClientFD(clientFD)].clientIP,
@@ -247,7 +249,8 @@ void ClientConnection::removeClientSocket(int clientFD)
 	int indexConnectedClients = getIndexByClientFD(clientFD);
 	_connectedClients[indexConnectedClients].unchunker.close_file();
 	_connectedClients.erase(indexConnectedClients + _connectedClients.begin());
-	int	i = 0; //added
+
+	int i = 0; //added
 	for (auto it = _serverClientSockets.begin(); it != _serverClientSockets.end(); ++it)
 	{
 		if (it->fd == clientFD)
@@ -300,6 +303,7 @@ void ClientConnection::setupClientConnection()
 {
 	while (true)
 	{
+		errno = 0;
 		_serverClientSockets.clear();
 		_serverConfigs.clear(); //added
 		addSocketsToPollfdContainer();
@@ -331,9 +335,9 @@ void ClientConnection::setupClientConnection()
 			logAdd("Signal received, closing server connection");
 			break;
 		}
-		else if (poll_count == 0)
-			continue;
+		else if (poll_count < 0)
+			logError("Failed to poll.");
 		else
-			logError("Failed to poll");
+			continue;
 	}
 }
