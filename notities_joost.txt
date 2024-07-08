@@ -1,0 +1,19 @@
+Probleem, Foto's uploaden gaat fout:
+  oorzaak: Request en chunking werkt met std::string. Dus \0 bytes die onderdeel van de request zijn zorgen voor incomplete requests. Staan wel in de char buffer[n] maar gaat niet lekker naar buffer_str.
+  oplossing?: Beste is om chunking aan te passen dat het niet met std::string werkt zodat de \0 bytes erdoor heen kunnen.
+
+Mogelijk probleem?: POLL Error
+  oorzaak: door voor het legen van de pollfd iedere keer te pollen kan het zijn dat er wordt over gepollt?
+  mogelijk neven effecten: indien er nu niet wordt gepolld iedere keer kan de reponsiveness en of zelfs hangen voorkomen. Een erg lange post of request kan niet te veel in de weg zitten voor andere requests.
+
+Return codes en geconfigureerde error pages.
+  de goede error page moet bij de goede error code gestopt worden. en omgedraaid (std::filesystem::path	FileAcces::getErrorPage(int return_code))
+
+Config van paths is te consvertatief blijkt.
+  implaats van exacte matches zouden ook gedeeltelijke matches moeten doorkomen. Heeft samenhang met auto index, auto index checkt of de gevraagde directory er is of niet. (dir_listing.cpp)
+
+Ik weet niet precies wat ze hiermee willen. Weet wel dat het nog niet geimplenteerd is. Had ze niet direct uit de subject gehaald dat dit zo moest
+  - any file with .bla as extension must answer to POST request by calling the cgi_test executable
+  - /post_body must answer anything to POST request with a maxBody of 100
+  - /put_test/* must answer to PUT request and save files to a directory of your choice
+Denk dat het samenhangt met (Define a HTTP redirection.) en (Set a default file to answer if the request is a directory.){index in config file?}
