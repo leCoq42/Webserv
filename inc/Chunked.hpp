@@ -1,7 +1,6 @@
 #pragma once
 
 #include "request.hpp"
-#include <fstream>
 #include <memory>
 
 //Constructed on firstRequest 
@@ -13,10 +12,11 @@ class Chunked
 	size_t			_bufferedLength;	//total length saved to file
 	std::string		_fileName;			//the file name where there is saved too
 	std::string		_boundary;			//the boundary as given in the first request
+
 	public:
-	std::shared_ptr<Request>	_firstRequest;	//copy of the first request
-	bool			_totalLength;		//false while full length is not reached
+	std::shared_ptr<Request>	_firstRequest; //copy of the first request
 	bool			_justStarted;
+	bool			_totalLength; //false while full length is not reached
 	Chunked();
 	Chunked(std::shared_ptr<Request> first_request);
 	Chunked(const Chunked &to_copy);

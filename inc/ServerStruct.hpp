@@ -5,18 +5,19 @@
 class ServerStruct: public ProtoStruct
 {
 	private:
-	ParserStruct	*source;
+	ParserStruct	*_source;
+
 	public:
-	int				nth_server;
-	std::string		id;
-	ConfigContent	port;
-	ConfigContent	host;
-	ConfigContent	names;
-	ConfigContent	root;
-	ConfigContent	location;
-	ConfigContent	error_page; //list
+	int				_serverNum;
+	std::string		_id;
+	ConfigContent	_port;
+	ConfigContent	_host;
+	ConfigContent	_names;
+	ConfigContent	_root;
+	ConfigContent	_location;
+	ConfigContent	_errorPage; //list
 	ConfigContent	_return; //list
-	ConfigContent	allow_methods;
+	ConfigContent	_allowMethods;
 
 	ServerStruct();
 	ServerStruct(ParserStruct *parser_struct, int nth_server);

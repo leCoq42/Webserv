@@ -4,11 +4,12 @@
 class ParserStruct
 {
 	private:
-	ParserItem	*head;
-	ParserItem	*current;
-	int			add_as_child;
+	ParserItem	*_head;
+	ParserItem	*_current;
+	int			_addAsChild;
+	size_t		_nServers;
+
 	public:
-	int		n_servers;
 	ParserStruct(void);
 	~ParserStruct();
 	void	display(bool with_content);
@@ -17,4 +18,5 @@ class ParserStruct
 	void	to_parent(void);
 	int		count_servers(void);
 	ParserItem	*go_to_nth(int n);
+	size_t	get_nServers();
 };

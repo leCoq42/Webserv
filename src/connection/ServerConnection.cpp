@@ -19,7 +19,7 @@ void ServerConnection::initServerInfo(ServerStruct &serverStruct, ServerInfo &in
 	std::cout << "SERVERINFO:" <<  std::endl;
 	info._config->show_self(); // added
   info.serverPort = atoi(it->c_str());
-  info.serverID = serverStruct.id;
+  info.serverID = serverStruct._id;
   server_addr.sin_family = AF_INET;
   server_addr.sin_addr.s_addr = INADDR_ANY;
   server_addr.sin_port = htons(atoi(it->c_str()));
@@ -54,8 +54,8 @@ void ServerConnection::listenIncomingConnections(ServerInfo &info) {
 }
 
 void ServerConnection::setUpServerConnection(ServerStruct &serverStruct) {
-  std::list<std::string>::iterator it = serverStruct.port.content_list.begin();
-  for (; it != serverStruct.port.content_list.end(); ++it) {
+  std::list<std::string>::iterator it = serverStruct._port.content_list.begin();
+  for (; it != serverStruct._port.content_list.end(); ++it) {
     if (atoi(it->c_str()) > 0 && atoi(it->c_str()) < 65536) {
       ServerInfo info;
       initServerInfo(serverStruct, info, it);
@@ -66,7 +66,7 @@ void ServerConnection::setUpServerConnection(ServerStruct &serverStruct) {
       logServerConnection("Server created", info.serverID, info.serverFD, info.serverPort);
     } 
     else {
-      logServerError("Invalid port number", serverStruct.id, atoi(it->c_str()));
+      logServerError("Invalid port number", serverStruct._id, atoi(it->c_str()));
     }
   }
 }

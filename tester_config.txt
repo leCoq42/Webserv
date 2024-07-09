@@ -3,20 +3,18 @@ server A {
 		listen				8081;
 		listen				8082;
 		listen				8083;
+
 		server_name			our-site.org www.our-site.org;
 		error_page			404 error/404.html;
-		error_page			402 /error/402.html;
+		error_page			402 error/402.html;
 		return				301 https://$host$request_url;
-		allow_methods		GET POST DELETE;
-		root				YoupiBanane;
-
-		location / {
-			allow_methods		GET;
-			autoindex			on;
-		}
+		allow_methods		GET;
+		root				YoupiBanane/;
+		index				index.html;
 
 		location /directory {
-			autoindex			off;
+			allow_methods		GET;
+			root				YoupiBanane/;
 			index				youpi.bad_extension;
 		}
 }

@@ -24,8 +24,7 @@ Response::Response(std::shared_ptr<Request> request, ServerStruct &config, std::
 	printResponse();
 }
 
-Response::~Response()
-{}
+Response::~Response() {}
 
 Response::Response(const Response &src)
     : _request(src._request), _responseString(src._responseString),
@@ -80,27 +79,22 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 
 	if (!_requestPath.empty() && _requestPath.has_extension())
 	{
-		std::unordered_map<std::string, std::string>::const_iterator res =
+		std::unordered_map<std::string, std::string>::const_iterator it =
 			contentTypes.find(_requestPath.extension());
-		if (res == contentTypes.end())
+		if (it == contentTypes.end())
 		{
 			_responseString =
 				buildResponse(static_cast<int>(StatusCode::UNSUPPORTED_MEDIA_TYPE),
-								"Unsupported Media Type", "");
+				  "Unsupported Media Type", "");
 			return false;
 		}
-		_contentType = res->second;
+		_contentType = it->second;
+
 		if (interpreters.find(_requestPath.extension()) == interpreters.end())
 		{
-			std::ifstream file(_requestPath, std::ios::binary);
-			if (!file)
-			{
-				_responseString = buildResponse(static_cast<int>(StatusCode::NOT_FOUND),
-												"Not Found", "");
+			body = readFileToBody();
+			if (body.empty())
 				return false;
-			}
-			buffer << file.rdbuf();
-			body = buffer.str();
 		}
 		else
 		{
@@ -115,7 +109,7 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 		body = list_dir(_requestPath, request->get_uri(), request->get_referer());
 	}
 	_responseString = buildResponse(static_cast<int>(StatusCode::OK), "OK", body,
-									isCGI); // when cgi double padded?
+			 						isCGI); // when cgi double padded?
 	return true;
 }
 
@@ -132,7 +126,7 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 	if (resourcePath.empty())
 		resourcePath = "index.html";
 
-	std::cout << "ReourcePath:" << resourcePath << std::endl;
+	std::cout << "ResourcePath:" << resourcePath << std::endl;
 
 	if (resourcePath.has_extension())
 	{
@@ -159,17 +153,34 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 	return true;
 }
 
+const std::string	Response::readFileToBody()
+{
+	std::stringstream buffer;
+	std::string body;
+	std::ifstream file(_requestPath, std::ios::binary);
+
+	if (!file)
+	{
+		_responseString = buildResponse(static_cast<int>(StatusCode::NOT_FOUND),
+										"Not Found", "");
+		return nullptr;
+	}
+	buffer << file.rdbuf();
+	body = buffer.str();
+	return body;
+}
+
 void Response::handle_multipart() {
 	// std::string bound = "--" + boundary;
 	size_t pos = 0;
 	std::string body = _request->get_body();
 	std::string boundary = _request->get_boundary();
-	std::cout << "\nMULTIPART KEEP ALIVE!!!\n\n";
+
 	_request->keepAlive(true); // added
 
-	std::cout << "<multipart/form-data>" << std::endl;
-	if (!_bufferFile.compare("")) //unrully long code barely readable, probably cut out the part that's usefull aswell. but it's hard to split out
+	if (_bufferFile.empty()) //unrully long code barely readable, probably cut out the part that's usefull aswell. but it's hard to split out
 	{
+		std::cout << "MULTIPART REQUEST!!!" << std::endl;
 		while (pos < body.size())
 		{
 			size_t start = std::search(body.begin() + pos,body.end(),
@@ -190,8 +201,6 @@ void Response::handle_multipart() {
 			std::string content = part.substr(header_end + 4);
 
 			size_t filename_pos = headers.find("filename=\""); //this is tricky might not necessarily called like this
-			// if (!filename.compare("")) //hacky shit
-			// 	filename = "temp.txt";
 			std::string filename;
 			if (filename_pos != std::string::npos)
 			{
@@ -199,30 +208,23 @@ void Response::handle_multipart() {
 				filename = headers.substr(filename_pos + 10, filename_end - filename_pos - 10);
 			}
 			else
-				// (!filename.compare("")) //hacky shit
 				filename = "temp.txt";
 
-			std::cout << "filename: " << filename << std::endl;
+			std::cout << "filename: " << "html/uploads/" + filename << std::endl;
 			std::cout << "content: " << content << std::endl;
 
-			_request->set_bufferFile((std::string)_requestPath.parent_path().append(filename));
+			_request->set_bufferFile(_requestPath.root_path().append("html/uploads/" + filename));
 			_request->set_startContentLength(body.length());//content.length());
-			std::ofstream file((std::string)_requestPath.parent_path().append(filename), std::ios::binary);
+			std::ofstream file("html/uploads/" + filename, std::ios::binary);
 			if (file.is_open())
 			{
 				file.write(content.c_str(), content.length());//body.c_str(), body.length());//content.c_str(), content.length());
 				file.close();
 				buildResponse(static_cast<int>(StatusCode::OK),
 							"File uploaded succesfully!", "");
-				// std::cout << "Content-Type: text/html/r/n/r/n";
-				// std::cout << "<html><body>File uploaded
-				// succesfully!</body></html>";
 			}
 			else
 			{
-				// std::cout << "Content-Type: text/html/r/n/r/n";
-				// std::cout << "<html><body>Error: file upload
-				// failed!</body></html>";
 				buildResponse(static_cast<int>(StatusCode::INTERNAL_SERVER_ERROR),
 							"Error: file upload failed!", "");
 			}
@@ -343,7 +345,7 @@ std::string Response::buildResponse(int status, const std::string &message,
 		_responseString.append("Content-Type: " + get_contentType() + "\r\n");
 		_responseString.append("\r\n" + body);
 	}
-	_request->set_requestStatus(status::HANDLED);
+	_request->set_requestStatus(status::COMPLETE);
 	return _responseString;
 }
 
