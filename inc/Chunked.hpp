@@ -14,9 +14,9 @@ class Chunked
 	std::string		_boundary;			//the boundary as given in the first request
 
 	public:
-	std::shared_ptr<Request>	_firstRequest;	//copy of the first request
+	std::shared_ptr<Request>	_firstRequest; //copy of the first request
 	bool			_justStarted;
-	bool			_totalLength;		//false while full length is not reached
+	bool			_totalLength; //false while full length is not reached
 	Chunked();
 	Chunked(std::shared_ptr<Request> first_request);
 	Chunked(const Chunked &to_copy);

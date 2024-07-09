@@ -41,7 +41,7 @@ class Request {
 		const size_t		&get_startContentLength() const; //added
 		const bool			&get_keepAlive() const;
 		const bool			&get_validity() const;
-		const status			&get_requestStatus() const;
+		const status		&get_requestStatus() const;
 		void				printRequest() const;
 		void				keepAlive(bool keepAlive); //added
 		void				set_bufferFile(std::string buffer_file); //added
@@ -54,11 +54,11 @@ class Request {
 		std::string			_requestPath;
 		std::string			_htmlVersion;
 		std::vector<std::string>	_requestArgs;
-		std::unordered_map<std::string, std::string> _headers;
+		std::unordered_map<std::string, std::string>	_headers;
 		bool				_keepAlive;
 		bool				_isValid;
 		std::string			_body;
-		std::unordered_map<std::string, std::string> _cgiEnv;
+		std::unordered_map<std::string, std::string>	_cgiEnv;
 		std::string			_bufferFile;//added
 		size_t				_startContentLength;
 		status				_requestStatus = status::INCOMPLETE;

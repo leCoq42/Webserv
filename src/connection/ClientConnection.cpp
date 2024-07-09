@@ -51,7 +51,7 @@ void ClientConnection::manageKeepAlive(int index) {
 	}
 }
 
-void	reset_buffer(ClientInfo &client, bool end_of_request)
+void	reset_buffer(Client &client, bool end_of_request)
 {
 	client.buffer[0] = 0;
 	client.bytesRead = 0;
@@ -158,7 +158,7 @@ void ClientConnection::handleInputEvent(int index) {
 			_connectedClients[connectedClientFD].unchunking = true;
 			std::cout<< "skip response WILL IT STAY ALIVE" << _connectedClients.size() << std::endl;
 			manageKeepAlive(index);
-			std::cout<< "skip response IT STAYs ALIVE" << _connectedClients.size() << std::endl;
+			std::cout<< "skip response IT STAYS ALIVE" << _connectedClients.size() << std::endl;
 			return reset_buffer(_connectedClients[connectedClientFD], false);
 		}
 	}
@@ -186,8 +186,6 @@ void ClientConnection::handleInputEvent(int index) {
 	manageKeepAlive(index);
 }
 
-
-
 void ClientConnection::addSocketsToPollfdContainer()
 {
 	for (size_t i = 0; i < _ptrServerConnection->_connectedServers.size(); i++) {
@@ -206,9 +204,9 @@ void ClientConnection::addSocketsToPollfdContainer()
 	}
 }
 
-ClientInfo ClientConnection::initClientInfo(int clientFD, sockaddr_in clientAddr)
+Client ClientConnection::initClientInfo(int clientFD, sockaddr_in clientAddr)
 {
-	ClientInfo clientInfo;
+	Client clientInfo;
 	memset(&clientInfo, 0, sizeof(clientInfo));
 	time_t currentTime;
 	time(&currentTime);

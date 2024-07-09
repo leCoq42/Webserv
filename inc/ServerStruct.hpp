@@ -8,7 +8,7 @@ class ServerStruct: public ProtoStruct
 	ParserStruct	*_source;
 
 	public:
-	int				_nthServer;
+	int				_serverNum;
 	std::string		_id;
 	ConfigContent	_port;
 	ConfigContent	_host;

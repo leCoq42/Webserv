@@ -51,45 +51,46 @@ public:
   void printResponse();
 
 private:
-  std::shared_ptr<Request>	_request;
-  std::string				_responseString;
-  std::string				_contentType;
-  std::string				_bufferFile;
-  ServerStruct				&_config;
-  FileAccess				_security;
-  std::filesystem::path		_requestPath;
+	std::shared_ptr<Request>	_request;
+	std::string					_responseString;
+	std::string					_contentType;
+	std::string					_bufferFile;
+	ServerStruct				&_config;
+	FileAccess					_security;
+	std::filesystem::path		_requestPath;
 
-  bool handleGetRequest(const std::shared_ptr<Request> &request);
-  bool handlePostRequest(const std::shared_ptr<Request> &request);
-  bool handleDeleteRequest(const std::shared_ptr<Request> &request);
+	bool handleGetRequest(const std::shared_ptr<Request> &request);
+	bool handlePostRequest(const std::shared_ptr<Request> &request);
+	bool handleDeleteRequest(const std::shared_ptr<Request> &request);
 
-  void handle_multipart();
-  std::unordered_map<std::string, std::string>
-  get_args(std::string requestBody, std::string contentType);
-  std::vector<std::string> get_parts(std::string requestBody,
-                                     std::string boundary);
+	void handle_multipart();
+	std::unordered_map<std::string, std::string>
+	get_args(std::string requestBody, std::string contentType);
+	std::vector<std::string> get_parts(std::string requestBody,
+									std::string boundary);
+	const std::string	readFileToBody();
 
-  std::string buildResponse(int status, const std::string &message,
-                            const std::string &body, bool isCGI = false);
+	std::string buildResponse(int status, const std::string &message,
+								const std::string &body, bool isCGI = false);
 
-  static const inline std::unordered_map<std::string, std::string> contentTypes{
-      {".html", "text/html"},
-      {".txt", "text/plain"},
+	static const inline std::unordered_map<std::string, std::string> contentTypes{
+		{".html", "text/html"},
+		{".txt", "text/plain"},
 
-      {".jpeg", "image/jpeg"},
-      {".jpg", "image/jpg"},
-      {".png", "image/png"},
-      {".gif", "image/gif"},
+		{".jpeg", "image/jpeg"},
+		{".jpg", "image/jpg"},
+		{".png", "image/png"},
+		{".gif", "image/gif"},
 
-      {".cgi", "text/html"},
-      {".php", "text/html"},
-      {".py", "text/html"},
+		{".cgi", "text/html"},
+		{".php", "text/html"},
+		{".py", "text/html"},
 
-      {"x-www-form-urlencoded", "application/x-www-form-urlencoded"},
-      {"form-data", "multipart/form-data"}};
+		{"x-www-form-urlencoded", "application/x-www-form-urlencoded"},
+		{"form-data", "multipart/form-data"}};
 
-  static const inline std::unordered_map<std::string, std::string> interpreters{
-      {".cgi", ""},
-      {".py", "/usr/bin/python3"},
-      {".php", "/ usr / lib / cgi - bin / php"}};
+	static const inline std::unordered_map<std::string, std::string> interpreters{
+		{".cgi", ""},
+		{".py", "/usr/bin/python3"},
+		{".php", "/ usr / lib / cgi - bin / php"}};
 };

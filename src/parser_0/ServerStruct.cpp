@@ -2,14 +2,14 @@
 
 ServerStruct::ServerStruct(void)
 {
-	this->_nthServer = -1;
+	this->_serverNum = -1;
 	this->_source = 0;
 	this->head = 0;
 }
 
 ServerStruct::ServerStruct(ParserStruct *parser_struct, int nth_server)
 {
-	this->_nthServer = nth_server;
+	this->_serverNum = nth_server;
 	this->_source = parser_struct;
 	this->head = parser_struct->go_to_nth(nth_server);
 	this->_id = this->head->getContent();
@@ -32,7 +32,7 @@ ServerStruct::ServerStruct(const ServerStruct &to_copy)
 
 ServerStruct	&ServerStruct::operator=(const ServerStruct &to_copy)
 {
-	this->_nthServer = to_copy._nthServer;
+	this->_serverNum = to_copy._serverNum;
 	this->_source = to_copy._source;
 	this->head = to_copy.head;
 	this->_port = to_copy._port;
@@ -51,7 +51,7 @@ ServerStruct::~ServerStruct(void)
 	//std::cout << "Deleting server struct." << std::endl;
 	// if (this->location.childs)
 	// 	delete (LocationStruct *)this->location.childs;
-	this->_nthServer = -1;
+	this->_serverNum = -1;
 }
 
 void	ServerStruct::show_self(void)
