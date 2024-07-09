@@ -13,23 +13,23 @@ std::vector<std::string> meta_variables_names = {
 
 //started/unfinished function for editing the body for stdin, for example trimming boundaries and or removing additional headers
 bool CgiParsing::dismantle_body(std::string body, std::string boundary) {
-  std::string contentDisposition;
-  std::string contentType;
+	std::string contentDisposition;
+	std::string contentType;
 
-  if (boundary.empty())
-    ;
-  // std::cout << "BOUNDARY:" << boundary << std::endl;
-  // std::cout << "BODY:" << std::endl << body << std::endl;
-  // std::cout << "End of BODY." << std::endl;
-  // contentDisposition = body.substr(body.find("Content-Disposition: "),
-  // body.substr(body.find("Content-Disposition: ")).find("\n")); std::cout <<
-  // "CONTENT-DISPOSITION:" << contentDisposition << std::endl; contentType =
-  // body.substr(body.find("Content-Type: "),
-  // body.substr(body.find("Content-Type: ")).find("\n")); std::cout <<
-  // "CONTENT-TYPE:" << contentType << std::endl; body = body.find("\r\n\r\n");
-  // std::cout << "body:" << body << std::endl;
-  this->body = body;
-  return (false);
+	if (boundary.empty())
+		;
+	// std::cout << "BOUNDARY:" << boundary << std::endl;
+	// std::cout << "BODY:" << std::endl << body << std::endl;
+	// std::cout << "End of BODY." << std::endl;
+	// contentDisposition = body.substr(body.find("Content-Disposition: "),
+	// body.substr(body.find("Content-Disposition: ")).find("\n")); std::cout <<
+	// "CONTENT-DISPOSITION:" << contentDisposition << std::endl; contentType =
+	// body.substr(body.find("Content-Type: "),
+	// body.substr(body.find("Content-Type: ")).find("\n")); std::cout <<
+	// "CONTENT-TYPE:" << contentType << std::endl; body = body.find("\r\n\r\n");
+	// std::cout << "body:" << body << std::endl;
+	this->_body = body;
+	return (false);
 }
 
 //$_GET['name'] = hoi php file is argv name=hoi :: $_SERVER['name'] = doei php
@@ -111,7 +111,7 @@ bool CgiParsing::add_to_envpp(std::string name, std::string value,
     if (value.compare(""))
       temp += "=" + value;
     std::replace(temp.begin(), temp.end(), '-', '_');
-    meta_variables.push_back(temp); // uri[name] = value;
+    _metaVars.push_back(temp); // uri[name] = value;
     return true;
   }
   return false;
@@ -126,14 +126,14 @@ bool CgiParsing::add_to_uri(std::string name, std::string value,
   temp = additive + name;
   if (value.compare(""))
     temp += "=" + value;
-  uri.push_back(temp); // uri[name] = value;
+  _uri.push_back(temp); // uri[name] = value;
   return true;
   // }
   // return false;
 }
 
-std::vector<std::string> &CgiParsing::get_argv() { return (uri); }
+std::vector<std::string> &CgiParsing::get_argv() { return (_uri); }
 
-std::vector<std::string> &CgiParsing::get_envp() { return (meta_variables); }
+std::vector<std::string> &CgiParsing::get_envp() { return (_metaVars); }
 
-std::string &CgiParsing::get_stdin() { return (body); }
+std::string &CgiParsing::get_stdin() { return (_body); }

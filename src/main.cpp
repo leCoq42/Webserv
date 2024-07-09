@@ -27,7 +27,7 @@ void parse(Parser *parser, std::list<ServerStruct> *server_structs,
     error_exit(2);
   if (!parser->parse_content_to_struct(*buffer, file_len))
     error_exit(3);
-  std::cout << parser->PS.n_servers << std::endl;
+  std::cout << parser->PS.get_nServers() << std::endl;
   if (!load_in_servers(&parser->PS, *server_structs))
     error_exit(4);
   // DEBUG
@@ -41,19 +41,19 @@ void parse(Parser *parser, std::list<ServerStruct> *server_structs,
 }
 
 int main(int argc, char **argv) {
-  auto SS = std::make_shared<ServerConnection>();
-  ClientConnection CC(SS);
-  Parser parser("#", "\n", "{", "}", " 	\n", "'", " 	\n", ";");
-  std::list<ServerStruct> server_structs;
-  char *buffer;
+	char *buffer;
+	std::shared_ptr<ServerConnection> SS = std::make_shared<ServerConnection>();
+	ClientConnection CC(SS);
+	std::list<ServerStruct> server_structs;
+	Parser parser("#", "\n", "{", "}", " 	\n", "'", " 	\n", ";");
 
-  if (argc != 2)
-    error_exit(1);
-  initSignals();
-  parse(&parser, &server_structs, &buffer, argv);
-  std::cout << std::endl << std::endl;
-  for (auto &server : server_structs)
-    SS->setUpServerConnection(server);
-  CC.setupClientConnection();
-  delete[] buffer;
+	if (argc != 2)
+		error_exit(1);
+	initSignals();
+	parse(&parser, &server_structs, &buffer, argv);
+	for (auto &server : server_structs)
+		SS->setUpServerConnection(server);
+	CC.setupClientConnection();
+	delete[] buffer;
+	return 0;
 }

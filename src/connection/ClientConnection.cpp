@@ -8,7 +8,7 @@
 ClientConnection::ClientConnection() {}
 
 ClientConnection::ClientConnection(std::shared_ptr<ServerConnection> ServerConnection)
-    : ptrServerConnection(ServerConnection) {}
+    : _ptrServerConnection(ServerConnection) {}
 
 ClientConnection::~ClientConnection()
 {
@@ -71,7 +71,6 @@ void	reset_buffer(ClientInfo &client, bool end_of_request)
 // I think the filename has to be given to argv, (might be happening already).
 void ClientConnection::handleInputEvent(int index) {
 	std::string	buffer_str;
-	std::string	upload_file;
 	uint32_t	connectedClientFD = getIndexByClientFD(_serverClientSockets[index].fd);
 	ssize_t		bytesRead = _connectedClients[connectedClientFD].bytesRead;
 
@@ -101,7 +100,9 @@ void ClientConnection::handleInputEvent(int index) {
 	_connectedClients[connectedClientFD].unchunking = false;
 
 	if (bytesRead == 0 &&
-		((_connectedClients[connectedClientFD].keepAlive == true) || !_connectedClients[connectedClientFD].unchunker._totalLength)){ //edited
+		((_connectedClients[connectedClientFD].keepAlive == true) ||
+		!_connectedClients[connectedClientFD].unchunker._totalLength))
+	{
 		logClientError("Client disconnected",
 					_connectedClients[connectedClientFD].clientIP,
 					_serverClientSockets[index].fd);
@@ -112,7 +113,7 @@ void ClientConnection::handleInputEvent(int index) {
 		return;
 	}
 
-	upload_file = "";
+	std::string upload_file = "";
 	if (!_connectedClients[connectedClientFD].unchunker._totalLength && !_connectedClients[connectedClientFD].unchunker._justStarted)
 	{
 		_connectedClients[connectedClientFD].unchunking = true;
@@ -142,13 +143,14 @@ void ClientConnection::handleInputEvent(int index) {
 	// request.parseRequest(_connectedClients[getIndexByClientFD(index)]); // Fix
 	// the error by using getIndexByClientFD(index) instead of connectedClientFD
 	//   std::cout << "Adress congig:" << _serverConfigs[index] << std::endl;
+	// if (request->get_requestStatus() == status::COMPLETE)
 	Response response(request, *_connectedClients[connectedClientFD]._config, upload_file); //changed to get server config
 
 	_connectedClients[connectedClientFD].keepAlive = request->get_keepAlive(); //keep alive as in header
 	std::cout << "REQUEST POST FILE:" << request->get_bufferFile() << std::endl;
 	if (request->get_bufferFile().compare(""))
 	{
-		std::cout << "THERE IS AN BUFFER_FILE\n";
+		std::cout << "THERE IS A BUFFER_FILE\n";
 		_connectedClients[connectedClientFD].unchunker = Chunked(request);
 		if (!_connectedClients[connectedClientFD].unchunker._totalLength)
 		{
@@ -184,21 +186,23 @@ void ClientConnection::handleInputEvent(int index) {
 	manageKeepAlive(index);
 }
 
+
+
 void ClientConnection::addSocketsToPollfdContainer()
 {
-	for (size_t i = 0; i < ptrServerConnection->_connectedServers.size(); i++) {
+	for (size_t i = 0; i < _ptrServerConnection->_connectedServers.size(); i++) {
 		pollfd server_pollfd;
-		server_pollfd.fd = ptrServerConnection->_connectedServers[i].serverFD;
+		server_pollfd.fd = _ptrServerConnection->_connectedServers[i].serverFD;
 		server_pollfd.events = POLLIN;
 		_serverClientSockets.push_back(server_pollfd);
-		_serverConfigs.push_back(ptrServerConnection->_connectedServers[i]._config); // addded
+		_serverConfigs.push_back(_ptrServerConnection->_connectedServers[i]._config); // addded
 	}
 	for (size_t i = 0; i < _connectedClients.size(); ++i) {
 		pollfd client_pollfd;
 		client_pollfd.fd = _connectedClients[i].clientFD;
 		client_pollfd.events = POLLIN;
 		_serverClientSockets.push_back(client_pollfd);
-		_serverConfigs.push_back(ptrServerConnection->_connectedServers[i]._config); // addded this is poop just for synchronisation
+		_serverConfigs.push_back(_ptrServerConnection->_connectedServers[i]._config); // addded this is poop just for synchronisation
 	}
 }
 
@@ -265,7 +269,7 @@ void ClientConnection::removeClientSocket(int clientFD)
 
 bool ClientConnection::isServerSocket(int fd)
 {
-	for (const auto &server_fd : ptrServerConnection->_connectedServers)
+	for (const auto &server_fd : _ptrServerConnection->_connectedServers)
 	{
 		if (fd == server_fd.serverFD)
 		return true;

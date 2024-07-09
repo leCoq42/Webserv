@@ -1,67 +1,62 @@
 #include "ParserStruct.hpp"
 
-ParserStruct::ParserStruct(void)
-{
-	this->head = 0;
-	this->current = 0;
-	this->add_as_child = 0;
-	this->n_servers = 0;
-}
+ParserStruct::ParserStruct(void) : _head(0), _current(0), _addAsChild(0), _nServers(0)
+{}
 
 ParserStruct::~ParserStruct()
 {
 	//std::cout << "delete parser struct" << std::endl;
-	delete this->head;
-	this->head = 0;
+	delete _head;
+	_head = 0;
 }
 
 void	ParserStruct::display(bool with_content)
 {
 	std::cout << "_____ParserStruct_____" << std::endl;
-	if (this->head)
-		this->head->display(0, with_content);
+	if (this->_head)
+		this->_head->display(0, with_content);
 	std::cout << "______________________" << std::endl;
 }
 
 void	ParserStruct::to_child(void)
 {
-	if (this->current && this->current->child)
-		this->current = this->current->child;
+	if (this->_current && this->_current->child)
+		this->_current = this->_current->child;
 	else
-		this->add_as_child = 1;
+		this->_addAsChild = 1;
 }
 
 void	ParserStruct::to_parent(void)
 {
-	if (this->add_as_child)
-		this->add_as_child = 0;
-	else if (this->current->parent)
-		this->current = this->current->parent;
+	if (this->_addAsChild)
+		this->_addAsChild = 0;
+	else if (this->_current->parent)
+		this->_current = this->_current->parent;
 }
 
 int		ParserStruct::add(std::string name, std::string content)
 {
 	ParserItem	**dest;
 
-	if (this->add_as_child)
+	if (this->_addAsChild)
 	{
-		dest = &this->current->child;
-		*dest = new ParserItem(name, content, this->current);
-		this->add_as_child = 0;
+		dest = &this->_current->child;
+		*dest = new ParserItem(name, content, this->_current);
+		this->_addAsChild = 0;
 	}
-	else if (this->current)
+	else if (this->_current)
 	{
-		dest = &this->current->next;
-		*dest = new ParserItem(name, content, this->current->parent);
+		dest = &this->_current->next;
+		*dest = new ParserItem(name, content, this->_current->parent);
 	}
 	else
 	{
-		dest = &this->head;
+		dest = &this->_head;
 		*dest = new ParserItem(name, content, 0);
 	}
 	if (!*dest)
 		return (0);
-	this->current = *dest;
+	this->_current = *dest;
 	return (1);
 }
 
@@ -80,25 +75,25 @@ int		ParserStruct::count_servers(void)
 {
 	ParserItem	*current;
 
-	this->n_servers = 0;
-	current = head;
+	this->_nServers = 0;
+	current = _head;
 	while (current)
 	{
 		if (!current->getName().compare("server"))
-			this->n_servers++;
+			this->_nServers++;
 		if (current->getName().compare("server") && current->child)
 			current = current->child;
 		else
 			current = get_new_up(current);
 	}
-	return (this->n_servers);
+	return (this->_nServers);
 }
 
 ParserItem	*ParserStruct::go_to_nth(int n)
 {
 	ParserItem	*current;
 
-	current = head;
+	current = _head;
 	while (current)
 	{
 		if (!current->getName().compare("server"))
@@ -112,4 +107,9 @@ ParserItem	*ParserStruct::go_to_nth(int n)
 			current = get_new_up(current);
 	}
 	return (current);
+}
+
+size_t ParserStruct::get_nServers()
+{
+	return _nServers;
 }

@@ -2,26 +2,26 @@
 
 ServerStruct::ServerStruct(void)
 {
-	this->nth_server = -1;
-	this->source = 0;
+	this->_nthServer = -1;
+	this->_source = 0;
 	this->head = 0;
 }
 
 ServerStruct::ServerStruct(ParserStruct *parser_struct, int nth_server)
 {
-	this->nth_server = nth_server;
-	this->source = parser_struct;
+	this->_nthServer = nth_server;
+	this->_source = parser_struct;
 	this->head = parser_struct->go_to_nth(nth_server);
-	this->id = this->head->getContent();
-	this->getContent("listen", this->port);
-	this->port.combine();
-	this->getContent("host", this->host);
-	this->getContent("server_name", this->names);
-	this->getContent("root", this->root);
-	this->getContent("location", this->location);
-	this->getContent("error_page", this->error_page);
+	this->_id = this->head->getContent();
+	this->getContent("listen", this->_port);
+	this->_port.combine();
+	this->getContent("host", this->_host);
+	this->getContent("server_name", this->_names);
+	this->getContent("root", this->_root);
+	this->getContent("location", this->_location);
+	this->getContent("error_page", this->_errorPage);
 	this->getContent("return", this->_return);
-	this->getContent("allow_methods", this->allow_methods);
+	this->getContent("allow_methods", this->_allowMethods);
 	//std::cout << std::endl;
 }
 
@@ -32,17 +32,17 @@ ServerStruct::ServerStruct(const ServerStruct &to_copy)
 
 ServerStruct	&ServerStruct::operator=(const ServerStruct &to_copy)
 {
-	this->nth_server = to_copy.nth_server;
-	this->source = to_copy.source;
+	this->_nthServer = to_copy._nthServer;
+	this->_source = to_copy._source;
 	this->head = to_copy.head;
-	this->port = to_copy.port;
-	this->names = to_copy.names;
-	this->location = to_copy.location;
-	this->allow_methods = to_copy.allow_methods;
-	this->id = to_copy.id;
-	this->root = to_copy.root;
+	this->_port = to_copy._port;
+	this->_names = to_copy._names;
+	this->_location = to_copy._location;
+	this->_allowMethods = to_copy._allowMethods;
+	this->_id = to_copy._id;
+	this->_root = to_copy._root;
 	this->_return = to_copy._return;
-	this->error_page = to_copy.error_page;
+	this->_errorPage = to_copy._errorPage;
 	return (*this);
 }
 
@@ -51,28 +51,28 @@ ServerStruct::~ServerStruct(void)
 	//std::cout << "Deleting server struct." << std::endl;
 	// if (this->location.childs)
 	// 	delete (LocationStruct *)this->location.childs;
-	this->nth_server = -1;
+	this->_nthServer = -1;
 }
 
 void	ServerStruct::show_self(void)
 {
-	std::cout << "server named: " << this->id << " at: "
+	std::cout << "server named: " << this->_id << " at: "
 		<< this->head << std::endl;
-	this->port.show_part("port:");
-	this->names.show_part("names:");
-	this->root.show_part("root:");
-	this->location.show_part("location:");
+	this->_port.show_part("port:");
+	this->_names.show_part("names:");
+	this->_root.show_part("root:");
+	this->_location.show_part("location:");
 	this->_return.show_part("return:");
-	this->error_page.show_part("error_page:");
-	this->allow_methods.show_part("allow_methods:");
+	this->_errorPage.show_part("error_page:");
+	this->_allowMethods.show_part("allow_methods:");
 }
 
 int	load_in_servers(ParserStruct *PS, std::list<ServerStruct> &server_structs)
 {
-	int	n;
+	size_t	n;
 
 	n = 0;
-	while (n++ < (*PS).n_servers)
+	while (n++ < (*PS).get_nServers())
 	{
 		//std::cout << "[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[ Loading in... ]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]" << std::endl;
 		ServerStruct	add_server = ServerStruct(PS, n);

@@ -1,12 +1,7 @@
 #include "Chunked.hpp"
+#include <fstream>
 
-Chunked::Chunked()
-{
-	_contentLength = 0;
-	_bufferedLength = 0;
-	_justStarted = false;
-	_totalLength = true;
-}
+Chunked::Chunked() : _contentLength(0), _bufferedLength(0), _justStarted(false), _totalLength(true) {}
 
 Chunked::Chunked(std::shared_ptr<Request>  first_request): _firstRequest(first_request)
 {

@@ -86,7 +86,9 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 		{
 			_responseString =
 				buildResponse(static_cast<int>(StatusCode::UNSUPPORTED_MEDIA_TYPE),
-								"Unsupported Media Type", "");
+				  "Unsupported Media Type", "");
+				// buildResponse(static_cast<int>(StatusCode::OK),
+				// 				"OK", "");
 			return false;
 		}
 		_contentType = res->second;
@@ -343,7 +345,7 @@ std::string Response::buildResponse(int status, const std::string &message,
 		_responseString.append("Content-Type: " + get_contentType() + "\r\n");
 		_responseString.append("\r\n" + body);
 	}
-	_request->set_requestStatus(status::HANDLED);
+	_request->set_requestStatus(status::COMPLETE);
 	return _responseString;
 }
 

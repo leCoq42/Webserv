@@ -254,14 +254,14 @@ void	Request::set_bufferFile(std::string buffer_file) //added
 	_bufferFile = buffer_file;
 }
 
-const std::string &Request::get_bufferFile() const {	return (_bufferFile);	}//added
+const std::string &Request::get_bufferFile() const { return _bufferFile; }//added
 
 void	Request::keepAlive(bool keepAlive) //added
 {
 	_keepAlive = keepAlive;
 }
 
-const size_t &Request::get_startContentLength() const {	return (_startContentLength);	}//added
+const size_t &Request::get_startContentLength() const { return (_startContentLength); }//added
 
 void	Request::set_startContentLength(size_t content_length)//added
 {
@@ -288,10 +288,12 @@ const bool &Request::get_validity() const
 }
 
 
-const status	&Request::check_requestStatus() const
+const status	&Request::get_requestStatus() const
 {
 	return _requestStatus;
 }
+
+
 
 void	Request::set_requestStatus(status status)
 {

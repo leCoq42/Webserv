@@ -10,13 +10,14 @@
 
 class CgiParsing {
 private:
-  std::vector<std::string> meta_variables; // envpp;	// meta variables and
+  std::vector<std::string> _metaVars; // envpp;	// meta variables and
                                            // header variables and shiznitz
-  std::vector<std::string> uri;            // argv;		// 4.4 The Script
+  std::vector<std::string> _uri;            // argv;		// 4.4 The Script
                                            // Command Line
-  std::vector<const char *> return_uri;
-  std::string body; // stdin;	//body should go here unless otherwise defined.
+  std::vector<const char *> _returnUri;
+  std::string _body; // stdin;	//body should go here unless otherwise defined.
   std::vector<std::string> customizable_variables_names; // accepted post_fixes
+
   bool add_to_envpp(std::string name, std::string value, std::string additive);
   bool add_to_uri(std::string name, std::string value, std::string additive);
   bool dismantle_body(std::string body, std::string boundary);

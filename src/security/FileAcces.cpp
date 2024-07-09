@@ -10,15 +10,13 @@
 FileAccess::FileAccess(ServerStruct &config): config(config)
 {
 	std::cout << MSG_BORDER << "[FILEACCES SETUP]" << MSG_BORDER << std::endl;
-	root = config.root.content_list.back();//configPaths.push_back(config.root.content_list.back());
+	root = config._root.content_list.back();//configPaths.push_back(config.root.content_list.back());
 	current_root = root;
-	allowed_methods = config.allow_methods.content_list;
+	allowed_methods = config._allowMethods.content_list;
 	show_all_allowed();
 }
 
-FileAccess::~FileAccess()
-{
-}
+FileAccess::~FileAccess() {}
 
 //Swaps out root if different root is given. And checks if path is within root.
 std::filesystem::path	FileAccess::root_or_path(std::filesystem::path path, std::filesystem::path current_root, std::filesystem::path root, LocationStruct	*current)
@@ -30,9 +28,9 @@ std::filesystem::path	FileAccess::root_or_path(std::filesystem::path path, std::
 		current_allowed_methods = current->allow_methods.content_list;
 	else
 		current_allowed_methods = allowed_methods;
-	if (path.string().find_first_of(root) + ((std::string)root).length() + 1 < ((std::string)path).length())
+	if ((path.string().find_first_of(root) + root.string().length() + 1) < path.string().length())
 	{
-		non_root = path.string().substr(path.string().find_first_of(root) + ((std::string)root).length() + 1);
+		non_root = path.string().substr(path.string().find_first_of(root) + root.string().length() + 1);
 		root_swapped_path = current_root;
 		root_swapped_path.append(non_root);
 	}
@@ -48,7 +46,7 @@ std::filesystem::path	FileAccess::find_location(std::filesystem::path path, std:
 {
 	ConfigContent	*current;
 
-	current = &config.location;
+	current = &config._location;
 	current_root = root;
 	uri.insert(0, "/");
 	std::cout << "find location:" << uri << "}{" << uri.substr(0, uri.find_last_of("/")) << std::endl;
@@ -59,11 +57,11 @@ std::filesystem::path	FileAccess::find_location(std::filesystem::path path, std:
 			for (std::string content : current->content_list)
 			{
 				if (!((LocationStruct *)current->childs)->root.content_list.empty())
-					current_root.append(((std::string)((LocationStruct *)current->childs)->root.content_list.back()).substr(1));
+					current_root.append(((std::string)((LocationStruct *)current->childs)->root.content_list.back()));
 
-				std::cout << "try path:" << current_root << std::endl;
-				std::cout << "requested:" << uri << "==" << content << std::endl;
-				if (path.extension().compare(""))
+				std::cout << "Try Path:" << current_root << std::endl;
+				std::cout << "Requested:" << uri << "=" << content << std::endl;
+				if (path.has_extension())
 				{
 					if (!uri.substr(0, uri.find_last_of("/")).compare(content) || !uri.substr(0, uri.find_last_of("/")).compare(""))
 						return (root_or_path(path, current_root, root, (LocationStruct *)current->childs));
@@ -72,7 +70,7 @@ std::filesystem::path	FileAccess::find_location(std::filesystem::path path, std:
 				{
 					if (!((LocationStruct *)current->childs)->_return.content_list.empty())
 					{
-						std::cout << "redirecting\n";
+						std::cout << "Redirecting\n";
 						path = current_root;
 						path.append(((LocationStruct *)current->childs)->_return.content_list.back());
 						return (find_location(path, ((LocationStruct *)current->childs)->_return.content_list.back(), return_code));
@@ -90,7 +88,7 @@ std::filesystem::path	FileAccess::find_location(std::filesystem::path path, std:
 		}
 	}
 	return_code = 404;
-	std::cout << "mepmepmep nothing found\n";
+	std::cout << "File Access: nothing found!\n";
 	return (root_or_path(root, root, root, NULL));
 }
 
@@ -104,7 +102,7 @@ std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &retur
 	//look through locations in server
 	path = find_location(path, uri, return_code);
 	std::cout << return_code << ":error\n";
-	std::cout << config.root.content_list.back();
+	std::cout << config._root.content_list.back();
 	return (path);
 }
 
@@ -115,7 +113,7 @@ std::filesystem::path	FileAccess::getErrorPage(int return_code)
 	std::string		error_code;
 
 	error_code = std::to_string(return_code);
-	current = &config.error_page;
+	current = &config._errorPage;
 	while (current)
 	{
 		if (!current->content_list.front().compare(error_code))
