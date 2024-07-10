@@ -2,13 +2,14 @@
 
 std::string &add_dir_to_listing(std::string &return_html, char *directory, const std::string &path, const std::string &referer)
 {
-	std::size_t	ith;
-	std::size_t	ref_ith;
+	(void)referer; // tja
+	// std::size_t	ith;
+	// // std::size_t	ref_ith;
 
-	ith = 0;
-	ref_ith = 0;
-	if (referer.size() > 8)
-		ith = referer.find(8, '/');
+	// ith = 0;
+	// // ref_ith = 0;
+	// if (referer.size() > 8)
+	// 	ith = referer.find(8, '/'); // SLORDIG, hoezo staat dit in de main?
 	return_html += "<button onclick = \"window.location.href='";
 	if (return_html.back() != '/')
 		return_html += '/';

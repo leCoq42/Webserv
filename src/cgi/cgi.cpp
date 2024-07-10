@@ -1,4 +1,3 @@
-#include "webserv.hpp"
 #include <cstring>
 #include <iostream>
 #include <sys/types.h>

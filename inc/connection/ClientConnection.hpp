@@ -44,7 +44,7 @@ class ClientConnection : ServerConnection, public virtual Log {
 		bool		isServerSocket(int fd);
 		void		handlePollOutEvent(size_t index);
 		void		handlePollErrorEvent(size_t index);
-		Client		initClientInfo(int clientFD, sockaddr_in clientAddr);
+		Client		initClientInfo(int clientFD, int index, sockaddr_in clientAddr);
 		void		manageKeepAlive(int index);
 		void		checkConnectedClientsStatus();
 		int 		getIndexByClientFD(int clientFD);

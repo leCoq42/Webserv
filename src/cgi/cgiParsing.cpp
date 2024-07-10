@@ -40,13 +40,13 @@ CgiParsing::CgiParsing(
     std::shared_ptr<Request> _request, const std::string &path,
     const std::string &interpreter) // ServerStruct &serverinfo
 {
-  int i;
+  // int i;
 
 	//Prefixes that are acceptable to be put into envp, see rfc documentation on specifications of what is accepted
   customizable_variables_names.push_back("X_");
   customizable_variables_names.push_back("");
 
-  i = -1;
+  // i = -1;
 
   // MAGIC env variables for PHP REDIRECT_STATUS=true, PHP gives an security error if these headers ar not included
   // SCRIPT_FILENAME=/var/www/... REQUEST_METHOD=POST GATEWAY_INTERFACE=CGI/1.1
