@@ -191,20 +191,20 @@ void ClientConnection::addSocketsToPollfdContainer()
 	for (size_t i = 0; i < _ptrServerConnection->_connectedServers.size(); i++) {
 		pollfd server_pollfd;
 		server_pollfd.fd = _ptrServerConnection->_connectedServers[i].serverFD;
-		server_pollfd.events = POLLIN;
+		server_pollfd.events = POLLIN | POLLOUT;
 		_serverClientSockets.push_back(server_pollfd);
 		_serverConfigs.push_back(_ptrServerConnection->_connectedServers[i]._config); // addded
 	}
 	for (size_t i = 0; i < _connectedClients.size(); ++i) {
 		pollfd client_pollfd;
 		client_pollfd.fd = _connectedClients[i].clientFD;
-		client_pollfd.events = POLLIN;
+		client_pollfd.events = POLLIN | POLLOUT;
 		_serverClientSockets.push_back(client_pollfd);
-		_serverConfigs.push_back(_ptrServerConnection->_connectedServers[i]._config); // addded this is poop just for synchronisation
+		// _serverConfigs.push_back(_ptrServerConnection->_connectedServers[i]._config); // addded this is poop just for synchronisation
 	}
 }
 
-Client ClientConnection::initClientInfo(int clientFD, sockaddr_in clientAddr)
+Client ClientConnection::initClientInfo(int clientFD, int index, sockaddr_in clientAddr)
 {
 	Client clientInfo;
 	memset(&clientInfo, 0, sizeof(clientInfo));
@@ -214,10 +214,11 @@ Client ClientConnection::initClientInfo(int clientFD, sockaddr_in clientAddr)
 		   sizeof(clientInfo.clientIP));
 	clientInfo.clientFD = clientFD;
 	clientInfo.keepAlive = false;
-	clientInfo.timeOut = 30; // will be configurable later, limits upload size
+	clientInfo.timeOut = 30; // will be configurable later, limits upload size // What is 30? Seconds?
 	clientInfo.lastRequestTime = currentTime;
 	clientInfo.numRequests = 0; // can be perhaps be deleted
-	clientInfo.maxRequests = 10000; // will be configurable later, yes missed this one might have to be more then this (chunked takes them off so will limit total upload size)
+	clientInfo.maxRequests = std::numeric_limits<int>::max(); // will be configurable later, yes missed this one might have to be more then this (chunked takes them off so will limit total upload size)
+	clientInfo._config = _serverConfigs[index];
 	return clientInfo;
 }
 
@@ -225,7 +226,6 @@ void ClientConnection::acceptClients(int serverFD, int index) {
 	struct sockaddr_in clientAddr;
 	socklen_t clientAddrLen = sizeof(clientAddr);
 	int clientFD = accept(serverFD, (struct sockaddr *)&clientAddr, &clientAddrLen);
-
 	if (clientFD == -1)
 	{
 		logError("Failed to connect on server");
@@ -233,35 +233,29 @@ void ClientConnection::acceptClients(int serverFD, int index) {
 	}
 	if (getpeername(clientFD, (struct sockaddr *)&clientAddr, &clientAddrLen) != 0)
 		logError("Failed to read client IP");
-	_connectedClients.push_back(initClientInfo(clientFD, clientAddr));
+	_connectedClients.push_back(initClientInfo(clientFD, index, clientAddr));
 	_connectedClients.back()._config = _serverConfigs[index]; //_serverClientSockets[serverFD]; // added
-	logClientConnection("accepted connection", _connectedClients.back().clientIP,
-						clientFD);
+	logClientConnection("accepted connection", _connectedClients.back().clientIP, clientFD);
 }
 
 void ClientConnection::removeClientSocket(int clientFD)
 {
-	if (_connectedClients.empty()) //hacky fix
+	if (_connectedClients.empty())
 		return ;
-
 	close(clientFD);
 	logClientConnection("closed connection",
-						_connectedClients[getIndexByClientFD(clientFD)].clientIP,
-						clientFD);
+						_connectedClients[getIndexByClientFD(clientFD)].clientIP, clientFD);
 	int indexConnectedClients = getIndexByClientFD(clientFD);
 	_connectedClients[indexConnectedClients].unchunker.close_file();
 	_connectedClients.erase(indexConnectedClients + _connectedClients.begin());
-
-	int i = 0; //added
 	for (auto it = _serverClientSockets.begin(); it != _serverClientSockets.end(); ++it)
 	{
 		if (it->fd == clientFD)
 		{
-			_serverClientSockets.erase(it); //?
-			_serverConfigs.erase(_serverConfigs.begin() + i); //added
+			_serverClientSockets.erase(it);
+			_serverConfigs.erase(_serverConfigs.begin()); // nodig?
 			break;
 		}
-		i++; // added
 	}
 }
 
@@ -290,14 +284,10 @@ void ClientConnection::checkConnectedClientsStatus() {
 	{
 		if (currentTime - _connectedClients[i].lastRequestTime >
 			_connectedClients[i].timeOut && _connectedClients[i].keepAlive == true)
-		{
-			removeClientSocket(_connectedClients[i].clientFD);
-		}
+				removeClientSocket(_connectedClients[i].clientFD);
 		if (_connectedClients[i].numRequests >= _connectedClients[i].maxRequests &&
 			_connectedClients[i].keepAlive == true)
-		{
-			removeClientSocket(_connectedClients[i].clientFD);
-		}
+				removeClientSocket(_connectedClients[i].clientFD);
 	}
 }
 
@@ -305,31 +295,26 @@ void ClientConnection::setupClientConnection()
 {
 	while (true)
 	{
-		errno = 0;
 		_serverClientSockets.clear();
 		_serverConfigs.clear(); //added
 		addSocketsToPollfdContainer();
-		int poll_count =
-			poll(_serverClientSockets.data(), _serverClientSockets.size(), 100);
+		int poll_count = poll(_serverClientSockets.data(), _serverClientSockets.size(), 100);
 		checkConnectedClientsStatus();
 		if (poll_count > 0)
 		{
-			for (size_t i = 0; i < _serverClientSockets.size(); i++)
+			for (size_t index = 0; index < _serverClientSockets.size(); index++)
 			{
-				if (_serverClientSockets[i].revents & POLLIN)
+				if (_serverClientSockets[index].revents & POLLIN)
 				{
-					if (isServerSocket(_serverClientSockets[i].fd))
-						acceptClients(_serverClientSockets[i].fd, i);
+					if (isServerSocket(_serverClientSockets[index].fd)) 
+						acceptClients(_serverClientSockets[index].fd, index);
 					else
-						handleInputEvent(i);
+						handleInputEvent(index);
 				}
-				if (_serverClientSockets[i].revents & POLLOUT)
-					handlePollOutEvent(i);
-				if (_serverClientSockets[i].revents & (POLLHUP | POLLERR))
-				{ //Could be problematic
-					handlePollErrorEvent(i);
-					// i--;
-				}
+				if (_serverClientSockets[index].revents & POLLOUT)
+					handlePollOutEvent(index);
+				if (_serverClientSockets[index].revents & (POLLHUP | POLLERR))
+					handlePollErrorEvent(index);
 			}
 		}
 		if (globalSignalReceived == 1)
@@ -339,7 +324,5 @@ void ClientConnection::setupClientConnection()
 		}
 		else if (poll_count < 0)
 			logError("Failed to poll.");
-		else
-			continue;
 	}
 }
