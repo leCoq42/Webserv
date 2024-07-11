@@ -6,7 +6,7 @@
 Log::Log() {
   addLogFile("./log/log.log");
 
-  _logFile.open("./log/log.log", std::ios_base::app);
+  _logFile.open("./log/logfile.log", std::ios_base::app);
   if (!_logFile.is_open()) {
     std::cerr << getTimeStamp() << " [error] Unable to open access.log file"
               << std::endl;
