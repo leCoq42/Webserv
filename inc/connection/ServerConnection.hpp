@@ -24,7 +24,7 @@ class ServerConnection : public virtual Log {
 private:
 public:
   std::vector<ServerInfo> _connectedServers;
-//   ServerStruct			_config;
+  // ServerStruct			_config;
   ServerConnection();
   ~ServerConnection();
 
