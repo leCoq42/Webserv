@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
-#include <vector>
+#include <sstream>
 
 
 auto print_key_value = [](const auto &key, const auto &value)
@@ -88,14 +88,15 @@ void Request::parseRequest()
 	}
 
 	_requestPath = trim(_requestPath, "/");
-	_requestArgs = parseUriArgs(_requestPath);
-
+	if (_requestMethod == "GET")
+		parseUrlArgs(_requestPath);
 	if (!parseRequestHeaders(requestStream)) {
 		_isValid = false;
 		return;
 	}
 
-	parseRequestBody(_rawRequest);
+	if (_requestMethod != "GET")
+		parseRequestBody(_rawRequest);
 
 	if (_headers.find("connection") != _headers.end()) {
 		if (_headers["connection"].compare("keep-alive") == 0) {
@@ -107,22 +108,40 @@ void Request::parseRequest()
 	return;
 }
 
-std::vector<std::string> Request::parseUriArgs(const std::string uri)
+void Request::parseUrlArgs(const std::string uri)
 {
 	size_t pos;
-	std::vector<std::string> args;
+	std::unordered_map<std::string, std::string> args;
 	std::string argStr;
 
 	pos = uri.find("?");
 	if (pos != std::string::npos) {
 		_requestPath = uri.substr(0, pos);
-		if (pos + 1) {
-		argStr = uri.substr(pos + 1);
-		args = split(argStr, "?");
+		if (pos + 1)
+		{
+			argStr = uri.substr(pos + 1);
+			splitUrlArgs(argStr);
 		}
 	}
-	return args;
 }
+
+void Request::splitUrlArgs(std::string argStr)
+{
+	std::string arg;
+	std::istringstream argStream(argStr);
+
+	while (std::getline(argStream, arg, '&'))
+	{
+		size_t pos = arg.find('=');
+		if (pos != std::string::npos)
+		{
+			std::string key = arg.substr(0, pos);
+			std::string value = arg.substr(pos + 1);
+			_requestArgs[key] = value;
+		}
+	}
+}
+
 
 bool Request::parseRequestLine(const std::string &line)
 {
@@ -256,7 +275,7 @@ void	Request::set_bufferFile(std::string buffer_file) //added
 
 const std::string &Request::get_bufferFile() const { return _bufferFile; }//added
 
-void	Request::keepAlive(bool keepAlive) //added
+void	Request::set_keepAlive(bool keepAlive) //added
 {
 	_keepAlive = keepAlive;
 }
@@ -272,7 +291,7 @@ const bool &Request::get_keepAlive() const { return _keepAlive; }
 
 const std::string &Request::get_htmlVersion() const { return _htmlVersion; }
 
-const std::vector<std::string> &Request::get_requestArgs() const
+const std::unordered_map<std::string, std::string> &Request::get_requestArgs() const
 {
   return _requestArgs;
 }
@@ -312,7 +331,7 @@ void Request::printRequest() const {
 
 	std::cout << "<URI Args>" << std::endl;
 	for (auto it : _requestArgs) {
-		std::cout << it << std::endl;
+		std::cout << "Key: " << it.first << " Value: " << it.second << std::endl;
 	}
 
 	std::cout << "<Headers>" << std::endl;

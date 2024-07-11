@@ -19,7 +19,8 @@
 Response::Response(ServerStruct &config) : _request(nullptr), _responseString(""), _config(config), _security(config) {}
 
 Response::Response(std::shared_ptr<Request> request, ServerStruct &config, std::string filename)
-    : _request(request), _responseString(""), _contentType(""), _bufferFile(filename), _config(config), _security(config) {
+    : _request(request), _responseString(""), _contentType(""), _bufferFile(filename), _config(config), _security(config)
+{
 	handleRequest(request);
 	printResponse();
 }
@@ -104,10 +105,8 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 									interpreters.at(_requestPath.extension()));
 		}
 	}
-	else // else if (true)? // dir listing on off
-	{
+	else
 		body = list_dir(_requestPath, request->get_uri(), request->get_referer());
-	}
 	_responseString = buildResponse(static_cast<int>(StatusCode::OK), "OK", body,
 			 						isCGI); // when cgi double padded?
 	return true;
@@ -153,6 +152,14 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 	return true;
 }
 
+bool Response::handleDeleteRequest(const std::shared_ptr<Request> &request)
+{
+	std::filesystem::path Path = request->get_uri();
+
+	buildResponse(static_cast<int>(StatusCode::OK), "OK", request->get_body());
+	return true;
+}
+
 const std::string	Response::readFileToBody()
 {
 	std::stringstream buffer;
@@ -173,14 +180,15 @@ const std::string	Response::readFileToBody()
 void Response::handle_multipart() {
 	// std::string bound = "--" + boundary;
 	size_t pos = 0;
+	std::string filename;
 	std::string body = _request->get_body();
 	std::string boundary = _request->get_boundary();
 
-	_request->keepAlive(true); // added
+	_request->set_keepAlive(true); // added
 
+	std::cout << "MULTIPART REQUEST!!!" << std::endl;
 	if (_bufferFile.empty()) //unrully long code barely readable, probably cut out the part that's usefull aswell. but it's hard to split out
 	{
-		std::cout << "MULTIPART REQUEST!!!" << std::endl;
 		while (pos < body.size())
 		{
 			size_t start = std::search(body.begin() + pos,body.end(),
@@ -191,17 +199,26 @@ void Response::handle_multipart() {
 			size_t end = std::search(body.begin() + start + boundary.length(),
 									body.end(), boundary.begin(),
 									boundary.end()) - body.begin();
-			// if (end == body.size())
-			//   break;
 
 			std::string part(body.begin() + start + boundary.length(),
 							body.begin() + end);
+
+
+			pos = end;
 			size_t header_end = part.find("\r\n\r\n");
 			std::string headers = part.substr(0, header_end);
 			std::string content = part.substr(header_end + 4);
+			
+			std::transform(headers.begin(), headers.end(), headers.begin(), [](unsigned char c){ return std::tolower(c);} );
+
+			size_t contentType = headers.find("content-type:");
+			if (contentType == std::string::npos)
+			{
+				std::cout << "Part without content" << std::endl;
+				continue;
+			}
 
 			size_t filename_pos = headers.find("filename=\""); //this is tricky might not necessarily called like this
-			std::string filename;
 			if (filename_pos != std::string::npos)
 			{
 				size_t filename_end = headers.find("\"", filename_pos + 10);
@@ -215,6 +232,7 @@ void Response::handle_multipart() {
 
 			_request->set_bufferFile(_requestPath.root_path().append("html/uploads/" + filename));
 			_request->set_startContentLength(body.length());//content.length());
+
 			std::ofstream file("html/uploads/" + filename, std::ios::binary);
 			if (file.is_open())
 			{
@@ -228,7 +246,6 @@ void Response::handle_multipart() {
 				buildResponse(static_cast<int>(StatusCode::INTERNAL_SERVER_ERROR),
 							"Error: file upload failed!", "");
 			}
-			pos = end;
 		}
 	}
 	else
@@ -239,13 +256,6 @@ void Response::handle_multipart() {
 	}
 }
 
-bool Response::handleDeleteRequest(const std::shared_ptr<Request> &request)
-{
-	std::filesystem::path Path = request->get_uri();
-
-	buildResponse(static_cast<int>(StatusCode::OK), "OK", request->get_body());
-	return true;
-}
 
 std::unordered_map<std::string, std::string>
 Response::get_args(std::string requestBody, std::string contentType) {
@@ -311,11 +321,12 @@ std::vector<std::string> Response::get_parts(std::string requestBody,
 	size_t pos = 0;
 	std::vector<std::string> parts;
 
-	while ((pos = requestBody.find("--" + boundary, pos)) != std::string::npos) {
+	while ((pos = requestBody.find("--" + boundary, pos)) != std::string::npos)
+	{
 		size_t start = pos + boundary.length() + 4;
 		pos = requestBody.find("--" + boundary, start);
 		if (pos != std::string::npos)
-		parts.push_back(requestBody.substr(start, pos - start - 2));
+			parts.push_back(requestBody.substr(start, pos - start - 2));
 	}
 	return parts;
 }

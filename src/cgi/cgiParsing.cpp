@@ -40,45 +40,42 @@ CgiParsing::CgiParsing(
     std::shared_ptr<Request> _request, const std::string &path,
     const std::string &interpreter) // ServerStruct &serverinfo
 {
-  // int i;
 
 	//Prefixes that are acceptable to be put into envp, see rfc documentation on specifications of what is accepted
-  customizable_variables_names.push_back("X_");
-  customizable_variables_names.push_back("");
+	customizable_variables_names.push_back("X_");
+	customizable_variables_names.push_back("");
 
-  // i = -1;
-
-  // MAGIC env variables for PHP REDIRECT_STATUS=true, PHP gives an security error if these headers ar not included
-  // SCRIPT_FILENAME=/var/www/... REQUEST_METHOD=POST GATEWAY_INTERFACE=CGI/1.1
-  if (!_request->get_requestMethod().compare("POST")) {
-    add_to_envpp("REQUEST_METHOD", _request->get_requestMethod(), "");
-    add_to_envpp("GATEWAY_INTERFACE", "CGI/1.1", "");
-  }
-  add_to_envpp("REDIRECT_STATUS", "true", "");
-  add_to_envpp("SCRIPT_FILENAME", path, "");
-
-	if (environ) //environ is passed to function, but dont think it's desired to pass it to execve
-	{
-	// while (*(environ + ++i))
-	// 	add_to_envpp(((std::string)*(environ + i)).substr(0,
-	// ((std::string)*(environ + i)).find("=")), ((std::string)*(environ +
-	// i)).substr(((std::string)*(environ + i)).find("=") + 1), "");
-		;
+	// MAGIC env variables for PHP REDIRECT_STATUS=true, PHP gives an security error if these headers ar not included
+	// SCRIPT_FILENAME=/var/www/... REQUEST_METHOD=POST GATEWAY_INTERFACE=CGI/1.1
+	if (!_request->get_requestMethod().compare("POST")) {
+		add_to_envpp("REQUEST_METHOD", _request->get_requestMethod(), "");
+		add_to_envpp("GATEWAY_INTERFACE", "CGI/1.1", "");
 	}
+	add_to_envpp("REDIRECT_STATUS", "true", "");
+	add_to_envpp("SCRIPT_FILENAME", path, "");
 
-	//try to add all headers to envp, gets checked over what is permissioned
-  for (const auto &[key, value] : headers)
-    add_to_envpp(key, value, "");
+		if (environ) //environ is passed to function, but dont think it's desired to pass it to execve
+		{
+		// while (*(environ + ++i))
+		// 	add_to_envpp(((std::string)*(environ + i)).substr(0,
+		// ((std::string)*(environ + i)).find("=")), ((std::string)*(environ +
+		// i)).substr(((std::string)*(environ + i)).find("=") + 1), "");
+			;
+		}
 
-  // adding variables to argv 
-  if (interpreter.compare(""))
-    add_to_uri(interpreter, "", "");
-  add_to_uri(path, "", "");
-  for (const auto &var : _request->get_requestArgs())
-    add_to_uri(var, "", "");
+		//try to add all headers to envp, gets checked over what is permissioned
+	for (const auto &[key, value] : headers)
+		add_to_envpp(key, value, "");
 
-	//Disect body if needed
-  dismantle_body(_request->get_body(), _request->get_boundary());
+	// adding variables to argv 
+	if (interpreter.compare(""))
+		add_to_uri(interpreter, "", "");
+	add_to_uri(path, "", "");
+	for (const auto &var : _request->get_requestArgs())
+		add_to_uri(var.first, var.second, "");
+
+		//Disect body if needed
+	dismantle_body(_request->get_body(), _request->get_boundary());
 }
 
 CgiParsing::~CgiParsing(void) {}
@@ -120,16 +117,13 @@ bool CgiParsing::add_to_envpp(std::string name, std::string value,
 // adds variable to argv. additive is specified prefix. commented part is to put rejected env variables in the argv
 bool CgiParsing::add_to_uri(std::string name, std::string value,
                             std::string additive) {
-  std::string temp;
-  // if (!validate_key(additive + name, customizable_variables_names))
-  // {
-  temp = additive + name;
-  if (value.compare(""))
-    temp += "=" + value;
-  _uri.push_back(temp); // uri[name] = value;
-  return true;
-  // }
-  // return false;
+	std::string temp;
+
+	temp = additive + name;
+	if (value.empty())
+		temp += "=" + value;
+	_uri.push_back(temp); // uri[name] = value;
+	return true;
 }
 
 std::vector<std::string> &CgiParsing::get_argv() { return (_uri); }

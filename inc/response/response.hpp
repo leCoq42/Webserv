@@ -64,8 +64,8 @@ private:
 	bool handleDeleteRequest(const std::shared_ptr<Request> &request);
 
 	void handle_multipart();
-	std::unordered_map<std::string, std::string>
-	get_args(std::string requestBody, std::string contentType);
+	std::unordered_map<std::string, std::string> get_args(std::string requestBody,
+													   std::string contentType);
 	std::vector<std::string> get_parts(std::string requestBody,
 									std::string boundary);
 	const std::string	readFileToBody();

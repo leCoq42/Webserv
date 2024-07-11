@@ -1,4 +1,7 @@
 #pragma once
+
+#include <vector>
+#include "sys/poll.h"
 #include "ProtoStruct.hpp"
 #include "LocationStruct.hpp"
 
@@ -19,9 +22,10 @@ class ServerStruct: public ProtoStruct
 	ConfigContent	_return; //list
 	ConfigContent	_allowMethods;
 
+
 	ServerStruct();
 	ServerStruct(ParserStruct *parser_struct, int nth_server);
-	ServerStruct(const ServerStruct &to_copy);
+	ServerStruct(const ServerStruct &src);
 	~ServerStruct();
 	ServerStruct	&operator=(const ServerStruct &to_copy);
 	void			show_self(void);
