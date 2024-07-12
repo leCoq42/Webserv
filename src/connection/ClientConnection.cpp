@@ -2,8 +2,13 @@
 #include "request.hpp"
 #include "response.hpp"
 #include "signals.hpp"
+#include "defines.hpp"
 #include <cerrno>
+#include <cstddef>
+#include <cstring>
 #include <memory>
+#include <sys/socket.h>
+#include <sys/types.h>
 
 ClientConnection::ClientConnection() {}
 
@@ -66,79 +71,122 @@ void	reset_buffer(Client &client, bool end_of_request)
 	}
 }
 
+ssize_t ClientConnection::receiveData(int index, std::string &datareceived)
+{
+	std::vector<char> buffer(2048);
+	int	connectedClientFD = getIndexByClientFD(_pollFdsWithConfigs[index].fd);
+	// ssize_t		bytesRead = _activeClients[connectedClientFD].bytesRead;
+	ssize_t bytes_received;
+	ssize_t total_received = 0;
+
+	errno = 0;
+	while (true) {
+		bytes_received = recv(_pollFdsWithConfigs[index].fd, &buffer[0], buffer.size(), MSG_DONTWAIT);
+		if (bytes_received > 0)
+		{
+			total_received += bytes_received;
+			// _activeClients[connectedClientFD].bytesRead += bytes_received;
+		}
+		else if (bytes_received < 0 && (errno != EAGAIN || errno != EWOULDBLOCK))
+		{
+			logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
+						_activeClients[connectedClientFD].clientIP,
+						_pollFdsWithConfigs[index].fd);
+			return -1;
+		}
+		else
+			break;
+	}
+	// test print total bytes received and buffer vector
+	std::cout << std::endl;
+	std::cout << MSG_BORDER << "Total bytes received: " << total_received << MSG_BORDER << std::endl;
+
+	datareceived = std::string(buffer.begin(), buffer.end());
+	return total_received;
+}
+
 //Intended workings
 // When an request is incomplete and goes through handlemultipart and is not completely received. Chunked object has to save the initial request, since sequential requests don't have headers.
 // and the response should be hold off? Until the last sequential request is received and passed through Chunked.add_to_file(). When that happens Chunked object will set _totalLength on true. Indicating that the full body was received. 
 // Then the response should be build again with the bufferedfile given so handlemultipart will have the whole body. Request could also be build with the whole body, body size might be too big for request object at the moment.
 // When the response is build again after Chunked _totalLength is true. Response will have acces to the full request BODY (without headers and boundaries) through the given filename. CGI should be able to be run then as well.
 // I think the filename has to be given to argv, (might be happening already).
-void ClientConnection::handleInputEvent(int index) {
+void ClientConnection::handleInputEvent(int index)
+{
 	std::string	buffer_str;
 	uint32_t	connectedClientFD = getIndexByClientFD(_pollFdsWithConfigs[index].fd);
-	ssize_t		bytesRead = _activeClients[connectedClientFD].bytesRead;
+	ssize_t		bytesRead;
 
-	int n = 0;
-	errno = 0;
-	n = recv(_pollFdsWithConfigs[index].fd, &_activeClients[connectedClientFD].buffer[bytesRead], sizeof(_activeClients[connectedClientFD].buffer) - bytesRead, MSG_DONTWAIT);
-	buffer_str = "";
-	if (n >= 0)
-	{
-		bytesRead += n;
-		_activeClients[connectedClientFD].bytesRead = bytesRead;
-		_activeClients[connectedClientFD].buffer[bytesRead] = '\0';
-		buffer_str = _activeClients[connectedClientFD].buffer;
-	}
-	else if (n < 0 && errno != EAGAIN)
-	{
-		logClientError("Failed to receive data from client",
-					_activeClients[connectedClientFD].clientIP,
-					_pollFdsWithConfigs[index].fd);
+	bytesRead = receiveData(index, buffer_str);
+	if (bytesRead < 0)
 		return;
-	}
-	else
-		return ;
-
-	if (buffer_str.find("\r\n\r\n") == std::string::npos && !_activeClients[connectedClientFD].unchunking)
-		return ;
-	_activeClients[connectedClientFD].unchunking = false;
-
-	if (bytesRead == 0 &&
-		((_activeClients[connectedClientFD].keepAlive == true) ||
-		!_activeClients[connectedClientFD].unchunker._totalLength))
-	{
-		logClientError("Client disconnected",
-					_activeClients[connectedClientFD].clientIP,
-					_pollFdsWithConfigs[index].fd);
-		_pollFdsWithConfigs[index].revents = POLLERR;
-		std::cout << "CLIENT DISCONNECTED" << std::endl;
-		reset_buffer(_activeClients[connectedClientFD], true);
-		//close file and delete client?
-		return;
-	}
-
-	std::string upload_file = "";
-	if (!_activeClients[connectedClientFD].unchunker._totalLength && !_activeClients[connectedClientFD].unchunker._justStarted)
-	{
-		_activeClients[connectedClientFD].unchunking = true;
-		Request	request = Request(buffer_str);
-		std::cout << "TOTAL LENGTH NOT REACHED" << request.get_validity() << std::endl;
-		if (request.get_validity()) //hacky and most often okay, but not always...
-		{
-			logClientError("Post interrupted",
-					_activeClients[connectedClientFD].clientIP,
-					_pollFdsWithConfigs[index].fd);
-			_pollFdsWithConfigs[index].revents = POLLERR;
-			buffer_str = _activeClients[connectedClientFD].buffer;
-			return reset_buffer(_activeClients[connectedClientFD], true); //might have to remove chunked and then just go one with the valid one
-		}
-		if (!_activeClients[connectedClientFD].unchunker.add_to_file(_activeClients[connectedClientFD].buffer, bytesRead))
-			return reset_buffer(_activeClients[connectedClientFD], false);
-		_activeClients[connectedClientFD].unchunking = false;
-		upload_file = _activeClients[connectedClientFD].unchunker.get_fileName();
-		buffer_str = _activeClients[connectedClientFD].unchunker._firstRequest->get_rawRequest();
-	}
 
 	std::shared_ptr<Request> request = std::make_shared<Request>(buffer_str);
+	Response response(request, *_activeClients[connectedClientFD]._config);
+	
+	// ssize_t		bytesRead = _activeClients[connectedClientFD].bytesRead;
+	// int n = 0;
+	// errno = 0;
+	// n = recv(_pollFdsWithConfigs[index].fd, &_activeClients[connectedClientFD].buffer[bytesRead], sizeof(_activeClients[connectedClientFD].buffer) - bytesRead, MSG_DONTWAIT);
+	// buffer_str = "";
+	// if (n > 0)
+	// {
+	// 	bytesRead += n;
+	// 	_activeClients[connectedClientFD].bytesRead = bytesRead;
+	// 	_activeClients[connectedClientFD].buffer[bytesRead] = '\0';
+	// 	buffer_str = _activeClients[connectedClientFD].buffer;
+	// }
+	// else if (n < 0 && errno != EAGAIN)
+	// {
+	// 	logClientError("Failed to receive data from client",
+	// 				_activeClients[connectedClientFD].clientIP,
+	// 				_pollFdsWithConfigs[index].fd);
+	// 	return;
+	// }
+	// else
+	// 	return ;
+
+	// if (buffer_str.find("\r\n\r\n") == std::string::npos && !_activeClients[connectedClientFD].unchunking)
+	// _activeClients[connectedClientFD].unchunking = false;
+	//
+	// if (bytesRead == 0 &&
+	// 	((_activeClients[connectedClientFD].keepAlive == true) ||
+	// 	!_activeClients[connectedClientFD].unchunker._totalLength))
+	// {
+	// 	logClientError("Client disconnected",
+	// 				_activeClients[connectedClientFD].clientIP,
+	// 				_pollFdsWithConfigs[index].fd);
+	// 	_pollFdsWithConfigs[index].revents = POLLERR;
+	// 	std::cout << "CLIENT DISCONNECTED" << std::endl;
+	// 	reset_buffer(_activeClients[connectedClientFD], true);
+	// 	//close file and delete client?
+	// 	return;
+	// }
+
+
+	// std::string upload_file = "";
+	// if (!_activeClients[connectedClientFD].unchunker._totalLength && !_activeClients[connectedClientFD].unchunker._justStarted)
+	// {
+	// 	_activeClients[connectedClientFD].unchunking = true;
+	// 	Request	request = Request(buffer_str);
+	// 	std::cout << "TOTAL LENGTH NOT REACHED" << request.get_validity() << std::endl;
+	// 	if (request.get_validity()) //hacky and most often okay, but not always...
+	// 	{
+	// 		logClientError("Post interrupted",
+	// 				_activeClients[connectedClientFD].clientIP,
+	// 				_pollFdsWithConfigs[index].fd);
+	// 		_pollFdsWithConfigs[index].revents = POLLERR;
+	// 		buffer_str = _activeClients[connectedClientFD].buffer;
+	// 		return reset_buffer(_activeClients[connectedClientFD], true); //might have to remove chunked and then just go one with the valid one
+	// 	}
+	// 	if (!_activeClients[connectedClientFD].unchunker.add_to_file(_activeClients[connectedClientFD].buffer, bytesRead))
+	// 		return reset_buffer(_activeClients[connectedClientFD], false);
+	// 	_activeClients[connectedClientFD].unchunking = false;
+	// 	upload_file = _activeClients[connectedClientFD].unchunker.get_fileName();
+	// 	buffer_str = _activeClients[connectedClientFD].unchunker._firstRequest->get_rawRequest();
+	// }
+	//
+	// std::shared_ptr<Request> request = std::make_shared<Request>(buffer_str);
 	// Use outcommented code to for parsing and sending response. If keepAlive is
 	// set to false, the client will be disconnected. If keepAlive is set to true,
 	// the client will stay connected till chunked request is done.
@@ -147,33 +195,37 @@ void ClientConnection::handleInputEvent(int index) {
 	// the error by using getIndexByClientFD(index) instead of connectedClientFD
 	//   std::cout << "Adress congig:" << _serverConfigs[index] << std::endl;
 	// if (request->get_requestStatus() == status::COMPLETE)
-	Response response(request, *_activeClients[connectedClientFD]._config, upload_file); //changed to get server config
+	// Response response(request, *_activeClients[connectedClientFD]._config, upload_file); //changed to get server config
+
+	// _activeClients[connectedClientFD].keepAlive = request->get_keepAlive(); //keep alive as in header
+	// std::cout << "REQUEST POST FILE:" << request->get_bufferFile() << std::endl;
+	// if (request->get_bufferFile().compare(""))
+	// {
+	// 	std::cout << "THERE IS A BUFFER_FILE\n";
+	// 	_activeClients[connectedClientFD].unchunker = Chunked(request);
+	// 	if (!_activeClients[connectedClientFD].unchunker._totalLength)
+	// 	{
+	// 		//skip response, right place?
+	// 		_activeClients[connectedClientFD].unchunking = true;
+	// 		std::cout<< "skip response WILL IT STAY ALIVE" << _activeClients.size() << std::endl;
+	// 		manageKeepAlive(index);
+	// 		std::cout<< "skip response IT STAYS ALIVE" << _activeClients.size() << std::endl;
+	// 		return reset_buffer(_activeClients[connectedClientFD], false);
+	// 	}
+	// }
 
 	_activeClients[connectedClientFD].keepAlive = request->get_keepAlive(); //keep alive as in header
-	std::cout << "REQUEST POST FILE:" << request->get_bufferFile() << std::endl;
-	if (request->get_bufferFile().compare(""))
-	{
-		std::cout << "THERE IS A BUFFER_FILE\n";
-		_activeClients[connectedClientFD].unchunker = Chunked(request);
-		if (!_activeClients[connectedClientFD].unchunker._totalLength)
-		{
-			//skip response, right place?
-			_activeClients[connectedClientFD].unchunking = true;
-			std::cout<< "skip response WILL IT STAY ALIVE" << _activeClients.size() << std::endl;
-			manageKeepAlive(index);
-			std::cout<< "skip response IT STAYS ALIVE" << _activeClients.size() << std::endl;
-			return reset_buffer(_activeClients[connectedClientFD], false);
-		}
-	}
-	std::cout << "RESPONDING" << std::endl;
-	_activeClients[connectedClientFD].unchunking = false;
+	// _activeClients[connectedClientFD].unchunking = false;
 	const std::string httpResponse = response.get_response(); //"here is the response from the server\n";
 	ssize_t bytesSent = send(_pollFdsWithConfigs[index].fd, httpResponse.c_str(),
 							httpResponse.length(), 0);
 	if (bytesSent == -1)
 	{
-		std::cerr << "Failed to send data to client: " << strerror(errno)
-				<< std::endl;
+		logClientError(
+			"Failed to send data to client: " + std::string(strerror(errno)),
+			_activeClients[getIndexByClientFD(_pollFdsWithConfigs[index].fd)]
+				.clientIP,
+			_pollFdsWithConfigs[index].fd);
 		return reset_buffer(_activeClients[connectedClientFD], true);
 	}
 	else if (bytesSent == 0)
@@ -184,6 +236,7 @@ void ClientConnection::handleInputEvent(int index) {
 				.clientIP,
 			_pollFdsWithConfigs[index].fd);
 	}
+	std::cout << MSG_BORDER << "Bytes Send: " << bytesSent << MSG_BORDER << std::endl;
 	reset_buffer(_activeClients[connectedClientFD], true);
 	manageKeepAlive(index);
 }

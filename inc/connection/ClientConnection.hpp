@@ -5,6 +5,7 @@
 #include "Chunked.hpp"
 #include <memory>
 #include <sys/poll.h>
+#include <sys/types.h>
 #include <vector>
 
 struct Client {
@@ -47,5 +48,6 @@ class ClientConnection : ServerConnection, public virtual Log {
 		void		manageKeepAlive(int index);
 		void		checkConnectedClientsStatus();
 		int 		getIndexByClientFD(int clientFD);
+		ssize_t		receiveData(int index, std::string &datareceived);
 };
 

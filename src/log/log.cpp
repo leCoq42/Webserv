@@ -2,9 +2,10 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <vector>
 
 Log::Log() {
-  addLogFile("./log/log.log");
+  addLogFile("./log/logfile.log");
 
   _logFile.open("./log/logfile.log", std::ios_base::app);
   if (!_logFile.is_open()) {
@@ -41,9 +42,9 @@ bool Log::addLogFile(const std::string &fileName) {
 
 std::string Log::getTimeStamp() {
   std::time_t now = std::time(nullptr);
-  char buff[100];
-  std::strftime(buff, sizeof(buff), "%Y/%m/%d %H:%M:%S", std::localtime(&now));
-  return std::string(buff);
+  std::vector<char> buff(100);
+  std::strftime(&buff[0], buff.size(), "%Y/%m/%d %H:%M:%S", std::localtime(&now));
+  return std::string(buff.begin(), buff.end());
 }
 
 // General log functions

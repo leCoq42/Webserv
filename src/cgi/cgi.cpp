@@ -107,9 +107,9 @@ std::string cgi::executeCGI(const std::string &path, const std::string &args,
     write(pipefd_in[1], vars.get_stdin().c_str(), vars.get_stdin().length()); //WRITES TO STDIN
     close(pipefd_in[1]);
     // for chunking check if body is empty otherwise keep.
-    char buffer[BUFF_SIZE];
-    while ((bytes_read = read(pipefd_out[0], buffer, sizeof(buffer) - 1)) > 0) {
-      std::string part(buffer, bytes_read);
+	std::vector<char> buffer(BUFF_SIZE);
+    while ((bytes_read = read(pipefd_out[0], &buffer[0], buffer.size())) > 0) {
+      std::string part(&buffer[0], bytes_read);
       result.append(part);
     }
     if (bytes_read == -1) {
