@@ -9,6 +9,7 @@
 #include <memory>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <system_error>
 
 ClientConnection::ClientConnection() {}
 
@@ -85,6 +86,7 @@ ssize_t ClientConnection::receiveData(int index, std::string &datareceived)
 		if (bytes_received > 0)
 		{
 			total_received += bytes_received;
+			datareceived.append(std::string(buffer.begin(), buffer.begin() + bytes_received));
 			// _activeClients[connectedClientFD].bytesRead += bytes_received;
 		}
 		else if (bytes_received < 0 && (errno != EAGAIN || errno != EWOULDBLOCK))
@@ -99,9 +101,7 @@ ssize_t ClientConnection::receiveData(int index, std::string &datareceived)
 	}
 	// test print total bytes received and buffer vector
 	std::cout << std::endl;
-	std::cout << MSG_BORDER << "Total bytes received: " << total_received << MSG_BORDER << std::endl;
-
-	datareceived = std::string(buffer.begin(), buffer.end());
+	std::cout << MSG_BORDER << "[Total bytes received: " << total_received << "]" << MSG_BORDER << std::endl;
 	return total_received;
 }
 
@@ -116,14 +116,29 @@ void ClientConnection::handleInputEvent(int index)
 	std::string	buffer_str;
 	uint32_t	connectedClientFD = getIndexByClientFD(_pollFdsWithConfigs[index].fd);
 	ssize_t		bytesRead;
+	std::shared_ptr<Request> request;
 
 	bytesRead = receiveData(index, buffer_str);
 	if (bytesRead < 0)
-		return;
+		return; // error?
 
-	std::shared_ptr<Request> request = std::make_shared<Request>(buffer_str);
-	Response response(request, *_activeClients[connectedClientFD]._config);
+	request = std::make_shared<Request>(buffer_str);
+	if (!request)
+		return; // error?
+
+	while (request->get_requestStatus() == requestStatus::INCOMPLETE) {
+		buffer_str.clear();
+		bytesRead = receiveData(index, buffer_str);
+		if (bytesRead < 0)
+			return; //error?
+		if (bytesRead == 0)
+			break; // why can the server go in an infinite loop when this break is replaced with a return??
+		request->appendToBody(buffer_str);
+	}
 	
+
+	std::cout << MSG_BORDER << "[Total Bodylength: " << request->get_body().length() << "]" << MSG_BORDER << std::endl;
+	Response response(request, *_activeClients[connectedClientFD]._config);
 	// ssize_t		bytesRead = _activeClients[connectedClientFD].bytesRead;
 	// int n = 0;
 	// errno = 0;
@@ -215,7 +230,6 @@ void ClientConnection::handleInputEvent(int index)
 	// }
 
 	_activeClients[connectedClientFD].keepAlive = request->get_keepAlive(); //keep alive as in header
-	// _activeClients[connectedClientFD].unchunking = false;
 	const std::string httpResponse = response.get_response(); //"here is the response from the server\n";
 	ssize_t bytesSent = send(_pollFdsWithConfigs[index].fd, httpResponse.c_str(),
 							httpResponse.length(), 0);
@@ -230,13 +244,14 @@ void ClientConnection::handleInputEvent(int index)
 	}
 	else if (bytesSent == 0)
 	{
-		logClientError(
+		logClientConnection(
 			"Client disconnected",
 			_activeClients[getIndexByClientFD(_pollFdsWithConfigs[index].fd)]
 				.clientIP,
 			_pollFdsWithConfigs[index].fd);
+		return reset_buffer(_activeClients[connectedClientFD], true);
 	}
-	std::cout << MSG_BORDER << "Bytes Send: " << bytesSent << MSG_BORDER << std::endl;
+	std::cout << MSG_BORDER << "[Total Bytes Send: " << bytesSent << "]" << MSG_BORDER << std::endl;
 	reset_buffer(_activeClients[connectedClientFD], true);
 	manageKeepAlive(index);
 }

@@ -58,24 +58,24 @@ private:
 	std::string					_contentType;
 	std::string					_bufferFile;
 	ServerStruct				&_config;
-	FileAccess					_security;
+	FileAccess					_fileAccess;
 	std::filesystem::path		_requestPath;
 
-	bool handleGetRequest(const std::shared_ptr<Request> &request);
-	bool handlePostRequest(const std::shared_ptr<Request> &request);
-	bool handleDeleteRequest(const std::shared_ptr<Request> &request);
-	void handle_multipart();
+	bool	handleGetRequest(const std::shared_ptr<Request> &request);
+	bool	handlePostRequest(const std::shared_ptr<Request> &request);
+	bool	handleDeleteRequest(const std::shared_ptr<Request> &request);
+	void	handle_multipart();
 
-	std::unordered_map<std::string, std::string> get_args(std::string requestBody,
-													   std::string contentType);
-	std::vector<std::string> split_multipart(std::string requestBody,
-									std::string boundary);
-	std::string extract_filename(const std::string &headers);
-	statusCode write_file(const std::string &path, const std::string &content);
-	const std::string	readFileToBody(std::filesystem::path path);
-
-	std::string buildResponse(int status, const std::string &message,
-								const std::string &body, bool isCGI = false);
+	std::unordered_map<std::string, std::string>	get_args(std::string requestBody,
+															   std::string contentType);
+	std::vector<std::string>						split_multipart(std::string requestBody,
+																	std::string boundary);
+	std::string										extract_filename(const std::string &headers);
+	statusCode										write_file(const std::string &path,
+																const std::string &content, bool append);
+	const std::string								readFileToBody(std::filesystem::path path);
+	std::string										buildResponse(int status, const std::string &message,
+																	const std::string &body, bool isCGI = false);
 
 	static const inline std::unordered_map<std::string, std::string> contentTypes{
 		{".html", "text/html"},
@@ -97,8 +97,6 @@ private:
 		{".cgi", ""},
 		{".py", "/usr/bin/python3"},
 		{".php", "/ usr / lib / cgi - bin / php"}};
-
-
 
 	static const inline std::map<statusCode, std::string> statusCodeMap = {
 		{statusCode::OK, "OK"},

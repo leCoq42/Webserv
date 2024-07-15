@@ -2,35 +2,31 @@
 <html>
 <head>
 <title>File Upload Test</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
 
 <!--Button linked to another page-->
-<button onclick = "window.location.href='/index.html';">Click Me!</button>
+<button onclick = "window.location.href='/index.html';">Home</button>
 <!--"Turn on or off directory listing", use cgi to make buttons for all files in the configuration file or in the directories-->
 
-<!--Upload file button-->
+<!-- <form action="/uploads" method="post" enctype="multipart/form-data"> -->
+<!--   <p>Select image to upload: <input type="file" name="filename" id="file" /> -->
+<!--   </p> -->
+<!--   <p><input type="submit" value="Upload File" name="submit" /></p> -->
+<!-- </form> -->
 
 
-<!-- <form action="/test_stdin.py" method="post">
-	<input type="file" id="myFile" name="filename">
-	<input type="submit">
-  </form> -->
-
-<!-- <form action="/test_stdin.py" method="post" enctype="multipart/form-data"></form> -->
 <form action="/uploads" method="post" enctype="multipart/form-data">
-  <p>Select image to upload: <input type="file" name="fileToUpload" /></p>
-  <p><input type="submit" value="Upload File" name="submit" /></p>
+  <p>
+	<input type="file" id="myFile" name="filename">	
+  </p>
+  <p>
+  	<input type="submit" value="submit">
+  </p>
 </form>
 
-<!-- <form action="upload.php" method="post" enctype="multipart/form-data">
-	<input type="file" name="fileToUpload">
-	<input type="submit" value="Upload File">
-  </form> -->
-<!-- <form action="/action_page.php">
-  <input type="file" id="myFile" name="filename">
-  <input type="submit">
-</form> -->
 
 </body>
 </html>

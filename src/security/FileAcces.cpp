@@ -9,11 +9,11 @@
 
 FileAccess::FileAccess(ServerStruct &config): config(config)
 {
-	std::cout << MSG_BORDER << "[FILEACCES SETUP]" << MSG_BORDER << std::endl;
+	std::cout << MSG_BORDER << "[FILEACCESS SETUP]" << MSG_BORDER << std::endl;
 	root = config._root.content_list.back();//configPaths.push_back(config.root.content_list.back());
 	current_root = root;
 	allowed_methods = config._allowMethods.content_list;
-	show_all_allowed();
+	// show_all_allowed();
 }
 
 FileAccess::~FileAccess() {}
@@ -49,7 +49,7 @@ std::filesystem::path	FileAccess::find_location(std::filesystem::path path, std:
 	current = &config._location;
 	current_root = root;
 	uri.insert(0, "/");
-	std::cout << "find location:" << uri << "}{" << uri.substr(0, uri.find_last_of("/")) << std::endl;
+	// std::cout << "find location:" << uri << "}{" << uri.substr(0, uri.find_last_of("/")) << std::endl;
 	if (path.string().find_last_of(root) != std::string::npos)
 	{
 		while (current)
@@ -59,8 +59,8 @@ std::filesystem::path	FileAccess::find_location(std::filesystem::path path, std:
 				if (!((LocationStruct *)current->childs)->root.content_list.empty())
 					current_root.append(((std::string)((LocationStruct *)current->childs)->root.content_list.back()));
 
-				std::cout << "Try Path:" << current_root << std::endl;
-				std::cout << "Requested:" << uri << "=" << content << std::endl;
+				// std::cout << "Try Path:" << current_root << std::endl;
+				// std::cout << "Requested:" << uri << "=" << content << std::endl;
 				if (path.has_extension())
 				{
 					if (!uri.substr(0, uri.find_last_of("/")).compare(content) || !uri.substr(0, uri.find_last_of("/")).compare(""))
@@ -70,7 +70,7 @@ std::filesystem::path	FileAccess::find_location(std::filesystem::path path, std:
 				{
 					if (!((LocationStruct *)current->childs)->_return.content_list.empty())
 					{
-						std::cout << "Redirecting\n";
+						// std::cout << "Redirecting\n";
 						path = current_root;
 						path.append(((LocationStruct *)current->childs)->_return.content_list.back());
 						return (find_location(path, ((LocationStruct *)current->childs)->_return.content_list.back(), return_code));
@@ -101,8 +101,8 @@ std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &retur
 	path.append(uri);
 	//look through locations in server
 	path = find_location(path, uri, return_code);
-	std::cout << return_code << ":error\n";
-	std::cout << config._root.content_list.back();
+	// std::cout << return_code << ":error\n";
+	// std::cout << config._root.content_list.back();
 	return (path);
 }
 
@@ -138,7 +138,7 @@ void	FileAccess::show_all_allowed(void)
 {
 	int	i;
 
-	//check if in root
+	// check if in root
 	std::cout << "SHOW ALL UPLOADS:" << std::endl;
 	i = uploadedFiles.size();
 	while (i--)

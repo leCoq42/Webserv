@@ -27,17 +27,18 @@ void parse(Parser *parser, std::list<ServerStruct> *server_structs,
 		error_exit(2);
 	if (!parser->parse_content_to_struct(*buffer, file_len))
 		error_exit(3);
-	std::cout << parser->PS.get_nServers() << std::endl;
 	if (!load_in_servers(&parser->PS, *server_structs))
 		error_exit(4);
-	// DEBUG
+	#ifdef DEBUG
+	std::cout << parser->PS.get_nServers() << std::endl;
 	if (!server_structs->empty()) {
-		for (ServerStruct server : *server_structs) {
-		std::cout << "-------------------------------------" << std::endl;
-		server.show_self();
-		std::cout << "-------------------------------------" << std::endl;
+			for (ServerStruct server : *server_structs) {
+				std::cout << "-------------------------------------" << std::endl;
+				server.show_self();
+				std::cout << "-------------------------------------" << std::endl;
 		}
 	}
+	#endif // DEBUG
 }
 
 int main(int argc, char **argv) {

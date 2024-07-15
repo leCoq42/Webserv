@@ -10,12 +10,12 @@
 // https://datatracker.ietf.org/doc/html/rfc3875#section-4
 //  std::string	specifiedCgiEnv[] = {}
 
-enum class status {INCOMPLETE, STUCK, COMPLETE};
+enum class requestStatus {INCOMPLETE, STUCK, COMPLETE, FAILED};
 
 class Request {
 	public:
 		Request();
-		Request(const std::string &str);
+		Request(const std::string str);
 		Request(const Request &src);
 		Request &operator=(const Request &rhs);
 		void swap(Request &lhs);
@@ -37,16 +37,17 @@ class Request {
 		const std::string	&get_body() const;
 		const std::unordered_map<std::string, std::string> &get_headers() const;
 		const std::string	&get_bufferFile() const; //added
-		size_t				get_contentLen() const;
-		const size_t		&get_startContentLength() const; //added
+		size_t				parse_contentLen() const;
+		const size_t		&get_contentLength() const; //added
 		const bool			&get_keepAlive() const;
 		const bool			&get_validity() const;
-		const status		&get_requestStatus() const;
+		const requestStatus	&get_requestStatus() const;
 		void				printRequest() const;
 		void				set_keepAlive(bool keepAlive); //added
 		void				set_bufferFile(std::string buffer_file); //added
-		void				set_startContentLength(size_t content_length); //added
-		void				set_requestStatus(status);
+		void				set_contentLength(size_t contentLength); //added
+		void				set_requestStatus(requestStatus);
+		void appendToBody(std::string requestString);
 
 	private:
 		const std::string	_rawRequest;
@@ -60,14 +61,15 @@ class Request {
 		std::string			_body;
 		std::unordered_map<std::string, std::string>	_cgiEnv;
 		std::string			_bufferFile;//added
-		size_t				_startContentLength;
-		status				_requestStatus = status::INCOMPLETE;
+		size_t				_contentLength;
+		bool				_chunked;
+		requestStatus		_requestStatus;
 		
 
 		void parseRequest();
 		bool parseRequestLine(const std::string &line);
 		bool parseRequestHeaders(std::istringstream &requestStream);
-		bool parseRequestBody(const std::string &_rawRequest);
+		std::string parseRequestBody(const std::string &_rawRequest);
 		void extractCgiEnv(void);
 		void splitUrlArgs(std::string argStr);
 		void parseUrlArgs(const std::string uri);
