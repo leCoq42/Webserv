@@ -19,14 +19,18 @@ Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
     : _request(request), _responseString(""), _contentType(""), _bufferFile(""), _config(config), _fileAccess(config)
 {
 	handleRequest(request);
+	#ifdef DEBUG
 	printResponse();
+	#endif // !DEBUG
 }
 
 Response::Response(std::shared_ptr<Request> request, ServerStruct &config, std::string filename)
     : _request(request), _responseString(""), _contentType(""), _bufferFile(filename), _config(config), _fileAccess(config)
 {
 	handleRequest(request);
+	#ifdef DEBUG
 	printResponse();
+	#endif // DEBUG
 }
 
 Response::~Response() {}
@@ -314,8 +318,8 @@ std::string Response::get_contentType() { return _contentType; }
 
 void Response::printResponse()
 {
-	// std::cout << MSG_BORDER << "[Response]" << MSG_BORDER << std::endl;
-	// std::cout << _responseString << std::endl;
+	std::cout << MSG_BORDER << "[Response]" << MSG_BORDER << std::endl;
+	std::cout << _responseString << std::endl;
 }
 
 // std::unordered_map<std::string, std::string>

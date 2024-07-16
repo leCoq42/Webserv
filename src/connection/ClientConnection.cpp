@@ -74,11 +74,11 @@ void	reset_buffer(Client &client, bool end_of_request)
 
 ssize_t ClientConnection::receiveData(int index, std::string &datareceived)
 {
-	std::vector<char> buffer(2048);
+	std::vector<char> buffer(BUFFSIZE);
 	int	connectedClientFD = getIndexByClientFD(_pollFdsWithConfigs[index].fd);
-	// ssize_t		bytesRead = _activeClients[connectedClientFD].bytesRead;
+	// ssize_t		bytesRead = _activeClients[connectedClientFD].bytesRead; -> not used anymore?
 	ssize_t bytes_received;
-	ssize_t total_received = 0;
+	std::string::size_type total_received = 0;
 
 	errno = 0;
 	while (true) {
@@ -87,7 +87,7 @@ ssize_t ClientConnection::receiveData(int index, std::string &datareceived)
 		{
 			total_received += bytes_received;
 			datareceived.append(std::string(buffer.begin(), buffer.begin() + bytes_received));
-			// _activeClients[connectedClientFD].bytesRead += bytes_received;
+			// _activeClients[connectedClientFD].bytesRead += bytes_received; -> not used anymore?
 		}
 		else if (bytes_received < 0 && (errno != EAGAIN || errno != EWOULDBLOCK))
 		{
@@ -100,7 +100,6 @@ ssize_t ClientConnection::receiveData(int index, std::string &datareceived)
 			break;
 	}
 	// test print total bytes received and buffer vector
-	std::cout << std::endl;
 	std::cout << MSG_BORDER << "[Total bytes received: " << total_received << "]" << MSG_BORDER << std::endl;
 	return total_received;
 }
@@ -114,127 +113,41 @@ ssize_t ClientConnection::receiveData(int index, std::string &datareceived)
 void ClientConnection::handleInputEvent(int index)
 {
 	std::string	buffer_str;
-	uint32_t	connectedClientFD = getIndexByClientFD(_pollFdsWithConfigs[index].fd);
+	int			connectedClientFD = getIndexByClientFD(_pollFdsWithConfigs[index].fd);
 	ssize_t		bytesRead;
-	std::shared_ptr<Request> request;
 
+	errno = 0;
 	bytesRead = receiveData(index, buffer_str);
-	if (bytesRead < 0)
-		return; // error?
+	if (bytesRead < 0) {
+		logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
+				 _activeClients[connectedClientFD].clientIP,_pollFdsWithConfigs[index].fd);
+		return;
+	}
 
-	request = std::make_shared<Request>(buffer_str);
+	std::shared_ptr<Request> request = std::make_shared<Request>(buffer_str);
 	if (!request)
 		return; // error?
 
 	while (request->get_requestStatus() == requestStatus::INCOMPLETE) {
 		buffer_str.clear();
 		bytesRead = receiveData(index, buffer_str);
-		if (bytesRead < 0)
-			return; //error?
+		if (bytesRead < 0) {
+			logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
+				  _activeClients[connectedClientFD].clientIP,_pollFdsWithConfigs[index].fd);
+			return;
+		}
 		if (bytesRead == 0)
-			break; // why can the server go in an infinite loop when this break is replaced with a return??
+			break;
 		request->appendToBody(buffer_str);
 	}
-	
 
 	std::cout << MSG_BORDER << "[Total Bodylength: " << request->get_body().length() << "]" << MSG_BORDER << std::endl;
 	Response response(request, *_activeClients[connectedClientFD]._config);
-	// ssize_t		bytesRead = _activeClients[connectedClientFD].bytesRead;
-	// int n = 0;
-	// errno = 0;
-	// n = recv(_pollFdsWithConfigs[index].fd, &_activeClients[connectedClientFD].buffer[bytesRead], sizeof(_activeClients[connectedClientFD].buffer) - bytesRead, MSG_DONTWAIT);
-	// buffer_str = "";
-	// if (n > 0)
-	// {
-	// 	bytesRead += n;
-	// 	_activeClients[connectedClientFD].bytesRead = bytesRead;
-	// 	_activeClients[connectedClientFD].buffer[bytesRead] = '\0';
-	// 	buffer_str = _activeClients[connectedClientFD].buffer;
-	// }
-	// else if (n < 0 && errno != EAGAIN)
-	// {
-	// 	logClientError("Failed to receive data from client",
-	// 				_activeClients[connectedClientFD].clientIP,
-	// 				_pollFdsWithConfigs[index].fd);
-	// 	return;
-	// }
-	// else
-	// 	return ;
 
-	// if (buffer_str.find("\r\n\r\n") == std::string::npos && !_activeClients[connectedClientFD].unchunking)
-	// _activeClients[connectedClientFD].unchunking = false;
-	//
-	// if (bytesRead == 0 &&
-	// 	((_activeClients[connectedClientFD].keepAlive == true) ||
-	// 	!_activeClients[connectedClientFD].unchunker._totalLength))
-	// {
-	// 	logClientError("Client disconnected",
-	// 				_activeClients[connectedClientFD].clientIP,
-	// 				_pollFdsWithConfigs[index].fd);
-	// 	_pollFdsWithConfigs[index].revents = POLLERR;
-	// 	std::cout << "CLIENT DISCONNECTED" << std::endl;
-	// 	reset_buffer(_activeClients[connectedClientFD], true);
-	// 	//close file and delete client?
-	// 	return;
-	// }
-
-
-	// std::string upload_file = "";
-	// if (!_activeClients[connectedClientFD].unchunker._totalLength && !_activeClients[connectedClientFD].unchunker._justStarted)
-	// {
-	// 	_activeClients[connectedClientFD].unchunking = true;
-	// 	Request	request = Request(buffer_str);
-	// 	std::cout << "TOTAL LENGTH NOT REACHED" << request.get_validity() << std::endl;
-	// 	if (request.get_validity()) //hacky and most often okay, but not always...
-	// 	{
-	// 		logClientError("Post interrupted",
-	// 				_activeClients[connectedClientFD].clientIP,
-	// 				_pollFdsWithConfigs[index].fd);
-	// 		_pollFdsWithConfigs[index].revents = POLLERR;
-	// 		buffer_str = _activeClients[connectedClientFD].buffer;
-	// 		return reset_buffer(_activeClients[connectedClientFD], true); //might have to remove chunked and then just go one with the valid one
-	// 	}
-	// 	if (!_activeClients[connectedClientFD].unchunker.add_to_file(_activeClients[connectedClientFD].buffer, bytesRead))
-	// 		return reset_buffer(_activeClients[connectedClientFD], false);
-	// 	_activeClients[connectedClientFD].unchunking = false;
-	// 	upload_file = _activeClients[connectedClientFD].unchunker.get_fileName();
-	// 	buffer_str = _activeClients[connectedClientFD].unchunker._firstRequest->get_rawRequest();
-	// }
-	//
-	// std::shared_ptr<Request> request = std::make_shared<Request>(buffer_str);
-	// Use outcommented code to for parsing and sending response. If keepAlive is
-	// set to false, the client will be disconnected. If keepAlive is set to true,
-	// the client will stay connected till chunked request is done.
-	// _activeClients[connectedClientFD].keepAlive =
-	// request.parseRequest(_activeClients[getIndexByClientFD(index)]); // Fix
-	// the error by using getIndexByClientFD(index) instead of connectedClientFD
-	//   std::cout << "Adress congig:" << _serverConfigs[index] << std::endl;
-	// if (request->get_requestStatus() == status::COMPLETE)
-	// Response response(request, *_activeClients[connectedClientFD]._config, upload_file); //changed to get server config
-
-	// _activeClients[connectedClientFD].keepAlive = request->get_keepAlive(); //keep alive as in header
-	// std::cout << "REQUEST POST FILE:" << request->get_bufferFile() << std::endl;
-	// if (request->get_bufferFile().compare(""))
-	// {
-	// 	std::cout << "THERE IS A BUFFER_FILE\n";
-	// 	_activeClients[connectedClientFD].unchunker = Chunked(request);
-	// 	if (!_activeClients[connectedClientFD].unchunker._totalLength)
-	// 	{
-	// 		//skip response, right place?
-	// 		_activeClients[connectedClientFD].unchunking = true;
-	// 		std::cout<< "skip response WILL IT STAY ALIVE" << _activeClients.size() << std::endl;
-	// 		manageKeepAlive(index);
-	// 		std::cout<< "skip response IT STAYS ALIVE" << _activeClients.size() << std::endl;
-	// 		return reset_buffer(_activeClients[connectedClientFD], false);
-	// 	}
-	// }
-
-	_activeClients[connectedClientFD].keepAlive = request->get_keepAlive(); //keep alive as in header
-	const std::string httpResponse = response.get_response(); //"here is the response from the server\n";
-	ssize_t bytesSent = send(_pollFdsWithConfigs[index].fd, httpResponse.c_str(),
-							httpResponse.length(), 0);
-	if (bytesSent == -1)
-	{
+	const std::string responseString = response.get_response();
+	ssize_t bytesSent = send(_pollFdsWithConfigs[index].fd, responseString.c_str(),
+							responseString.length(), 0);
+	if (bytesSent == -1) {
 		logClientError(
 			"Failed to send data to client: " + std::string(strerror(errno)),
 			_activeClients[getIndexByClientFD(_pollFdsWithConfigs[index].fd)]
@@ -242,8 +155,7 @@ void ClientConnection::handleInputEvent(int index)
 			_pollFdsWithConfigs[index].fd);
 		return reset_buffer(_activeClients[connectedClientFD], true);
 	}
-	else if (bytesSent == 0)
-	{
+	else if (bytesSent == 0) {
 		logClientConnection(
 			"Client disconnected",
 			_activeClients[getIndexByClientFD(_pollFdsWithConfigs[index].fd)]
@@ -251,12 +163,12 @@ void ClientConnection::handleInputEvent(int index)
 			_pollFdsWithConfigs[index].fd);
 		return reset_buffer(_activeClients[connectedClientFD], true);
 	}
+
 	std::cout << MSG_BORDER << "[Total Bytes Send: " << bytesSent << "]" << MSG_BORDER << std::endl;
 	reset_buffer(_activeClients[connectedClientFD], true);
+	_activeClients[connectedClientFD].keepAlive = request->get_keepAlive(); //keep alive as in header
 	manageKeepAlive(index);
 }
-
-
 
 Client ClientConnection::initClientInfo(int clientFD, int index, sockaddr_in clientAddr)
 {
