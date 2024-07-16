@@ -3,7 +3,7 @@ webserv
 */uploads/*
 
 obj/
-./log
+log/*
 
 .DS_Store
 .cache

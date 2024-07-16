@@ -21,7 +21,8 @@ class CGI {
 
 	private:
 		const std::shared_ptr<Request>					_request;
-		std::unordered_map<std::string, std::string>	_cgiEnv;
+		// std::unordered_map<std::string, std::string>	_cgiEnvp;
+		std::vector<std::string>						_cgiEnvp;
 		std::vector<std::string>						_cgiArgv;
 
 	static const inline std::vector<std::string> metaVarNames = {

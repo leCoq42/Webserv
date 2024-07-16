@@ -21,35 +21,33 @@ CGI::CGI(const std::shared_ptr<Request> &request) : _request(request) {}
 
 CGI::~CGI() {}
 
-bool CGI::validate_key(std::string key, std::vector<std::string> customizable_variables_names) {
-	int i;
-
+bool CGI::validate_key(std::string key, std::vector<std::string> custom_var_names) {
 	for (auto &c : key)
 		c = toupper(c);
-	i = metaVarNames.size();
-	while (i--) {
-		if (!metaVarNames[i].compare(key))
-			return true;
-	}
-	i = customizable_variables_names.size();
-	while (i--) {
-		if (key.find(customizable_variables_names[i]) != std::string::npos)
-			return true;
-	}
+
+	auto it = std::find(metaVarNames.begin(), metaVarNames.end(), key);
+	if (it != metaVarNames.end())
+		return true;
+
+	it = std::find(custom_var_names.begin(), custom_var_names.end(), key);
+	if (it != custom_var_names.end())
+		return true;
+
 	return false;
 }
 
 // adds variable to envpp if permissed. additive is a specified prefix
 bool CGI::add_to_envp(std::string name, std::string value, std::string additive) {
-	std::string temp;
-	if (validate_key(additive + name, customizable_variables_names)) {
-		temp = additive + name;
-		for (auto &c : temp)
+	std::string tmp;
+
+	if (validate_key(additive + name, custom_var_names)) {
+		tmp = additive + name;
+		for (auto &c : tmp)
 			c = toupper(c);
-		if (value.compare(""))
-			temp += "=" + value;
-		std::replace(temp.begin(), temp.end(), '-', '_');
-		_metaVars.push_back(temp); // uri[name] = value;
+		if (!value.empty())
+			tmp += "=" + value;
+		std::replace(tmp.begin(), tmp.end(), '-', '_');
+		_cgiEnvp.push_back(tmp); // uri[name] = value;
 		return true;
 	}
 	return false;
@@ -60,7 +58,7 @@ bool CGI::add_to_argv(std::string name, std::string value, std::string additive)
 	std::string temp;
 
 	temp = additive + name;
-	if (value.empty())
+	if (!value.empty())
 		temp += "=" + value;
 	_cgiArgv.push_back(temp); // uri[name] = value;
 	return true;
