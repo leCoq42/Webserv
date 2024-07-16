@@ -22,13 +22,15 @@ Request::Request() : _rawRequest(""), _requestMethod(""), _requestPath(""),
 Request::Request(const std::string rawStr) : _rawRequest(rawStr), _keepAlive(false) {
 	parseRequest();
 
-	if (_chunked && _body.length() != _contentLength) {// TODO: not sure which length to compare with
+	if (_chunked && _contentLength != _body.length()) {// TODO: not sure which length to compare with
 		_requestStatus = requestStatus::INCOMPLETE;
-		std::cout << "Chunked Request >>>>>>>>>>>" << std::endl;
+		std::cout << "<<< Chunked Request >>>" << std::endl;
 	}
 	else{
 		_requestStatus = requestStatus::COMPLETE;
+		#ifdef DEBUG
 		printRequest();
+		#endif // DEBUG
 	}
 }
 
@@ -127,8 +129,6 @@ void Request::parseRequest()
 	_isValid = checkRequestValidity();
 	return;
 }
-
-
 
 void Request::parseUrlArgs(const std::string uri)
 {
@@ -351,7 +351,7 @@ void Request::printRequest() const {
 		std::cout << "Referer: " << get_referer() << std::endl;
 		std::cout << "ContentType: " << get_contentType() << std::endl;
 		std::cout << "Boundary: " << get_boundary() << std::endl;
-		std::cout << "ContentLen: " << get_contentLen() << std::endl;
+		std::cout << "ContentLen: " << get_contentLength() << std::endl;
 	}
 
 	std::cout << "<Keep-Alive>" << std::endl;

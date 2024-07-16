@@ -48,7 +48,7 @@ void ClientConnection::manageKeepAlive(int index) {
 	time(&currentTime);
 	_activeClients[indexConnectedClients].lastRequestTime = currentTime;
 	_activeClients[indexConnectedClients].numRequests += 1;
-	if (_activeClients[indexConnectedClients].keepAlive == true || _activeClients[indexConnectedClients].unchunking == true)
+	if (_activeClients[indexConnectedClients].keepAlive == true)
 	{
 		std::cout << "REPOLL" << std::endl;
 		_pollFdsWithConfigs[index].events = POLLIN | POLLOUT;

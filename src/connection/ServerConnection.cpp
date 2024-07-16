@@ -16,12 +16,12 @@ void ServerConnection::initServerInfo(ServerStruct &serverStruct, ServerInfo &in
 
 	// _config = serverStruct;
 	info._config = &serverStruct; //added points to serverstruct
-	//
+
 	#ifdef DEBUG
 	std::cout << "SERVERINFO:" <<  std::endl;
 	info._config->show_self(); // added
-	#endif // DEBUG
-	//
+	#endif
+
 	info.serverPort = atoi(it->c_str());
 	info.serverID = serverStruct._id;
 	server_addr.sin_family = AF_INET;

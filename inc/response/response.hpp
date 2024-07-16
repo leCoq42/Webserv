@@ -44,11 +44,11 @@ public:
 
   Response(const Response &src);
   Response &operator=(const Response &rhs);
-  void swap(Response &lhs);
 
-  void handleRequest(const std::shared_ptr<Request> &request);
-  std::string get_response();
-  std::string get_contentType();
+  void			swap(Response &lhs);
+  void			handleRequest(const std::shared_ptr<Request> &request);
+  std::string	get_response();
+  std::string	get_contentType();
 
   void printResponse();
 

@@ -21,7 +21,7 @@ Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
 	handleRequest(request);
 	#ifdef DEBUG
 	printResponse();
-	#endif // !DEBUG
+	#endif
 }
 
 Response::Response(std::shared_ptr<Request> request, ServerStruct &config, std::string filename)
@@ -30,7 +30,7 @@ Response::Response(std::shared_ptr<Request> request, ServerStruct &config, std::
 	handleRequest(request);
 	#ifdef DEBUG
 	printResponse();
-	#endif // DEBUG
+	#endif
 }
 
 Response::~Response() {}
@@ -109,7 +109,7 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 		else
 		{
 			isCGI = true;
-			cgi CGI(_contentType);
+			CGI CGI(_request);
 			body = CGI.executeCGI(_requestPath, "", _request,
 									interpreters.at(_requestPath.extension()));
 		}
@@ -135,24 +135,20 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 		resourcePath = "index.html";
 
 	std::cout << "ResourcePath:" << resourcePath << std::endl;
-	if (resourcePath.has_extension())
-	{
-		if (interpreters.find(resourcePath.extension()) != interpreters.end())
-		{
+	if (resourcePath.has_extension()) {
+		if (interpreters.find(resourcePath.extension()) != interpreters.end()) {
 			isCGI = true;
 			path.append(resourcePath.string());
-			cgi CGI(_contentType);
+			CGI CGI(_request);
 			body = CGI.executeCGI(path, "", _request,
 									interpreters.at(resourcePath.extension()));
 		}
-		else
-		{
+		else {
 			buildResponse(static_cast<int>(statusCode::NO_CONTENT), "No Content", "");
 			return true;
 		}
 	}
-	if (requestContentType == "multipart/form-data")
-	{
+	if (requestContentType == "multipart/form-data") {
 		handle_multipart();
 		return true;
 	}
@@ -160,16 +156,14 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 	return true;
 }
 
-bool Response::handleDeleteRequest(const std::shared_ptr<Request> &request)
-{
+bool Response::handleDeleteRequest(const std::shared_ptr<Request> &request) {
 	std::filesystem::path Path = request->get_uri();
 
 	buildResponse(static_cast<int>(statusCode::OK), "OK", "");
 	return true;
 }
 
-const std::string	Response::readFileToBody(std::filesystem::path path)
-{
+const std::string	Response::readFileToBody(std::filesystem::path path) {
 	std::stringstream buffer;
 	std::string body;
 	std::ifstream file( path, std::ios::binary);
@@ -195,8 +189,8 @@ void Response::handle_multipart() {
 	if (_bufferFile.empty())
 	{
 		std::vector<std::string> parts = split_multipart(requestBody, boundary);
-		for (const std::string &part: parts)
-		{
+		std::cout << "Number of Parts: " << parts.size() << std::endl;
+		for (const std::string &part: parts) {
 			if (part.empty())
 				continue;
 
@@ -217,7 +211,9 @@ void Response::handle_multipart() {
 
 			filename = extract_filename(headers);
 
+			#ifdef DEBUG
 			std::cout << MSG_BORDER << "[part content:]" << MSG_BORDER << "\n" << content << std::endl;
+			#endif
 
 			status = write_file(      "html/uploads/" + filename, content, append);
 			if (status != statusCode::OK)
@@ -231,21 +227,19 @@ void Response::handle_multipart() {
 		else
 			responseBody = readFileToBody("html/standard_404.html");
 	}
-	else {//TODO: should be able to run cgi as well
+	else {//TODO should be able to run cgi as well
 		status = statusCode::OK;
 	}
 	buildResponse(static_cast<int>(status), statusCodeMap.at(status), responseBody);
 }
 
 std::vector<std::string> Response::split_multipart(std::string requestBody,
-                                             std::string boundary)
-{
+                                             std::string boundary) {
 	std::vector<std::string> parts;
 	std::string fullBoundary = "--" + boundary;
 	size_t pos = 0;
 
-	while (pos < requestBody.size())
-	{
+	while (pos < requestBody.size()) {
 		size_t start = requestBody.find(fullBoundary, pos);
 		if (start == std::string::npos)
 			break;
@@ -258,8 +252,7 @@ std::vector<std::string> Response::split_multipart(std::string requestBody,
 	return parts;
 }
 
-std::string Response::extract_filename(const std::string &headers)
-{
+std::string Response::extract_filename(const std::string &headers) {
 	size_t filename_pos = headers.find("filename=\""); //this is tricky might not necessarily called like this
 				//
 	if (filename_pos == std::string::npos)
@@ -268,15 +261,13 @@ std::string Response::extract_filename(const std::string &headers)
 	return headers.substr(filename_pos + 10, filename_end - filename_pos - 10);
 }
 
-statusCode Response::write_file(const std::string &path, const std::string &content, bool append)
-{
+statusCode Response::write_file(const std::string &path, const std::string &content, bool append) {
 	std::ofstream file;
 	if (append)
 		file.open(path, std::ios::binary | std::ios::app);
 	else
 		file.open(path, std::ios::binary);
-	if (file.is_open())
-	{
+	if (file.is_open()) {
 		file.write(content.c_str(), content.length());
 		file.close();
 		return statusCode::OK;
@@ -286,27 +277,22 @@ statusCode Response::write_file(const std::string &path, const std::string &cont
 }
 
 std::string Response::buildResponse(int status, const std::string &message,
-                                    const std::string &body, bool isCGI)
-{
+                                    const std::string &body, bool isCGI) {
 	_responseString.append("HTTP/1.1 " + std::to_string(status) + " " + message +
 							CRLF);
-	if (!body.empty() && !isCGI)
-	{
+	if (!body.empty() && !isCGI) {
 		_responseString.append("Content-Length: " + std::to_string(body.length()) +
 							CRLF);
 	}
-	if (_request->get_keepAlive())
-	{
+	if (_request->get_keepAlive()) {
 		_responseString.append(
 			"Keep-Alive: timeout=" + std::to_string(KEEP_ALIVE_TIMOUT) +
 			", max=" + std::to_string(KEEP_ALIVE_N) + CRLF);
 	}
-	if (isCGI)
-	{
+	if (isCGI) {
 		_responseString.append(body);
 	}
-	else
-	{
+	else {
 		_responseString.append("Content-Type: " + get_contentType() + CRLF);
 		_responseString.append(CRLF + body);
 	}
@@ -316,8 +302,7 @@ std::string Response::buildResponse(int status, const std::string &message,
 std::string Response::get_response() { return _responseString; }
 std::string Response::get_contentType() { return _contentType; }
 
-void Response::printResponse()
-{
+void Response::printResponse() {
 	std::cout << MSG_BORDER << "[Response]" << MSG_BORDER << std::endl;
 	std::cout << _responseString << std::endl;
 }

@@ -9,13 +9,13 @@
 
 void error_exit(int error_code) {
 	if (error_code == 1)
-		std::cout << "no file given" << std::endl;
+		std::cerr << "no file given" << std::endl;
 	else if (error_code == 2)
-		std::cout << "file loading error" << std::endl;
+		std::cerr << "file loading error" << std::endl;
 	else if (error_code == 3)
-		std::cout << "parsing went wrong" << std::endl;
+		std::cerr << "parsing went wrong" << std::endl;
 	else if (error_code == 4)
-		std::cout << "loading server struct went wrong" << std::endl;
+		std::cerr << "loading server struct went wrong" << std::endl;
 	exit(1);
 }
 
@@ -31,14 +31,14 @@ void parse(Parser *parser, std::list<ServerStruct> *server_structs,
 		error_exit(4);
 	#ifdef DEBUG
 	std::cout << parser->PS.get_nServers() << std::endl;
-	if (!server_structs->empty()) {
+	if (!server_structs.empty()) {
 			for (ServerStruct server : *server_structs) {
 				std::cout << "-------------------------------------" << std::endl;
 				server.show_self();
 				std::cout << "-------------------------------------" << std::endl;
 		}
 	}
-	#endif // DEBUG
+	#endif
 }
 
 int main(int argc, char **argv) {
@@ -50,6 +50,7 @@ int main(int argc, char **argv) {
 
 	if (argc != 2)
 		error_exit(1);
+
 	initSignals();
 	parse(&parser, &server_structs, &buffer, argv);
 	for (auto &server : server_structs)

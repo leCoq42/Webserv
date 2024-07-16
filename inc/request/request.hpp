@@ -65,12 +65,11 @@ class Request {
 		bool				_chunked;
 		requestStatus		_requestStatus;
 		
-
-		void parseRequest();
-		bool parseRequestLine(const std::string &line);
-		bool parseRequestHeaders(std::istringstream &requestStream);
-		std::string parseRequestBody(const std::string &_rawRequest);
-		void extractCgiEnv(void);
-		void splitUrlArgs(std::string argStr);
-		void parseUrlArgs(const std::string uri);
+		void		parseRequest();
+		bool		parseRequestLine(const std::string &line);
+		bool		parseRequestHeaders(std::istringstream &requestStream);
+		std::string	parseRequestBody(const std::string &_rawRequest);
+		void		extractCgiEnv();
+		void		parseUrlArgs(const std::string uri);
+		void		splitUrlArgs(std::string argStr);
 };
