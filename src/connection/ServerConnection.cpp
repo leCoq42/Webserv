@@ -11,19 +11,23 @@ ServerConnection::~ServerConnection() {
 }
 
 void ServerConnection::initServerInfo(ServerStruct &serverStruct, ServerInfo &info, std::list<std::string>::iterator it) {
-  struct sockaddr_in server_addr;
-  memset(&server_addr, 0, sizeof(server_addr));
+	struct sockaddr_in server_addr;
+	memset(&server_addr, 0, sizeof(server_addr));
 
 	// _config = serverStruct;
 	info._config = &serverStruct; //added points to serverstruct
+	//
+	#ifdef DEBUG
 	std::cout << "SERVERINFO:" <<  std::endl;
 	info._config->show_self(); // added
-  info.serverPort = atoi(it->c_str());
-  info.serverID = serverStruct._id;
-  server_addr.sin_family = AF_INET;
-  server_addr.sin_addr.s_addr = INADDR_ANY;
-  server_addr.sin_port = htons(atoi(it->c_str()));
-  info.server_addr = server_addr;
+	#endif // DEBUG
+	//
+	info.serverPort = atoi(it->c_str());
+	info.serverID = serverStruct._id;
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_addr.s_addr = INADDR_ANY;
+	server_addr.sin_port = htons(atoi(it->c_str()));
+	info.server_addr = server_addr;
 }
 
 void ServerConnection::createServerSocket(ServerInfo &info) {

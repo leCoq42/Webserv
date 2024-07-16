@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
-#include <vector>
+#include <sstream>
 
 
 auto print_key_value = [](const auto &key, const auto &value)
@@ -15,11 +15,21 @@ auto print_key_value = [](const auto &key, const auto &value)
 	std::cout << "Key:[" << key << "] Value:[" << value << "]\n";
 };
 
-Request::Request() : _rawRequest(""), _requestMethod(""), _requestPath(""), _htmlVersion(""), _keepAlive(false), _isValid(0), _body(""), _bufferFile("") {}
+Request::Request() : _rawRequest(""), _requestMethod(""), _requestPath(""),
+	_htmlVersion(""), _keepAlive(false), _isValid(0), _body(""), _bufferFile(""),
+	_contentLength(0), _chunked(false), _requestStatus(requestStatus::COMPLETE) {}
 
-Request::Request(const std::string &rawStr) : _rawRequest(rawStr), _keepAlive(false) {
+Request::Request(const std::string rawStr) : _rawRequest(rawStr), _keepAlive(false) {
 	parseRequest();
-	printRequest();
+
+	if (_chunked && _body.length() != _contentLength) {// TODO: not sure which length to compare with
+		_requestStatus = requestStatus::INCOMPLETE;
+		std::cout << "Chunked Request >>>>>>>>>>>" << std::endl;
+	}
+	else{
+		_requestStatus = requestStatus::COMPLETE;
+		printRequest();
+	}
 }
 
 Request::~Request() {}
@@ -29,8 +39,9 @@ Request::Request(const Request &src) :
 	_requestPath(src._requestPath), _htmlVersion(src._htmlVersion),
 	_requestArgs(src._requestArgs), _headers(src._headers),
 	_keepAlive(src._keepAlive), _isValid(src._isValid), _body(src._body),
-	_cgiEnv(src._cgiEnv), _bufferFile(src._bufferFile), _startContentLength(src._startContentLength)
-{
+	_cgiEnv(src._cgiEnv), _bufferFile(src._bufferFile),
+	_contentLength(src._contentLength), _chunked(src._chunked),
+	_requestStatus(src._requestStatus) {
 	extractCgiEnv();
 }
 
@@ -51,7 +62,9 @@ void Request::swap(Request &lhs) {
 	std::swap(_body, lhs._body);
 	std::swap(_cgiEnv, lhs._cgiEnv);
 	std::swap(_bufferFile, lhs._bufferFile);
-	std::swap(_startContentLength, lhs._startContentLength);
+	std::swap(_contentLength, lhs._contentLength);
+	std::swap(_chunked, lhs._chunked);
+	std::swap(_requestStatus, lhs._requestStatus);
 }
 
 // doesn't seem to be the standard but it is an security issue not to check
@@ -61,6 +74,7 @@ void Request::extractCgiEnv() // whoops wrong place, also security issue :p
 {
 	if (get_headers().empty())
 		return;
+
 	// Should check for accepted env variables, but dont think its specified to be
 	// that way.
 	for (const auto &[key, value] : get_headers())
@@ -88,41 +102,68 @@ void Request::parseRequest()
 	}
 
 	_requestPath = trim(_requestPath, "/");
-	_requestArgs = parseUriArgs(_requestPath);
-
+	if (_requestMethod == "GET")
+		parseUrlArgs(_requestPath);
 	if (!parseRequestHeaders(requestStream)) {
 		_isValid = false;
 		return;
 	}
 
-	parseRequestBody(_rawRequest);
+	if (_requestMethod != "GET") {
+		_body = parseRequestBody(_rawRequest);
+		_contentLength = parse_contentLen();
+	}
 
 	if (_headers.find("connection") != _headers.end()) {
-		if (_headers["connection"].compare("keep-alive") == 0) {
-		_keepAlive = false; //was true
+		if (_headers["connection"] == "keep-alive") {
+			_keepAlive = true;
 		}
 	}
 
+	if (_headers.find("transfer-encoding") != _headers.end()) {
+		if (_headers["transfer-encoding"].find("chunked") != std::string::npos) 
+			_chunked = true;
+	}
 	_isValid = checkRequestValidity();
 	return;
 }
 
-std::vector<std::string> Request::parseUriArgs(const std::string uri)
+
+
+void Request::parseUrlArgs(const std::string uri)
 {
 	size_t pos;
-	std::vector<std::string> args;
+	std::unordered_map<std::string, std::string> args;
 	std::string argStr;
 
 	pos = uri.find("?");
 	if (pos != std::string::npos) {
 		_requestPath = uri.substr(0, pos);
-		if (pos + 1) {
-		argStr = uri.substr(pos + 1);
-		args = split(argStr, "?");
+		if (pos + 1)
+		{
+			argStr = uri.substr(pos + 1);
+			splitUrlArgs(argStr);
 		}
 	}
-	return args;
 }
+
+void Request::splitUrlArgs(std::string argStr)
+{
+	std::string arg;
+	std::istringstream argStream(argStr);
+
+	while (std::getline(argStream, arg, '&'))
+	{
+		size_t pos = arg.find('=');
+		if (pos != std::string::npos)
+		{
+			std::string key = arg.substr(0, pos);
+			std::string value = arg.substr(pos + 1);
+			_requestArgs[key] = value;
+		}
+	}
+}
+
 
 bool Request::parseRequestLine(const std::string &line)
 {
@@ -161,16 +202,21 @@ bool Request::parseRequestHeaders(std::istringstream &requestStream)
 	return true;
 }
 
-bool Request::parseRequestBody(const std::string &_rawRequest)
+std::string Request::parseRequestBody(const std::string &_rawRequest)
 {
 	size_t body_start;
 
-	body_start = _rawRequest.find("\r\n\r\n");
+	body_start = _rawRequest.find(CRLFCRLF);
 	if (body_start == std::string::npos) {
-		return false;
+		return "";
 	}
-	_body = _rawRequest.substr(body_start + 4, get_contentLen());
-	return true;
+	std::string body = _rawRequest.substr(body_start + 4, parse_contentLen());
+	return body;
+}
+
+void Request::appendToBody(std::string requestString) {
+	std::string chunk = parseRequestBody(requestString);
+	_body.append(chunk);
 }
 
 // TODO: max length of GET request 2048 bytes?
@@ -216,7 +262,7 @@ const std::string Request::get_contentType() const
 	return contentType;
 }
 
-size_t Request::get_contentLen() const
+size_t Request::parse_contentLen() const
 {
 	auto contentLenStr = _headers.find("content-length");
 	if (contentLenStr == _headers.end())
@@ -244,64 +290,43 @@ const std::string Request::get_boundary() const {
 	return ret;
 }
 
-const std::string &Request::get_body() const
-{
-	return _body;
-}
+const std::string &Request::get_body() const { return _body; }
 
-void	Request::set_bufferFile(std::string buffer_file) //added
-{
-	_bufferFile = buffer_file;
-}
 
 const std::string &Request::get_bufferFile() const { return _bufferFile; }//added
 
-void	Request::keepAlive(bool keepAlive) //added
-{
-	_keepAlive = keepAlive;
-}
 
-const size_t &Request::get_startContentLength() const { return (_startContentLength); }//added
+const size_t &Request::get_contentLength() const { return (_contentLength); }//added
 
-void	Request::set_startContentLength(size_t content_length)//added
-{
-	_startContentLength = content_length;
-}
 
 const bool &Request::get_keepAlive() const { return _keepAlive; }
 
 const std::string &Request::get_htmlVersion() const { return _htmlVersion; }
 
-const std::vector<std::string> &Request::get_requestArgs() const
-{
+const std::unordered_map<std::string, std::string> &Request::get_requestArgs() const {
   return _requestArgs;
 }
 
-const std::unordered_map<std::string, std::string> &Request::get_headers() const
-{
-  return _headers;
+const std::unordered_map<std::string, std::string> &Request::get_headers() const {
+	return _headers;
 }
 
-const bool &Request::get_validity() const
-{
-	return _isValid;
-}
+const bool &Request::get_validity() const { return _isValid; }
 
+const requestStatus	&Request::get_requestStatus() const { return _requestStatus; }
 
-const status	&Request::get_requestStatus() const
-{
-	return _requestStatus;
-}
+void	Request::set_bufferFile(std::string buffer_file) { _bufferFile = buffer_file; }
 
+void	Request::set_contentLength(size_t contentLength) {
+	_contentLength = contentLength;
+} // added
 
+void	Request::set_requestStatus(requestStatus status) { _requestStatus = status; }
 
-void	Request::set_requestStatus(status status)
-{
-	_requestStatus = status;
-}
+void	Request::set_keepAlive(bool keepAlive) { _keepAlive = keepAlive; } // added
 
 void Request::printRequest() const {
-	std::cout << MSG_BORDER << "[Request]" << MSG_BORDER << std::endl;
+	std::cout << MSG_BORDER << "[Complete Request:]" << MSG_BORDER << std::endl;
 	std::cout << get_rawRequest() << std::endl;
 
 #ifdef DEBUG
@@ -312,7 +337,7 @@ void Request::printRequest() const {
 
 	std::cout << "<URI Args>" << std::endl;
 	for (auto it : _requestArgs) {
-		std::cout << it << std::endl;
+		std::cout << "Key: " << it.first << " Value: " << it.second << std::endl;
 	}
 
 	std::cout << "<Headers>" << std::endl;

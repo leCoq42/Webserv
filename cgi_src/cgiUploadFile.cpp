@@ -1,8 +1,10 @@
 #include <cstdlib>
+#include <vector>
 #include <cstring>
 #include <fstream>
 #include <iostream>
 #include <string>
+#include "defines.hpp"
 
 const int BUFFER_SIZE = 1024;
 
@@ -26,40 +28,43 @@ std::string urlDecode(const std::string &input) {
 }
 
 void parseMultipartFormData(const std::string &boundary) {
-  std::string line;
-  std::string filename;
-  std::ofstream outFile;
-  bool isFile = false;
+	std::string line;
+	std::string filename;
+	std::ofstream outFile;
+	bool isFile = false;
 
-  while (std::getline(std::cin, line)) {
-    if (line.find("Content-Disposition:") != std::string::npos) {
-      size_t filenamePos = line.find("filename=\"");
-      if (filenamePos != std::string::npos) {
-        size_t filenameEnd = line.find("\"", filenamePos + 10);
-        filename =
-            line.substr(filenamePos + 10, filenameEnd - filenamePos - 10);
-        filename = urlDecode(filename);
-        outFile.open(filename, std::ios::binary);
-        isFile = true;
-      }
-    } else if (line == "\r") {
-      if (isFile) {
-        char buffer[BUFFER_SIZE];
-        while (std::cin.read(buffer, BUFFER_SIZE)) {
-          std::string chunk(buffer, std::cin.gcount());
-          size_t boundaryPos = chunk.find(boundary);
-          if (boundaryPos != std::string::npos) {
-            outFile.write(chunk.c_str(), boundaryPos - 2);
-            break;
-          }
-          outFile.write(chunk.c_str(), chunk.length());
-        }
-        outFile.close();
-        isFile = false;
-        break;
-      }
-    }
-  }
+	while (std::getline(std::cin, line)) {
+		if (line.find("Content-Disposition:") != std::string::npos) {
+			size_t filenamePos = line.find("filename=\"");
+			if (filenamePos != std::string::npos)
+			{
+				size_t filenameEnd = line.find("\"", filenamePos + 10);
+				filename =
+					line.substr(filenamePos + 10, filenameEnd - filenamePos - 10);
+				filename = urlDecode(filename);
+				outFile.open(filename, std::ios::binary);
+				isFile = true;
+			}
+		} else if (line == "\r") {
+			if (isFile)
+			{
+				std::vector<char> buffer(BUFFER_SIZE);
+				while (std::cin.read(&buffer[0], BUFFSIZE))
+				{
+					std::string chunk(&buffer[0], &buffer[0] + std::cin.gcount());
+					size_t boundaryPos = chunk.find(boundary);
+					if (boundaryPos != std::string::npos) {
+						outFile.write(chunk.c_str(), boundaryPos - 2);
+						break;
+					}
+					outFile.write(chunk.c_str(), chunk.length());
+				}
+				outFile.close();
+				isFile = false;
+				break;
+			}
+		}
+	}
 }
 
 int main() {

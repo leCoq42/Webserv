@@ -1,5 +1,7 @@
 webserv
 
+*/uploads/*
+
 obj/
 ./log
 

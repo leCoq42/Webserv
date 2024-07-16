@@ -5,8 +5,8 @@ Chunked::Chunked() : _contentLength(0), _bufferedLength(0), _justStarted(false),
 
 Chunked::Chunked(std::shared_ptr<Request>  first_request): _firstRequest(first_request)
 {
-	_contentLength = first_request->get_contentLen();
-	_bufferedLength = first_request->get_startContentLength();//first_request->get_rawRequest().length();
+	_contentLength = first_request->parse_contentLen();
+	_bufferedLength = first_request->get_contentLength();//first_request->get_rawRequest().length();
 	_fileName = first_request->get_bufferFile();
 	_boundary = first_request->get_boundary();
 	std::cout << _bufferedLength << "==" << _contentLength << std::endl;
@@ -32,7 +32,7 @@ Chunked	&Chunked::operator=(const Chunked &to_copy)
 	_justStarted = to_copy._justStarted;
 	if (_firstRequest)
 	{
-		_contentLength = _firstRequest->get_contentLen();
+		_contentLength = _firstRequest->parse_contentLen();
 		_bufferedLength = to_copy._bufferedLength;//_firstRequest->get_rawRequest().length();
 		_fileName = _firstRequest->get_bufferFile();
 		_boundary = _firstRequest->get_boundary();

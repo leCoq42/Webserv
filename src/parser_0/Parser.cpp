@@ -139,7 +139,9 @@ int	Parser::parse_content_to_struct(char *buffer, unsigned long buffer_len)
 				return (0);
 	}
 	//std::cout << "+++++++++++" << this->level << this->old_level << std::endl;
+	#ifdef DEBUG
 	this->PS.display(true);
+	#endif // DEBUG
 	if (this->old_level)
 	{
 		//std::cout << "LEVEL ISSUE: " << this->old_level << std::endl;

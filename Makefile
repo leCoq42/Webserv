@@ -10,10 +10,10 @@ HEADERS     := inc/Webserv.hpp
 CC          := c++ --std=c++20
 
 # Include Paths
-INCLUDES    := $(shell find inc -type d -exec echo -I{} \;)
+INCLUDES    := $(shell find inc -type d -exec echo -I {} \;)
 
 #Compiler Flags
-CFLAGS		:= -Wall -Wextra -Werror -Wunreachable-code#-Ofast
+CFLAGS := -Wall -Wextra -Werror -Wunreachable-code#-Ofast
 
 #Debug Flags
 ifdef DEBUG
