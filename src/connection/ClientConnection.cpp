@@ -27,40 +27,39 @@ ClientConnection::~ClientConnection()
 	}
 }
 void ClientConnection::handlePollErrorEvent(size_t index) {
-  removeClientSocket(_pollFdsWithConfigs[index].fd);
+  removeClientSocket(_polledFds[index].fd);
 }
 
-int ClientConnection::getIndexByClientFD(int clientFD)
+int ClientConnection::findClientIndex(int clientFD)
 {
-	int index = 0;
+	int activeClientsIndex = 0;
 	for (size_t i = 0; i < _activeClients.size(); i++)
 	{
 		if (_activeClients[i].clientFD == clientFD)
-			index = i;
+			activeClientsIndex = i;
 	}
-	return (index);
+	return (activeClientsIndex);
 }
 
-void ClientConnection::manageKeepAlive(int index) {
-	int indexConnectedClients =
-		getIndexByClientFD(_pollFdsWithConfigs[index].fd);
+void ClientConnection::manageKeepAlive(int polledFdIndex) {
+	int indexActiveClients = findClientIndex(_polledFds[polledFdIndex].fd);
 	time_t currentTime;
 	time(&currentTime);
-	_activeClients[indexConnectedClients].lastRequestTime = currentTime;
-	_activeClients[indexConnectedClients].numRequests += 1;
-	if (_activeClients[indexConnectedClients].keepAlive == true || _activeClients[indexConnectedClients].unchunking == true)
+	_activeClients[indexActiveClients].lastRequestTime = currentTime;
+	_activeClients[indexActiveClients].numRequests += 1;
+	if (_activeClients[indexActiveClients].keepAlive == true || _activeClients[indexActiveClients].unchunking == true)
 	{
 		std::cout << "REPOLL" << std::endl;
-		_pollFdsWithConfigs[index].events = POLLIN | POLLOUT;
+		_polledFds[polledFdIndex].events = POLLIN | POLLOUT;
 	}
 	else
 	{
 		std::cout << "REMOVED_CLIENT" << std::endl;
-		removeClientSocket(_pollFdsWithConfigs[index].fd);
+		removeClientSocket(_polledFds[polledFdIndex].fd);
 	}
 }
 
-void	reset_buffer(Client &client, bool end_of_request)
+void	reset_buffer(clientInfo &client, bool end_of_request)
 {
 	client.buffer[0] = 0;
 	client.bytesRead = 0;
@@ -72,36 +71,57 @@ void	reset_buffer(Client &client, bool end_of_request)
 	}
 }
 
-ssize_t ClientConnection::receiveData(int index, std::string &datareceived)
+void ClientConnection::receiveData(int index, std::string &datareceived, int activeClientsIndex)
 {
 	std::vector<char> buffer(BUFFSIZE);
-	int	connectedClientFD = getIndexByClientFD(_pollFdsWithConfigs[index].fd);
-	// ssize_t		bytesRead = _activeClients[connectedClientFD].bytesRead; -> not used anymore?
 	ssize_t bytes_received;
 	std::string::size_type total_received = 0;
 
-	errno = 0;
-	while (true) {
-		bytes_received = recv(_pollFdsWithConfigs[index].fd, &buffer[0], buffer.size(), MSG_DONTWAIT);
+		bytes_received = recv(_polledFds[index].fd, &buffer[0], buffer.size(), MSG_DONTWAIT);
 		if (bytes_received > 0)
 		{
 			total_received += bytes_received;
+			_activeClients[activeClientsIndex].bytesRead += bytes_received;
 			datareceived.append(std::string(buffer.begin(), buffer.begin() + bytes_received));
-			// _activeClients[connectedClientFD].bytesRead += bytes_received; -> not used anymore?
 		}
 		else if (bytes_received < 0 && (errno != EAGAIN || errno != EWOULDBLOCK))
 		{
 			logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
-						_activeClients[connectedClientFD].clientIP,
-						_pollFdsWithConfigs[index].fd);
-			return -1;
+						_activeClients[activeClientsIndex].clientIP,
+						_polledFds[index].fd);
 		}
-		else
-			break;
-	}
 	// test print total bytes received and buffer vector
 	std::cout << MSG_BORDER << "[Total bytes received: " << total_received << "]" << MSG_BORDER << std::endl;
-	return total_received;
+}
+
+void	ClientConnection::sendData(int polledFdsIndex, Request request, int activeClientsIndex)
+{
+	// std::cout << MSG_BORDER << "[Total Bodylength: " << request->get_body().length() << "]" << MSG_BORDER << std::endl;
+	Response response(request, *_activeClients[activeClientsIndex]._config);
+	const std::string responseString = response.get_response();
+	ssize_t bytesSent = send(_polledFds[polledFdsIndex].fd, responseString.c_str(),
+							responseString.length(), 0);
+	if (bytesSent == -1) 
+	{
+		logClientError(
+			"Failed to send data to client: " + std::string(strerror(errno)),
+			_activeClients[findClientIndex(_polledFds[polledFdsIndex].fd)]
+				.clientIP,
+			_polledFds[polledFdsIndex].fd);
+		// return reset_buffer(_activeClients[activeClientsIndex], true);
+	}
+	else if (bytesSent == 0) {
+		logClientConnection(
+			"Client disconnected",
+			_activeClients[findClientIndex(_polledFds[polledFdsIndex].fd)]
+				.clientIP,
+			_polledFds[polledFdsIndex].fd);
+		// return reset_buffer(_activeClients[activeClientsIndex], true);
+	}
+
+	std::cout << MSG_BORDER << "[Total Bytes Send: " << bytesSent << "]" << MSG_BORDER << std::endl;
+	// reset_buffer(_activeClients[activeClientsIndex], true);
+	_activeClients[activeClientsIndex].keepAlive = request->get_keepAlive(); //keep alive as in header
 }
 
 //Intended workings
@@ -110,82 +130,40 @@ ssize_t ClientConnection::receiveData(int index, std::string &datareceived)
 // Then the response should be build again with the bufferedfile given so handlemultipart will have the whole body. Request could also be build with the whole body, body size might be too big for request object at the moment.
 // When the response is build again after Chunked _totalLength is true. Response will have acces to the full request BODY (without headers and boundaries) through the given filename. CGI should be able to be run then as well.
 // I think the filename has to be given to argv, (might be happening already).
-void ClientConnection::handleInputEvent(int index)
+void ClientConnection::handleInputEvent(int polledFdsIndex)
 {
 	std::string	buffer_str;
-	int			connectedClientFD = getIndexByClientFD(_pollFdsWithConfigs[index].fd);
-	ssize_t		bytesRead;
+	int			activeClientsIndex = findClientIndex(_polledFds[polledFdsIndex].fd);
 
-	errno = 0;
-	bytesRead = receiveData(index, buffer_str);
-	if (bytesRead < 0) {
-		logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
-				 _activeClients[connectedClientFD].clientIP,_pollFdsWithConfigs[index].fd);
-		return;
-	}
-
-	std::shared_ptr<Request> request = std::make_shared<Request>(buffer_str);
+	receiveData(polledFdsIndex, buffer_str, activeClientsIndex);
+	std::shared_ptr<Request> request = std::make_shared<Request>(buffer_str); // resetten?
 	if (!request)
 		return; // error?
-
-	while (request->get_requestStatus() == requestStatus::INCOMPLETE) {
-		buffer_str.clear();
-		bytesRead = receiveData(index, buffer_str);
-		if (bytesRead < 0) {
-			logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
-				  _activeClients[connectedClientFD].clientIP,_pollFdsWithConfigs[index].fd);
-			return;
-		}
-		if (bytesRead == 0)
-			break;
+	if (request->get_requestStatus() != requestStatus::COMPLETE) 
+	{
 		request->appendToBody(buffer_str);
+		return;
 	}
-
-	std::cout << MSG_BORDER << "[Total Bodylength: " << request->get_body().length() << "]" << MSG_BORDER << std::endl;
-	Response response(request, *_activeClients[connectedClientFD]._config);
-
-	const std::string responseString = response.get_response();
-	ssize_t bytesSent = send(_pollFdsWithConfigs[index].fd, responseString.c_str(),
-							responseString.length(), 0);
-	if (bytesSent == -1) {
-		logClientError(
-			"Failed to send data to client: " + std::string(strerror(errno)),
-			_activeClients[getIndexByClientFD(_pollFdsWithConfigs[index].fd)]
-				.clientIP,
-			_pollFdsWithConfigs[index].fd);
-		return reset_buffer(_activeClients[connectedClientFD], true);
-	}
-	else if (bytesSent == 0) {
-		logClientConnection(
-			"Client disconnected",
-			_activeClients[getIndexByClientFD(_pollFdsWithConfigs[index].fd)]
-				.clientIP,
-			_pollFdsWithConfigs[index].fd);
-		return reset_buffer(_activeClients[connectedClientFD], true);
-	}
-
-	std::cout << MSG_BORDER << "[Total Bytes Send: " << bytesSent << "]" << MSG_BORDER << std::endl;
-	reset_buffer(_activeClients[connectedClientFD], true);
-	_activeClients[connectedClientFD].keepAlive = request->get_keepAlive(); //keep alive as in header
-	manageKeepAlive(index);
+	sendData(polledFdsIndex, request, activeClientsIndex);
+	manageKeepAlive(polledFdsIndex);
 }
 
-Client ClientConnection::initClientInfo(int clientFD, int index, sockaddr_in clientAddr)
+clientInfo	ClientConnection::initClientInfo(int clientFD, int index, sockaddr_in clientAddr)
 {
-	Client clientInfo;
-	memset(&clientInfo, 0, sizeof(clientInfo));
+	clientInfo info;
+	memset(&info, 0, sizeof(info));
 	time_t currentTime;
 	time(&currentTime);
-	inet_ntop(AF_INET, &clientAddr.sin_addr, clientInfo.clientIP,
-		   sizeof(clientInfo.clientIP));
-	clientInfo.clientFD = clientFD;
-	clientInfo.keepAlive = false;
-	clientInfo.timeOut = 30; // will be configurable later, limits upload size // What is 30? Seconds?
-	clientInfo.lastRequestTime = currentTime;
-	clientInfo.numRequests = 0; // can be perhaps be deleted
-	clientInfo.maxRequests = std::numeric_limits<int>::max(); // will be configurable later, yes missed this one might have to be more then this (chunked takes them off so will limit total upload size)
-	clientInfo._config = _serverConfigs[index];
-	return clientInfo;
+	inet_ntop(AF_INET, &clientAddr.sin_addr, info.clientIP,
+		   sizeof(info.clientIP));
+	info.clientFD = clientFD;
+	info.keepAlive = false;
+	info.timeOut = 30; // will be configurable later, limits upload size // What is 30? Seconds?
+	info.lastRequestTime = currentTime;
+	info.numRequests = 0; // can be perhaps be deleted
+	info.maxRequests = std::numeric_limits<int>::max(); // will be configurable later, yes missed this one might have to be more then this (chunked takes them off so will limit total upload size)
+	info._config = _serverConfigs[index];
+	return info;
 }
 
 void ClientConnection::acceptClients(int serverFD, int index) {
@@ -209,15 +187,15 @@ void ClientConnection::removeClientSocket(int clientFD)
 		return ;
 	close(clientFD);
 	logClientConnection("closed connection",
-						_activeClients[getIndexByClientFD(clientFD)].clientIP, clientFD);
-	int indexConnectedClients = getIndexByClientFD(clientFD);
+						_activeClients[findClientIndex(clientFD)].clientIP, clientFD);
+	int indexConnectedClients = findClientIndex(clientFD);
 	_activeClients[indexConnectedClients].unchunker.close_file();
 	_activeClients.erase(indexConnectedClients + _activeClients.begin());
-	for (auto it = _pollFdsWithConfigs.begin(); it != _pollFdsWithConfigs.end(); ++it)
+	for (auto it = _polledFds.begin(); it != _polledFds.end(); ++it)
 	{
 		if (it->fd == clientFD)
 		{
-			_pollFdsWithConfigs.erase(it);
+			_polledFds.erase(it);
 			_serverConfigs.erase(_serverConfigs.begin()); // nodig?
 			break;
 		}
@@ -235,7 +213,7 @@ bool ClientConnection::isServerSocket(int fd)
 }
 
 void ClientConnection::handlePollOutEvent(size_t index) {
-  _pollFdsWithConfigs[index].events &= ~POLLOUT;
+  _polledFds[index].events &= ~POLLOUT;
 }
 
 
@@ -259,14 +237,14 @@ void ClientConnection::addSocketsToPollfdContainer()
 		pollfd server_pollfd;
 		server_pollfd.fd = _ptrServerConnection->_connectedServers[i].serverFD;
 		server_pollfd.events = POLLIN | POLLOUT;
-		_pollFdsWithConfigs.push_back(server_pollfd);
+		_polledFds.push_back(server_pollfd);
 		_serverConfigs.push_back(_ptrServerConnection->_connectedServers[i]._config); // addded
 	}
 	for (size_t i = 0; i < _activeClients.size(); ++i) {
 		pollfd client_pollfd;
 		client_pollfd.fd = _activeClients[i].clientFD;
 		client_pollfd.events = POLLIN | POLLOUT;
-		_pollFdsWithConfigs.push_back(client_pollfd);
+		_polledFds.push_back(client_pollfd);
 	}
 }
 
@@ -274,25 +252,25 @@ void ClientConnection::setupClientConnection()
 {
 	while (true)
 	{
-		_pollFdsWithConfigs.clear();
+		_polledFds.clear();
 		_serverConfigs.clear(); //added
 		addSocketsToPollfdContainer();
-		int poll_count = poll(_pollFdsWithConfigs.data(), _pollFdsWithConfigs.size(), 100);
+		int poll_count = poll(_polledFds.data(), _polledFds.size(), 100);
 		checkConnectedClientsStatus();
 		if (poll_count > 0)
 		{
-			for (size_t index = 0; index < _pollFdsWithConfigs.size(); index++)
+			for (size_t index = 0; index < _polledFds.size(); index++)
 			{
-				if (_pollFdsWithConfigs[index].revents & POLLIN)
+				if (_polledFds[index].revents & POLLIN)
 				{
-					if (isServerSocket(_pollFdsWithConfigs[index].fd)) 
-						acceptClients(_pollFdsWithConfigs[index].fd, index);
+					if (isServerSocket(_polledFds[index].fd)) 
+						acceptClients(_polledFds[index].fd, index);
 					else
 						handleInputEvent(index);
 				}
-				if (_pollFdsWithConfigs[index].revents & POLLOUT)
+				if (_polledFds[index].revents & POLLOUT)
 					handlePollOutEvent(index);
-				if (_pollFdsWithConfigs[index].revents & (POLLHUP | POLLERR))
+				if (_polledFds[index].revents & (POLLHUP | POLLERR))
 					handlePollErrorEvent(index);
 			}
 		}

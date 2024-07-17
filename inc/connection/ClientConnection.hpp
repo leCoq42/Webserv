@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <vector>
 
-struct Client {
+struct clientInfo {
 	char			clientIP[INET_ADDRSTRLEN];
 	int				clientFD;
 	bool			keepAlive;
@@ -26,8 +26,8 @@ struct Client {
 class ClientConnection : ServerConnection, public virtual Log {
 	private:
 		std::shared_ptr<ServerConnection>	_ptrServerConnection;
-		std::vector<Client>					_activeClients;
-		std::vector<pollfd>					_pollFdsWithConfigs;
+		std::vector<clientInfo>				_activeClients;
+		std::vector<pollfd>					_polledFds;
 		std::vector<ServerStruct*>			_serverConfigs; //added synchronous to pollfd vector
 
 	public:
@@ -44,10 +44,11 @@ class ClientConnection : ServerConnection, public virtual Log {
 		bool		isServerSocket(int fd);
 		void		handlePollOutEvent(size_t index);
 		void		handlePollErrorEvent(size_t index);
-		Client		initClientInfo(int clientFD, int index, sockaddr_in clientAddr);
+		clientInfo	initClientInfo(int clientFD, int index, sockaddr_in clientAddr);
 		void		manageKeepAlive(int index);
 		void		checkConnectedClientsStatus();
-		int 		getIndexByClientFD(int clientFD);
-		ssize_t		receiveData(int index, std::string &datareceived);
+		int 		findClientIndex(int clientFD);
+		void		receiveData(int index, std::string &datareceived, int activeClientsIndex);
+		void		sendData(int polledIndex, Request request, int activeClientsIndex);
 };
 
