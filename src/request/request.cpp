@@ -24,7 +24,8 @@ Request::Request(const std::string rawStr) : _rawRequest(rawStr), _keepAlive(fal
 
 	if (_chunked && _body.length() != _contentLength) {// TODO: not sure which length to compare with
 		_requestStatus = requestStatus::INCOMPLETE;
-		std::cout << "Chunked Request >>>>>>>>>>>" << std::endl;
+		std::cout << "Incomplete Request >>>>>>>>>>>" << std::endl;
+		printRequest();
 	}
 	else{
 		_requestStatus = requestStatus::COMPLETE;
@@ -109,10 +110,8 @@ void Request::parseRequest()
 		return;
 	}
 
-	if (_requestMethod != "GET") {
-		_body = parseRequestBody(_rawRequest);
-		_contentLength = parse_contentLen();
-	}
+	_contentLength = parse_contentLen();
+	_body = parseRequestBody(_rawRequest);
 
 	if (_headers.find("connection") != _headers.end()) {
 		if (_headers["connection"] == "keep-alive") {
@@ -122,7 +121,8 @@ void Request::parseRequest()
 
 	if (_headers.find("transfer-encoding") != _headers.end()) {
 		if (_headers["transfer-encoding"].find("chunked") != std::string::npos) 
-			_chunked = true;
+			_chunked = false; 
+			// _chunked = true; //test
 	}
 	_isValid = checkRequestValidity();
 	return;
@@ -210,13 +210,18 @@ std::string Request::parseRequestBody(const std::string &_rawRequest)
 	if (body_start == std::string::npos) {
 		return "";
 	}
-	std::string body = _rawRequest.substr(body_start + 4, parse_contentLen());
+	std::string body = _rawRequest.substr(body_start + 4, _contentLength);
 	return body;
 }
 
 void Request::appendToBody(std::string requestString) {
 	std::string chunk = parseRequestBody(requestString);
 	_body.append(chunk);
+	std::cout << "_body: " << _body.length() << std::endl;
+	std::cout << "_contentLength: " << _contentLength << std::endl;
+	if (_body.length() == _contentLength) {
+		_requestStatus = requestStatus::COMPLETE;
+	}
 }
 
 // TODO: max length of GET request 2048 bytes?
@@ -351,13 +356,19 @@ void Request::printRequest() const {
 		std::cout << "Referer: " << get_referer() << std::endl;
 		std::cout << "ContentType: " << get_contentType() << std::endl;
 		std::cout << "Boundary: " << get_boundary() << std::endl;
-		std::cout << "ContentLen: " << get_contentLen() << std::endl;
+		std::cout << "ContentLen: " << get_contentLength() << std::endl;
 	}
 
 	std::cout << "<Keep-Alive>" << std::endl;
 	bool keepAlive = get_keepAlive();
 	(keepAlive ? std::cout << "Keep-Alive: true" << std::endl
 				: std::cout << "Keep-Alive: false" << std::endl);
+
+	std::cout << "<chunked>" << std::endl;
+	std::cout << "chunked: " << _chunked << std::endl;
+	(_chunked ? std::cout << "chunked: true" << std::endl
+				: std::cout << "chunked: false" << std::endl);
+
 
 	std::cout << "<Body>" << std::endl;
 	std::string body = get_body();
