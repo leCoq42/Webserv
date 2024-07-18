@@ -41,7 +41,7 @@ int ClientConnection::findClientIndex(int clientFD)
 	return (activeClientsIndex);
 }
 
-// void ClientConnection::manageKeepAlive(int polledFdIndex, int activeClientsIndex) {
+// void ClientConnection::manageClientInfo(int polledFdIndex, int activeClientsIndex) {
 // 	time_t currentTime;
 // 	time(&currentTime);
 // 	_activeClients[activeClientsIndex].lastRequestTime = currentTime;
@@ -127,26 +127,20 @@ void ClientConnection::handleInputEvent(int polledFdsIndex)
 		return;
 	}
 	if (!_activeClients[activeClientsIndex].request)
-	{ 
-		std::cout << "REQUEST PTR CREATED" << std::endl;
 		_activeClients[activeClientsIndex].request = std::make_shared<Request>(buffer_str);
-	}
-	else
-		std::cout << "REQUEST PTR EXISTS" << std::endl;
+	std::cout << "CHUNKED!!!!! " << _activeClients[activeClientsIndex].request->get_chunked() << std::endl;
 	if (bytesReceived > 0)
 	{
-			_activeClients[activeClientsIndex].request->appendToBody(buffer_str);
-			if (_activeClients[activeClientsIndex].request->get_requestStatus() == requestStatus::INCOMPLETE){
-				std::cout << "INCOMPLETE REQUEST" << std::endl;
-				return;
-			}
+		std::cout << "HIERO?!?!?!" << std::endl;
+		_activeClients[activeClientsIndex].request->appendToBody(buffer_str);
+		if (_activeClients[activeClientsIndex].request->get_requestStatus() == requestStatus::INCOMPLETE){
+			std::cout << "INCOMPLETE REQUEST" << std::endl;
+			return;
+		}
 	}
 	Response response(_activeClients[activeClientsIndex].request, *_activeClients[activeClientsIndex]._config);
 	sendData(polledFdsIndex, response);
-	std::cout << "RESPONSE SENT & CLIENT REMOVED" << std::endl;
-	// _activeClients[activeClientsIndex].request.reset();
 	removeClientSocket(_polledFds[polledFdsIndex].fd);
-	// manageKeepAlive(polledFdsIndex, activeClientsIndex);
 }
 
 clientInfo	ClientConnection::initClientInfo(int clientFD, int index, sockaddr_in clientAddr)
@@ -157,12 +151,9 @@ clientInfo	ClientConnection::initClientInfo(int clientFD, int index, sockaddr_in
 	time(&currentTime);
 	inet_ntop(AF_INET, &clientAddr.sin_addr, info.clientIP, sizeof(info.clientIP));
 	info.clientFD = clientFD;
-	info.keepAlive = false;
 	std::shared_ptr<Request>	request;
 	info.timeOut = 30; // will be configurable later, limits upload size // What is 30? Seconds?
 	info.lastRequestTime = currentTime;
-	info.numRequests = 0; // can be perhaps be deleted
-	info.maxRequests = std::numeric_limits<int>::max(); // will be configurable later, yes missed this one might have to be more then this (chunked takes them off so will limit total upload size)
 	info._config = _serverConfigs[index];
 	return (info);
 }
@@ -189,8 +180,7 @@ void ClientConnection::removeClientSocket(int clientFD)
 		return ;
 	int activeClientIndex = findClientIndex(clientFD);
 	close(clientFD);
-	logClientConnection("closed connection",
-						_activeClients[activeClientIndex].clientIP, clientFD);
+	logClientConnection("closed connection", _activeClients[activeClientIndex].clientIP, clientFD);
 	_activeClients[activeClientIndex].unchunker.close_file();
 	_activeClients.erase(activeClientIndex + _activeClients.begin());
 	for (auto it = _polledFds.begin(); it != _polledFds.end(); ++it)
@@ -225,10 +215,7 @@ void ClientConnection::checkConnectedClientsStatus() {
 	for (size_t i = 0; i < _activeClients.size(); i++)
 	{
 		if (currentTime - _activeClients[i].lastRequestTime >
-			_activeClients[i].timeOut && _activeClients[i].keepAlive == true)
-				removeClientSocket(_activeClients[i].clientFD);
-		if (_activeClients[i].numRequests >= _activeClients[i].maxRequests &&
-			_activeClients[i].keepAlive == true)
+			_activeClients[i].timeOut)
 				removeClientSocket(_activeClients[i].clientFD);
 	}
 }

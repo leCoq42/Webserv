@@ -295,12 +295,6 @@ std::string Response::buildResponse(int status, const std::string &message,
 		_responseString.append("Content-Length: " + std::to_string(body.length()) +
 							CRLF);
 	}
-	if (_request->get_keepAlive())
-	{
-		_responseString.append(
-			"Keep-Alive: timeout=" + std::to_string(KEEP_ALIVE_TIMOUT) +
-			", max=" + std::to_string(KEEP_ALIVE_N) + CRLF);
-	}
 	if (isCGI)
 	{
 		_responseString.append(body);

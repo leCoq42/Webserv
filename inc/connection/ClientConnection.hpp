@@ -14,12 +14,9 @@ struct clientInfo {
 	char			clientIP[INET_ADDRSTRLEN];
 	int				clientFD;
 	std::shared_ptr<Request>	request;
-	bool			keepAlive;
 	bool			unchunking;
 	long int		timeOut;
 	long int		lastRequestTime;
-	size_t			numRequests;
-	size_t			maxRequests;
 	ServerStruct	*_config; //port/server config for multiple server setup
 	Chunked			unchunker; //unchunker object to save multipart requests into an bufferfile
 	char			buffer[1024*100]; //buffer without blocking, in combination with maxnumrequests limits the upload size
@@ -48,7 +45,7 @@ class ClientConnection : ServerConnection, public virtual Log {
 		void		handlePollOutEvent(size_t index);
 		void		handlePollErrorEvent(size_t index);
 		clientInfo	initClientInfo(int clientFD, int index, sockaddr_in clientAddr);
-		void		manageKeepAlive(int polledFDIndex, int activeClientsIndex);
+		void		manageClientInfo(int polledFDIndex, int activeClientsIndex);
 		void		checkConnectedClientsStatus();
 		int 		findClientIndex(int clientFD);
 		ssize_t		receiveData(int index, std::string &datareceived, int activeClientsIndex);

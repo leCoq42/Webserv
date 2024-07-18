@@ -16,10 +16,12 @@ auto print_key_value = [](const auto &key, const auto &value)
 };
 
 Request::Request() : _rawRequest(""), _requestMethod(""), _requestPath(""),
-	_htmlVersion(""), _keepAlive(false), _isValid(0), _body(""), _bufferFile(""),
+	_htmlVersion(""), _isValid(0), _body(""), _bufferFile(""),
 	_contentLength(0), _chunked(false), _requestStatus(requestStatus::COMPLETE) {}
 
-Request::Request(const std::string rawStr) : _rawRequest(rawStr), _keepAlive(false) {
+Request::Request(const std::string rawStr) : _rawRequest(rawStr), _requestMethod(""), _requestPath(""),
+	_htmlVersion(""), _isValid(0), _body(""), _bufferFile(""),
+	_contentLength(0), _chunked(false), _requestStatus(requestStatus::COMPLETE)  {
 	parseRequest();
 
 	if (_chunked && _body.length() != _contentLength) {// TODO: not sure which length to compare with
@@ -39,7 +41,7 @@ Request::Request(const Request &src) :
 	_rawRequest(src._rawRequest), _requestMethod(src._requestMethod),
 	_requestPath(src._requestPath), _htmlVersion(src._htmlVersion),
 	_requestArgs(src._requestArgs), _headers(src._headers),
-	_keepAlive(src._keepAlive), _isValid(src._isValid), _body(src._body),
+	_isValid(src._isValid), _body(src._body),
 	_cgiEnv(src._cgiEnv), _bufferFile(src._bufferFile),
 	_contentLength(src._contentLength), _chunked(src._chunked),
 	_requestStatus(src._requestStatus) {
@@ -58,7 +60,6 @@ void Request::swap(Request &lhs) {
 	std::swap(_htmlVersion, lhs._htmlVersion);
 	std::swap(_requestArgs, lhs._requestArgs);
 	std::swap(_headers, lhs._headers);
-	std::swap(_keepAlive, lhs._keepAlive);
 	std::swap(_isValid, lhs._isValid);
 	std::swap(_body, lhs._body);
 	std::swap(_cgiEnv, lhs._cgiEnv);
@@ -112,17 +113,10 @@ void Request::parseRequest()
 
 	_contentLength = parse_contentLen();
 	_body = parseRequestBody(_rawRequest);
-
-	if (_headers.find("connection") != _headers.end()) {
-		if (_headers["connection"] == "keep-alive") {
-			_keepAlive = true;
-		}
-	}
-
 	if (_headers.find("transfer-encoding") != _headers.end()) {
-		if (_headers["transfer-encoding"].find("chunked") != std::string::npos) 
-			_chunked = false; 
-			// _chunked = true; //test
+		if (_headers["transfer-encoding"].find("chunked") != std::string::npos)  {
+			_chunked = true;
+		}
 	}
 	_isValid = checkRequestValidity();
 	return;
@@ -295,6 +289,8 @@ const std::string Request::get_boundary() const {
 	return ret;
 }
 
+const bool &Request::get_chunked() const { return _chunked; }
+
 const std::string &Request::get_body() const { return _body; }
 
 
@@ -302,9 +298,6 @@ const std::string &Request::get_bufferFile() const { return _bufferFile; }//adde
 
 
 const size_t &Request::get_contentLength() const { return (_contentLength); }//added
-
-
-const bool &Request::get_keepAlive() const { return _keepAlive; }
 
 const std::string &Request::get_htmlVersion() const { return _htmlVersion; }
 
@@ -327,8 +320,6 @@ void	Request::set_contentLength(size_t contentLength) {
 } // added
 
 void	Request::set_requestStatus(requestStatus status) { _requestStatus = status; }
-
-void	Request::set_keepAlive(bool keepAlive) { _keepAlive = keepAlive; } // added
 
 void Request::printRequest() const {
 	std::cout << MSG_BORDER << "[Complete Request:]" << MSG_BORDER << std::endl;
@@ -358,11 +349,6 @@ void Request::printRequest() const {
 		std::cout << "Boundary: " << get_boundary() << std::endl;
 		std::cout << "ContentLen: " << get_contentLength() << std::endl;
 	}
-
-	std::cout << "<Keep-Alive>" << std::endl;
-	bool keepAlive = get_keepAlive();
-	(keepAlive ? std::cout << "Keep-Alive: true" << std::endl
-				: std::cout << "Keep-Alive: false" << std::endl);
 
 	std::cout << "<chunked>" << std::endl;
 	std::cout << "chunked: " << _chunked << std::endl;
