@@ -13,13 +13,15 @@
 struct clientInfo {
 	char			clientIP[INET_ADDRSTRLEN];
 	int				clientFD;
+	bool			isFileUpload;
+	uint32_t		expectedContentLength;// check int!
 	std::shared_ptr<Request>	request;
 	bool			unchunking;
 	long int		timeOut;
 	long int		lastRequestTime;
 	ServerStruct	*_config; //port/server config for multiple server setup
 	Chunked			unchunker; //unchunker object to save multipart requests into an bufferfile
-	char			buffer[1024*100]; //buffer without blocking, in combination with maxnumrequests limits the upload size
+	std::string		buff_str;
 	ssize_t			totalBytesReceived = 0; //buffered amount
 };
 
@@ -48,7 +50,7 @@ class ClientConnection : ServerConnection, public virtual Log {
 		void		manageClientInfo(int polledFDIndex, int activeClientsIndex);
 		void		checkConnectedClientsStatus();
 		int 		findClientIndex(int clientFD);
-		ssize_t		receiveData(int index, std::string &datareceived, int activeClientsIndex);
+		ssize_t		receiveData(int index, int activeClientsIndex);
 		void		sendData(int polledIndex, Response response);
 };
 

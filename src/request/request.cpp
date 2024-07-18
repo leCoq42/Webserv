@@ -17,11 +17,11 @@ auto print_key_value = [](const auto &key, const auto &value)
 
 Request::Request() : _rawRequest(""), _requestMethod(""), _requestPath(""),
 	_htmlVersion(""), _isValid(0), _body(""), _bufferFile(""),
-	_contentLength(0), _chunked(false), _requestStatus(requestStatus::COMPLETE) {}
+	_contentLength(0), _chunked(false), _requestStatus(requestStatus::INCOMPLETE) {}
 
 Request::Request(const std::string rawStr) : _rawRequest(rawStr), _requestMethod(""), _requestPath(""),
 	_htmlVersion(""), _isValid(0), _body(""), _bufferFile(""),
-	_contentLength(0), _chunked(false), _requestStatus(requestStatus::COMPLETE)  {
+	_contentLength(0), _chunked(false), _requestStatus(requestStatus::INCOMPLETE)  {
 	parseRequest();
 
 	if (_chunked && _body.length() != _contentLength) {// TODO: not sure which length to compare with

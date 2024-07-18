@@ -70,7 +70,7 @@ int ClientConnection::findClientIndex(int clientFD)
 // 	}
 // }
 
-ssize_t ClientConnection::receiveData(int index, std::string &datareceived, int activeClientsIndex)
+ssize_t ClientConnection::receiveData(int index, int activeClientsIndex)
 {
 	std::vector<char> buffer(BUFFSIZE);
 
@@ -78,7 +78,7 @@ ssize_t ClientConnection::receiveData(int index, std::string &datareceived, int 
 	if (bytesReceived > 0)
 	{
 		_activeClients[activeClientsIndex].totalBytesReceived += bytesReceived;
-		datareceived.append(std::string(buffer.begin(), buffer.begin() + bytesReceived));
+		_activeClients[activeClientsIndex].buff_str.append(std::string(buffer.begin(), buffer.begin() + bytesReceived));
 	}
 	else if (bytesReceived < 0 && (errno != EAGAIN || errno != EWOULDBLOCK))
 	{
@@ -112,35 +112,80 @@ void	ClientConnection::sendData(int polledIndex, Response response)
 // Then the response should be build again with the bufferedfile given so handlemultipart will have the whole body. Request could also be build with the whole body, body size might be too big for request object at the moment.
 // When the response is build again after Chunked _totalLength is true. Response will have acces to the full request BODY (without headers and boundaries) through the given filename. CGI should be able to be run then as well.
 // I think the filename has to be given to argv, (might be happening already).
+// void ClientConnection::handleInputEvent(int polledFdsIndex)
+// {
+// 	std::string	buffer_str;
+// 	int			activeClientsIndex = findClientIndex(_polledFds[polledFdsIndex].fd);
+
+// 	ssize_t bytesReceived = receiveData(polledFdsIndex, buffer_str, activeClientsIndex);
+// 	if (bytesReceived < 0 && (errno != EAGAIN || errno != EWOULDBLOCK))
+// 		return;
+// 	if (bytesReceived == 0)
+// 	{
+// 		logClientConnection("Client disconnected", _activeClients[activeClientsIndex].clientIP, _polledFds[polledFdsIndex].fd);
+// 		removeClientSocket(_polledFds[polledFdsIndex].fd);
+// 		return;
+// 	}
+// 	if (!_activeClients[activeClientsIndex].request)
+// 		_activeClients[activeClientsIndex].request = std::make_shared<Request>(buffer_str);
+// 	std::cout << "CHUNKED!!!!! " << _activeClients[activeClientsIndex].request->get_chunked() << std::endl;
+// 	if (bytesReceived > 0)
+// 	{
+// 		std::cout << "HIERO?!?!?!" << std::endl;
+// 		_activeClients[activeClientsIndex].request->appendToBody(buffer_str);
+// 		if (_activeClients[activeClientsIndex].request->get_requestStatus() == requestStatus::INCOMPLETE){
+// 			std::cout << "INCOMPLETE REQUEST" << std::endl;
+// 			return;
+// 		}
+// 	}
+// 	Response response(_activeClients[activeClientsIndex].request, *_activeClients[activeClientsIndex]._config);
+// 	sendData(polledFdsIndex, response);
+// 	removeClientSocket(_polledFds[polledFdsIndex].fd);
+// }
+
 void ClientConnection::handleInputEvent(int polledFdsIndex)
 {
-	std::string	buffer_str;
-	int			activeClientsIndex = findClientIndex(_polledFds[polledFdsIndex].fd);
+    int activeClientsIndex = findClientIndex(_polledFds[polledFdsIndex].fd);
 
-	ssize_t bytesReceived = receiveData(polledFdsIndex, buffer_str, activeClientsIndex);
-	if (bytesReceived < 0 && (errno != EAGAIN || errno != EWOULDBLOCK))
-		return;
-	if (bytesReceived == 0)
-	{
-		logClientConnection("Client disconnected", _activeClients[activeClientsIndex].clientIP, _polledFds[polledFdsIndex].fd);
-		removeClientSocket(_polledFds[polledFdsIndex].fd);
-		return;
-	}
+    ssize_t bytesReceived = receiveData(polledFdsIndex, activeClientsIndex);
+    if (bytesReceived < 0 && (errno != EAGAIN && errno != EWOULDBLOCK))
+        return;
+    if (bytesReceived == 0)
+    {
+        logClientConnection("Client disconnected", _activeClients[activeClientsIndex].clientIP, _polledFds[polledFdsIndex].fd);
+        removeClientSocket(_polledFds[polledFdsIndex].fd);
+        return;
+    }
 	if (!_activeClients[activeClientsIndex].request)
-		_activeClients[activeClientsIndex].request = std::make_shared<Request>(buffer_str);
-	std::cout << "CHUNKED!!!!! " << _activeClients[activeClientsIndex].request->get_chunked() << std::endl;
-	if (bytesReceived > 0)
 	{
-		std::cout << "HIERO?!?!?!" << std::endl;
-		_activeClients[activeClientsIndex].request->appendToBody(buffer_str);
-		if (_activeClients[activeClientsIndex].request->get_requestStatus() == requestStatus::INCOMPLETE){
-			std::cout << "INCOMPLETE REQUEST" << std::endl;
-			return;
-		}
+        _activeClients[activeClientsIndex].request = std::make_shared<Request>(_activeClients[activeClientsIndex].buff_str);
+		std::cout << "REQUEST CREATED" << std::endl;
 	}
-	Response response(_activeClients[activeClientsIndex].request, *_activeClients[activeClientsIndex]._config);
-	sendData(polledFdsIndex, response);
-	removeClientSocket(_polledFds[polledFdsIndex].fd);
+	if (_activeClients[activeClientsIndex].request->get_requestStatus() == requestStatus::INCOMPLETE) //check for fileupload
+	{
+		_activeClients[activeClientsIndex].isFileUpload = true;
+		_activeClients[activeClientsIndex].expectedContentLength = _activeClients[activeClientsIndex].request->get_contentLength();
+	}
+	else 
+        _activeClients[activeClientsIndex].request->appendToBody(_activeClients[activeClientsIndex].buff_str);
+    _activeClients[activeClientsIndex].buff_str.clear();
+    if (_activeClients[activeClientsIndex].isFileUpload) {
+		if (_activeClients[activeClientsIndex].request->get_body().size() < _activeClients[activeClientsIndex].expectedContentLength) {
+            std::cout << "File upload in progress. Received " << _activeClients[activeClientsIndex].request->get_body().size() 
+                      << " of " << _activeClients[activeClientsIndex].expectedContentLength << " bytes." << std::endl;
+            return; // Wait for more data
+        }
+    }
+
+    if (_activeClients[activeClientsIndex].request->get_requestStatus() == requestStatus::INCOMPLETE) {
+        std::cout << "INCOMPLETE REQUEST" << std::endl;
+        return; // Wait for more data
+    }
+
+    // Process the complete request
+    Response response(_activeClients[activeClientsIndex].request, *_activeClients[activeClientsIndex]._config);
+    sendData(polledFdsIndex, response);
+    removeClientSocket(_polledFds[polledFdsIndex].fd);
 }
 
 clientInfo	ClientConnection::initClientInfo(int clientFD, int index, sockaddr_in clientAddr)
