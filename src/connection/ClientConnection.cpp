@@ -76,18 +76,15 @@ ssize_t ClientConnection::receiveData(int index, std::string &datareceived)
 {
 	std::vector<char> buffer(BUFFSIZE);
 	int	connectedClientFD = getIndexByClientFD(_pollFdsWithConfigs[index].fd);
-	// ssize_t		bytesRead = _activeClients[connectedClientFD].bytesRead; -> not used anymore?
 	ssize_t bytes_received;
 	std::string::size_type total_received = 0;
 
-	errno = 0;
 	while (true) {
 		bytes_received = recv(_pollFdsWithConfigs[index].fd, &buffer[0], buffer.size(), MSG_DONTWAIT);
 		if (bytes_received > 0)
 		{
 			total_received += bytes_received;
 			datareceived.append(std::string(buffer.begin(), buffer.begin() + bytes_received));
-			// _activeClients[connectedClientFD].bytesRead += bytes_received; -> not used anymore?
 		}
 		else if (bytes_received < 0 && (errno != EAGAIN || errno != EWOULDBLOCK))
 		{
@@ -99,30 +96,19 @@ ssize_t ClientConnection::receiveData(int index, std::string &datareceived)
 		else
 			break;
 	}
-	// test print total bytes received and buffer vector
-	std::cout << MSG_BORDER << "[Total bytes received: " << total_received << "]" << MSG_BORDER << std::endl;
 	return total_received;
 }
 
-//Intended workings
-// When an request is incomplete and goes through handlemultipart and is not completely received. Chunked object has to save the initial request, since sequential requests don't have headers.
-// and the response should be hold off? Until the last sequential request is received and passed through Chunked.add_to_file(). When that happens Chunked object will set _totalLength on true. Indicating that the full body was received. 
-// Then the response should be build again with the bufferedfile given so handlemultipart will have the whole body. Request could also be build with the whole body, body size might be too big for request object at the moment.
-// When the response is build again after Chunked _totalLength is true. Response will have acces to the full request BODY (without headers and boundaries) through the given filename. CGI should be able to be run then as well.
-// I think the filename has to be given to argv, (might be happening already).
 void ClientConnection::handleInputEvent(int index)
 {
 	std::string	buffer_str;
 	int			connectedClientFD = getIndexByClientFD(_pollFdsWithConfigs[index].fd);
 	ssize_t		bytesRead;
+	ssize_t		totalBytes;
 
-	errno = 0;
-	bytesRead = receiveData(index, buffer_str);
-	if (bytesRead < 0) {
-		logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
-				 _activeClients[connectedClientFD].clientIP,_pollFdsWithConfigs[index].fd);
+	totalBytes = receiveData(index, buffer_str);
+	if (totalBytes <= 0)
 		return;
-	}
 
 	std::shared_ptr<Request> request = std::make_shared<Request>(buffer_str);
 	if (!request)
@@ -131,7 +117,7 @@ void ClientConnection::handleInputEvent(int index)
 	while (request->get_requestStatus() == requestStatus::INCOMPLETE) {
 		buffer_str.clear();
 		bytesRead = receiveData(index, buffer_str);
-		if (bytesRead < 0) {
+		if (bytesRead < 0 && (errno != EAGAIN || errno != EWOULDBLOCK)) {
 			logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
 				  _activeClients[connectedClientFD].clientIP,_pollFdsWithConfigs[index].fd);
 			return;
@@ -139,9 +125,12 @@ void ClientConnection::handleInputEvent(int index)
 		if (bytesRead == 0)
 			break;
 		request->appendToBody(buffer_str);
+		totalBytes += bytesRead;
 	}
 
+	std::cout << MSG_BORDER << "[Total bytes received: " << totalBytes << "]" << MSG_BORDER << std::endl;
 	std::cout << MSG_BORDER << "[Total Bodylength: " << request->get_body().length() << "]" << MSG_BORDER << std::endl;
+
 	Response response(request, *_activeClients[connectedClientFD]._config);
 
 	const std::string responseString = response.get_response();
@@ -153,7 +142,6 @@ void ClientConnection::handleInputEvent(int index)
 			_activeClients[getIndexByClientFD(_pollFdsWithConfigs[index].fd)]
 				.clientIP,
 			_pollFdsWithConfigs[index].fd);
-		return reset_buffer(_activeClients[connectedClientFD], true);
 	}
 	else if (bytesSent == 0) {
 		logClientConnection(
@@ -161,11 +149,12 @@ void ClientConnection::handleInputEvent(int index)
 			_activeClients[getIndexByClientFD(_pollFdsWithConfigs[index].fd)]
 				.clientIP,
 			_pollFdsWithConfigs[index].fd);
-		return reset_buffer(_activeClients[connectedClientFD], true);
 	}
 
-	std::cout << MSG_BORDER << "[Total Bytes Send: " << bytesSent << "]" << MSG_BORDER << std::endl;
 	reset_buffer(_activeClients[connectedClientFD], true);
+	if (bytesSent < 0 || bytesSent == 0)
+		return;
+	std::cout << MSG_BORDER << "[Total Bytes Send: " << bytesSent << "]" << MSG_BORDER << std::endl;
 	_activeClients[connectedClientFD].keepAlive = request->get_keepAlive(); //keep alive as in header
 	manageKeepAlive(index);
 }

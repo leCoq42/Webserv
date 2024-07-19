@@ -8,23 +8,24 @@
 #include <string>
 #include <unordered_map>
 #include <sstream>
+#include <filesystem>
 
 
-auto print_key_value = [](const auto &key, const auto &value)
-{
-	std::cout << "Key:[" << key << "] Value:[" << value << "]\n";
-};
+// auto print_key_value = [](const auto &key, const auto &value)
+// {
+// 	std::cout << "Key:[" << key << "] Value:[" << value << "]\n";
+// };
 
 Request::Request() : _rawRequest(""), _requestMethod(""), _requestPath(""),
 	_htmlVersion(""), _keepAlive(false), _isValid(0), _body(""), _bufferFile(""),
 	_contentLength(0), _chunked(false), _requestStatus(requestStatus::COMPLETE) {}
 
-Request::Request(const std::string rawStr) : _rawRequest(rawStr), _keepAlive(false) {
+Request::Request(const std::string rawStr) : _rawRequest(rawStr), _contentLength(0), _chunked(false) {
 	parseRequest();
 
-	if (_chunked && _contentLength != _body.length()) {// TODO: not sure which length to compare with
+	if (get_requestMethod() != "GET"  && _contentLength != _body.length()) {// TODO: not sure which length to compare with
+		std::cout << "<<< Incomplete Request >>>" << std::endl;
 		_requestStatus = requestStatus::INCOMPLETE;
-		std::cout << "<<< Chunked Request >>>" << std::endl;
 	}
 	else{
 		_requestStatus = requestStatus::COMPLETE;
@@ -39,13 +40,10 @@ Request::~Request() {}
 Request::Request(const Request &src) :
 	_rawRequest(src._rawRequest), _requestMethod(src._requestMethod),
 	_requestPath(src._requestPath), _htmlVersion(src._htmlVersion),
-	_requestArgs(src._requestArgs), _headers(src._headers),
-	_keepAlive(src._keepAlive), _isValid(src._isValid), _body(src._body),
-	_cgiEnv(src._cgiEnv), _bufferFile(src._bufferFile),
-	_contentLength(src._contentLength), _chunked(src._chunked),
-	_requestStatus(src._requestStatus) {
-	extractCgiEnv();
-}
+	 _keepAlive(src._keepAlive), _isValid(src._isValid), _body(src._body),
+	_bufferFile(src._bufferFile), _contentLength(src._contentLength), _chunked(src._chunked),
+	_requestStatus(src._requestStatus), _headers(src._headers),
+	_requestArgs(src._requestArgs) {}
 
 Request &Request::operator=(const Request &rhs) {
 	Request temp(rhs);
@@ -62,25 +60,10 @@ void Request::swap(Request &lhs) {
 	std::swap(_keepAlive, lhs._keepAlive);
 	std::swap(_isValid, lhs._isValid);
 	std::swap(_body, lhs._body);
-	std::swap(_cgiEnv, lhs._cgiEnv);
 	std::swap(_bufferFile, lhs._bufferFile);
 	std::swap(_contentLength, lhs._contentLength);
 	std::swap(_chunked, lhs._chunked);
 	std::swap(_requestStatus, lhs._requestStatus);
-}
-
-// doesn't seem to be the standard but it is an security issue not to check
-// this, https://www.htmlhelp.com/faq/cgifaq.2.html
-// https://datatracker.ietf.org/doc/html/rfc3875#section-4
-void Request::extractCgiEnv() // whoops wrong place, also security issue :p
-{
-	if (get_headers().empty())
-		return;
-
-	// Should check for accepted env variables, but dont think its specified to be
-	// that way.
-	for (const auto &[key, value] : get_headers())
-		print_key_value(key, value);
 }
 
 void Request::parseRequest()
@@ -217,6 +200,8 @@ std::string Request::parseRequestBody(const std::string &_rawRequest)
 void Request::appendToBody(std::string requestString) {
 	std::string chunk = parseRequestBody(requestString);
 	_body.append(chunk);
+	if (_body.length() == _contentLength)
+		_requestStatus = requestStatus::COMPLETE;
 }
 
 // TODO: max length of GET request 2048 bytes?
@@ -238,8 +223,6 @@ bool Request::checkRequestValidity() const
 const std::string &Request::get_rawRequest() const { return _rawRequest; }
 
 const std::string &Request::get_requestMethod() const { return _requestMethod; }
-
-const std::string &Request::get_uri() const { return _requestPath; }
 
 const std::string Request::get_referer() const
 {
@@ -292,12 +275,11 @@ const std::string Request::get_boundary() const {
 
 const std::string &Request::get_body() const { return _body; }
 
+const std::filesystem::path &Request::get_requestPath() const { return _requestPath; }
 
 const std::string &Request::get_bufferFile() const { return _bufferFile; }//added
 
-
 const size_t &Request::get_contentLength() const { return (_contentLength); }//added
-
 
 const bool &Request::get_keepAlive() const { return _keepAlive; }
 
@@ -325,6 +307,8 @@ void	Request::set_requestStatus(requestStatus status) { _requestStatus = status;
 
 void	Request::set_keepAlive(bool keepAlive) { _keepAlive = keepAlive; } // added
 
+void		Request::set_requestPath(std::filesystem::path newPath) { _requestPath = newPath; }
+
 void Request::printRequest() const {
 	std::cout << MSG_BORDER << "[Complete Request:]" << MSG_BORDER << std::endl;
 	std::cout << get_rawRequest() << std::endl;
@@ -332,7 +316,7 @@ void Request::printRequest() const {
 #ifdef DEBUG
 	std::cout << MSG_BORDER << "[Parsed Request]" << MSG_BORDER << std::endl;
 	std::cout << "request method: " << get_requestMethod() << std::endl;
-	std::cout << "request path: " << get_uri() << std::endl;
+	std::cout << "request path: " << get_requestPath() << std::endl;
 	std::cout << "html version: " << get_htmlVersion() << std::endl;
 
 	std::cout << "<URI Args>" << std::endl;

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <vector>
+#include <filesystem>
 
 // doesn't seem to be the standard but it is an security issue not to check
 // this, https://www.htmlhelp.com/faq/cgifaq.2.html
@@ -42,34 +43,34 @@ class Request {
 		const bool			&get_keepAlive() const;
 		const bool			&get_validity() const;
 		const requestStatus	&get_requestStatus() const;
+		const std::filesystem::path &get_requestPath() const;
 		void				printRequest() const;
 		void				set_keepAlive(bool keepAlive); //added
 		void				set_bufferFile(std::string buffer_file); //added
 		void				set_contentLength(size_t contentLength); //added
 		void				set_requestStatus(requestStatus);
+		void				set_requestPath(std::filesystem::path newPath);
 		void appendToBody(std::string requestString);
 
 	private:
-		const std::string	_rawRequest;
-		std::string			_requestMethod;
-		std::string			_requestPath;
-		std::string			_htmlVersion;
-		std::unordered_map<std::string, std::string>	_requestArgs;
+		const std::string		_rawRequest;
+		std::string				_requestMethod;
+		std::filesystem::path	_requestPath;
+		std::string				_htmlVersion;
+		bool					_keepAlive;
+		bool					_isValid;
+		std::string				_body;
+		std::string				_bufferFile;//added
+		size_t					_contentLength;
+		bool					_chunked;
+		requestStatus			_requestStatus;
 		std::unordered_map<std::string, std::string>	_headers;
-		bool				_keepAlive;
-		bool				_isValid;
-		std::string			_body;
-		std::unordered_map<std::string, std::string>	_cgiEnv;
-		std::string			_bufferFile;//added
-		size_t				_contentLength;
-		bool				_chunked;
-		requestStatus		_requestStatus;
+		std::unordered_map<std::string, std::string>	_requestArgs;
 		
 		void		parseRequest();
 		bool		parseRequestLine(const std::string &line);
 		bool		parseRequestHeaders(std::istringstream &requestStream);
 		std::string	parseRequestBody(const std::string &_rawRequest);
-		void		extractCgiEnv();
 		void		parseUrlArgs(const std::string uri);
 		void		splitUrlArgs(std::string argStr);
 };

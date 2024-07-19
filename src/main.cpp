@@ -31,7 +31,7 @@ void parse(Parser *parser, std::list<ServerStruct> *server_structs,
 		error_exit(4);
 	#ifdef DEBUG
 	std::cout << parser->PS.get_nServers() << std::endl;
-	if (!server_structs.empty()) {
+	if (!server_structs->empty()) {
 			for (ServerStruct server : *server_structs) {
 				std::cout << "-------------------------------------" << std::endl;
 				server.show_self();

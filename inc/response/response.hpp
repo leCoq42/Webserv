@@ -59,7 +59,6 @@ private:
 	std::string					_bufferFile;
 	ServerStruct				&_config;
 	FileAccess					_fileAccess;
-	std::filesystem::path		_requestPath;
 
 	bool	handleGetRequest(const std::shared_ptr<Request> &request);
 	bool	handlePostRequest(const std::shared_ptr<Request> &request);
@@ -96,7 +95,8 @@ private:
 	static const inline std::unordered_map<std::string, std::string> interpreters{
 		{".cgi", ""},
 		{".py", "/usr/bin/python3"},
-		{".php", "/ usr / lib / cgi - bin / php"}};
+		{".php", "/ usr / lib / cgi - bin / php"},
+	};
 
 	static const inline std::map<statusCode, std::string> statusCodeMap = {
 		{statusCode::OK, "OK"},

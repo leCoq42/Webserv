@@ -2,7 +2,7 @@
 
 #define MSG_BORDER "---------------------------"
 
-#define BUFFSIZE 2048
+#define BUFFSIZE 4096
 
 #define CRLF "\r\n"
 

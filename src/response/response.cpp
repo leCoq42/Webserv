@@ -16,18 +16,41 @@
 Response::Response(ServerStruct &config) : _request(nullptr), _responseString(""), _config(config), _fileAccess(config) {}
 
 Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
-    : _request(request), _responseString(""), _contentType(""), _bufferFile(""), _config(config), _fileAccess(config)
-{
-	handleRequest(request);
+    : _request(request), _responseString(""), _contentType(""), _bufferFile(""), _config(config), _fileAccess(config) {
+	int return_code = 0;
+
+	std::filesystem::path newPath = _fileAccess.isFilePermissioned(request->get_requestPath(), return_code);
+	if (return_code) {
+		std::cout << "New Path:" << _request->get_requestPath() << std::endl;
+		_request->set_requestPath (_fileAccess.getErrorPage(return_code)); // wrong place
+		buildResponse(static_cast<int>(return_code), "Not Found", "");
+	}
+	else {
+		_request->set_requestPath(newPath);
+		std::cout << "New Path:" << _request->get_requestPath() << std::endl;
+		handleRequest(request);
+	}
 	#ifdef DEBUG
 	printResponse();
 	#endif
+
 }
 
 Response::Response(std::shared_ptr<Request> request, ServerStruct &config, std::string filename)
-    : _request(request), _responseString(""), _contentType(""), _bufferFile(filename), _config(config), _fileAccess(config)
-{
-	handleRequest(request);
+    : _request(request), _responseString(""), _contentType(""), _bufferFile(filename), _config(config), _fileAccess(config) {
+	int return_code = 0;
+
+	std::filesystem::path newPath = _fileAccess.isFilePermissioned(request->get_requestPath(), return_code);
+	if (return_code) {
+		std::cout << "New Path:" << _request->get_requestPath() << std::endl;
+		_request->set_requestPath (_fileAccess.getErrorPage(return_code)); // wrong place
+		buildResponse(static_cast<int>(return_code), "Not Found", "");
+	}
+	else {
+		_request->set_requestPath(newPath);
+		std::cout << "New Path:" << _request->get_requestPath() << std::endl;
+		handleRequest(request);
+	}
 	#ifdef DEBUG
 	printResponse();
 	#endif
@@ -53,18 +76,10 @@ void Response::swap(Response &lhs) {
 
 void Response::handleRequest(const std::shared_ptr<Request> &request)
 {
-	int	return_code = 0;
 	std::string request_method = request->get_requestMethod();
 
 	try {
-		_requestPath = _fileAccess.isFilePermissioned(request->get_uri(), return_code);
-		std::cout << "PATH:" << _requestPath << std::endl;
-		if (return_code)
-		{
-			_requestPath = _fileAccess.getErrorPage(return_code); // wrong place
-			buildResponse(static_cast<int>(return_code), "Not Found", "");
-		}
-		else if (request_method == "GET" && _fileAccess.allowedMethod("GET"))
+		if (request_method == "GET" && _fileAccess.allowedMethod("GET"))
 			handleGetRequest(request);
 		else if (request_method == "POST" && _fileAccess.allowedMethod("POST"))
 			handlePostRequest(request);
@@ -85,12 +100,13 @@ void Response::handleRequest(const std::shared_ptr<Request> &request)
 bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 	std::string body;
 	std::stringstream buffer;
+	std::filesystem::path resourcePath = _request->get_requestPath();
 	bool isCGI = false;
 
-	if (!_requestPath.empty() && _requestPath.has_extension())
+	if (!resourcePath.empty() && resourcePath.has_extension())
 	{
 		std::unordered_map<std::string, std::string>::const_iterator it =
-			contentTypes.find(_requestPath.extension());
+			contentTypes.find(resourcePath.extension());
 		if (it == contentTypes.end())
 		{
 			_responseString =
@@ -100,22 +116,21 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 		}
 		_contentType = it->second;
 
-		if (interpreters.find(_requestPath.extension()) == interpreters.end())
+		if (interpreters.find(resourcePath.extension()) == interpreters.end())
 		{
-			body = readFileToBody(_requestPath);
+			body = readFileToBody(resourcePath);
 			if (body.empty())
 				return false;
 		}
 		else
 		{
 			isCGI = true;
-			CGI CGI(_request);
-			body = CGI.executeCGI(_requestPath, "", _request,
-									interpreters.at(_requestPath.extension()));
+			CGI CGI(_request, interpreters.at(resourcePath.extension()));
+			body = CGI.executeCGI();
 		}
 	}
 	else
-		body = list_dir(_requestPath, request->get_uri(), request->get_referer());
+		body = list_dir(resourcePath, request->get_requestPath(), request->get_referer());
 	_responseString = buildResponse(static_cast<int>(statusCode::OK), "OK", body,
 			 						isCGI); // when cgi double padded?
 	return true;
@@ -124,8 +139,8 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 	std::string requestBody = request->get_body();
 	std::string requestContentType = request->get_contentType();
-	std::filesystem::path path = "html/";
-	std::filesystem::path resourcePath = request->get_uri();
+	// std::filesystem::path path = "html/";
+	std::filesystem::path resourcePath = request->get_requestPath();
 	std::string body;
 	bool isCGI = false;
 
@@ -138,10 +153,9 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 	if (resourcePath.has_extension()) {
 		if (interpreters.find(resourcePath.extension()) != interpreters.end()) {
 			isCGI = true;
-			path.append(resourcePath.string());
-			CGI CGI(_request);
-			body = CGI.executeCGI(path, "", _request,
-									interpreters.at(resourcePath.extension()));
+			// path.append(resourcePath.string());
+			CGI CGI(_request, interpreters.at(resourcePath.extension()));
+			body = CGI.executeCGI();
 		}
 		else {
 			buildResponse(static_cast<int>(statusCode::NO_CONTENT), "No Content", "");
@@ -157,7 +171,7 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 }
 
 bool Response::handleDeleteRequest(const std::shared_ptr<Request> &request) {
-	std::filesystem::path Path = request->get_uri();
+	std::filesystem::path Path = request->get_requestPath();
 
 	buildResponse(static_cast<int>(statusCode::OK), "OK", "");
 	return true;
