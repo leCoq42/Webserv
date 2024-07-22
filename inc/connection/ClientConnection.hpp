@@ -10,6 +10,7 @@
 #include "request.hpp"
 #include "response.hpp"
 
+
 struct clientInfo {
 	char			clientIP[INET_ADDRSTRLEN];
 	int				clientFD;

@@ -10,6 +10,7 @@
 #include <sstream>
 
 
+
 auto print_key_value = [](const auto &key, const auto &value)
 {
 	std::cout << "Key:[" << key << "] Value:[" << value << "]\n";
@@ -17,20 +18,21 @@ auto print_key_value = [](const auto &key, const auto &value)
 
 Request::Request() : _rawRequest(""), _requestMethod(""), _requestPath(""),
 	_htmlVersion(""), _isValid(0), _body(""), _bufferFile(""),
-	_contentLength(0), _chunked(false), _requestStatus(requestStatus::INCOMPLETE) {}
+	_contentLength(0), _chunked(false), _requestStatus(false) {}
 
 Request::Request(const std::string rawStr) : _rawRequest(rawStr), _requestMethod(""), _requestPath(""),
 	_htmlVersion(""), _isValid(0), _body(""), _bufferFile(""),
-	_contentLength(0), _chunked(false), _requestStatus(requestStatus::INCOMPLETE)  {
+	_contentLength(0), _chunked(false), _requestStatus(false)  {
 	parseRequest();
 
-	if (_chunked && _body.length() != _contentLength) {// TODO: not sure which length to compare with
-		_requestStatus = requestStatus::INCOMPLETE;
+	if (_body.length() != _contentLength) {// TODO: not sure which length to compare with
+		_requestStatus = false;
 		std::cout << "Incomplete Request >>>>>>>>>>>" << std::endl;
 		printRequest();
 	}
 	else{
-		_requestStatus = requestStatus::COMPLETE;
+		_requestStatus = true;
+		std::cout << "complete request >>>>>>>>>>>>" << std::endl;
 		printRequest();
 	}
 }
@@ -208,14 +210,29 @@ std::string Request::parseRequestBody(const std::string &_rawRequest)
 	return body;
 }
 
-void Request::appendToBody(std::string requestString) {
-	std::string chunk = parseRequestBody(requestString);
-	_body.append(chunk);
-	std::cout << "_body: " << _body.length() << std::endl;
-	std::cout << "_contentLength: " << _contentLength << std::endl;
-	if (_body.length() == _contentLength) {
-		_requestStatus = requestStatus::COMPLETE;
-	}
+// void Request::appendToBody(std::string requestString) {
+// 	// std::string chunk = parseRequestBody(requestString);
+// 	// _body.append(chunk);
+// 	_body.append(requestString);
+// 	std::cout << "_body: " << _body.length() << std::endl;
+// 	std::cout << "_contentLength: " << _contentLength << std::endl;
+// 	if (_body.length() == _contentLength) {
+// 		_requestStatus = true;
+// 	}
+// }
+
+void Request::appendToBody(const std::string requestString) {
+    size_t remainingBytes = _contentLength - _body.length();
+    size_t bytesToAppend = std::min(requestString.length(), remainingBytes);
+    
+    _body.append(requestString.substr(0, bytesToAppend));
+    
+    std::cout << "_body: " << _body.length() << std::endl;
+    std::cout << "_contentLength: " << _contentLength << std::endl;
+    
+    if (_body.length() >= _contentLength) {
+        _requestStatus = true;
+    }
 }
 
 // TODO: max length of GET request 2048 bytes?
@@ -311,7 +328,7 @@ const std::unordered_map<std::string, std::string> &Request::get_headers() const
 
 const bool &Request::get_validity() const { return _isValid; }
 
-const requestStatus	&Request::get_requestStatus() const { return _requestStatus; }
+const bool	&Request::get_requestStatus() const { return _requestStatus; }
 
 void	Request::set_bufferFile(std::string buffer_file) { _bufferFile = buffer_file; }
 
@@ -319,7 +336,7 @@ void	Request::set_contentLength(size_t contentLength) {
 	_contentLength = contentLength;
 } // added
 
-void	Request::set_requestStatus(requestStatus status) { _requestStatus = status; }
+void	Request::set_requestStatus(bool status) { _requestStatus = status; }
 
 void Request::printRequest() const {
 	std::cout << MSG_BORDER << "[Complete Request:]" << MSG_BORDER << std::endl;

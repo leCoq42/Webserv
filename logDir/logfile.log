@@ -1,251 +1,33 @@
-2024/07/18 15:03:21 [info]  Server created A on socket 5 listening on port 8080
-2024/07/18 15:03:21 [info]  Server created A on socket 6 listening on port 8081
-2024/07/18 15:03:21 [info]  Server created A on socket 7 listening on port 8082
-2024/07/18 15:03:21 [info]  Server created A on socket 8 listening on port 8083
-2024/07/18 15:03:21 [info]  Server created B on socket 9 listening on port 8090
-2024/07/18 15:03:21 [info]  Server created B on socket 10 listening on port 8091
-2024/07/18 15:03:21 [info]  Server created B on socket 11 listening on port 8092
-2024/07/18 15:03:21 [info]  Server created B on socket 12 listening on port 8093
-2024/07/18 15:03:25 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:03:25 [info]  Client IP 127.0.0.1 accepted connection on socket 14
-2024/07/18 15:03:47 [info]  Client IP 127.0.0.1 Client disconnected on socket 13
-2024/07/18 15:03:47 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:03:47 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:03:56 [info]  Client IP 127.0.0.1 closed connection on socket 14
-2024/07/18 15:03:57 [info]  Signal received, closing server connection
-2024/07/18 15:03:57 [info]  Client IP 127.0.0.1 connection closed on socket 13
-2024/07/18 15:03:57 [info]  Closing server A on socket 5 listening on port 8080
-2024/07/18 15:03:57 [info]  Closing server A on socket 6 listening on port 8081
-2024/07/18 15:03:57 [info]  Closing server A on socket 7 listening on port 8082
-2024/07/18 15:03:57 [info]  Closing server A on socket 8 listening on port 8083
-2024/07/18 15:03:57 [info]  Closing server B on socket 9 listening on port 8090
-2024/07/18 15:03:57 [info]  Closing server B on socket 10 listening on port 8091
-2024/07/18 15:03:57 [info]  Closing server B on socket 11 listening on port 8092
-2024/07/18 15:03:57 [info]  Closing server B on socket 12 listening on port 8093
-2024/07/18 15:04:03 [info]  Server created A on socket 5 listening on port 8080
-2024/07/18 15:04:03 [info]  Server created A on socket 6 listening on port 8081
-2024/07/18 15:04:03 [info]  Server created A on socket 7 listening on port 8082
-2024/07/18 15:04:03 [info]  Server created A on socket 8 listening on port 8083
-2024/07/18 15:04:03 [info]  Server created B on socket 9 listening on port 8090
-2024/07/18 15:04:03 [info]  Server created B on socket 10 listening on port 8091
-2024/07/18 15:04:03 [info]  Server created B on socket 11 listening on port 8092
-2024/07/18 15:04:03 [info]  Server created B on socket 12 listening on port 8093
-2024/07/18 15:04:03 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:04:03 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:04:03 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:04:03 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:04:08 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:04:08 [info]  Client IP 127.0.0.1 accepted connection on socket 14
-2024/07/18 15:04:08 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:04:08 [info]  Client IP 127.0.0.1 closed connection on socket 14
-2024/07/18 15:04:23 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:04:23 [info]  Client IP 127.0.0.1 accepted connection on socket 14
-2024/07/18 15:04:23 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:04:23 [info]  Client IP 127.0.0.1 closed connection on socket 14
-2024/07/18 15:04:27 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:04:27 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:05:17 [info]  Signal received, closing server connection
-2024/07/18 15:05:17 [info]  Closing server A on socket 5 listening on port 8080
-2024/07/18 15:05:17 [info]  Closing server A on socket 6 listening on port 8081
-2024/07/18 15:05:17 [info]  Closing server A on socket 7 listening on port 8082
-2024/07/18 15:05:17 [info]  Closing server A on socket 8 listening on port 8083
-2024/07/18 15:05:17 [info]  Closing server B on socket 9 listening on port 8090
-2024/07/18 15:05:17 [info]  Closing server B on socket 10 listening on port 8091
-2024/07/18 15:05:17 [info]  Closing server B on socket 11 listening on port 8092
-2024/07/18 15:05:17 [info]  Closing server B on socket 12 listening on port 8093
-2024/07/18 15:05:26 [info]  Server created A on socket 5 listening on port 8080
-2024/07/18 15:05:26 [info]  Server created A on socket 6 listening on port 8081
-2024/07/18 15:05:26 [info]  Server created A on socket 7 listening on port 8082
-2024/07/18 15:05:26 [info]  Server created A on socket 8 listening on port 8083
-2024/07/18 15:05:26 [info]  Server created B on socket 9 listening on port 8090
-2024/07/18 15:05:26 [info]  Server created B on socket 10 listening on port 8091
-2024/07/18 15:05:26 [info]  Server created B on socket 11 listening on port 8092
-2024/07/18 15:05:26 [info]  Server created B on socket 12 listening on port 8093
-2024/07/18 15:05:28 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:05:28 [info]  Client IP 127.0.0.1 accepted connection on socket 14
-2024/07/18 15:05:28 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:05:28 [info]  Client IP 127.0.0.1 closed connection on socket 14
-2024/07/18 15:05:34 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:05:34 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:05:34 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:05:34 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:05:38 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:05:38 [info]  Client IP 127.0.0.1 accepted connection on socket 14
-2024/07/18 15:05:38 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:06:09 [info]  Client IP 127.0.0.1 closed connection on socket 14
-2024/07/18 15:06:09 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:06:09 [info]  Client IP 127.0.0.1 accepted connection on socket 14
-2024/07/18 15:06:09 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:06:19 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:06:19 [info]  Client IP 127.0.0.1 closed connection on socket 14
-2024/07/18 15:06:19 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:06:19 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:06:19 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:06:24 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:06:24 [info]  Client IP 127.0.0.1 accepted connection on socket 14
-2024/07/18 15:06:24 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:06:25 [info]  Client IP 127.0.0.1 closed connection on socket 14
-2024/07/18 15:06:42 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:06:42 [info]  Client IP 127.0.0.1 accepted connection on socket 14
-2024/07/18 15:06:42 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:06:42 [info]  Client IP 127.0.0.1 closed connection on socket 14
-2024/07/18 15:06:46 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:06:46 [info]  Client IP 127.0.0.1 accepted connection on socket 14
-2024/07/18 15:06:46 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:07:17 [info]  Client IP 127.0.0.1 closed connection on socket 14
-2024/07/18 15:07:52 [info]  Signal received, closing server connection
-2024/07/18 15:07:52 [info]  Closing server A on socket 5 listening on port 8080
-2024/07/18 15:07:52 [info]  Closing server A on socket 6 listening on port 8081
-2024/07/18 15:07:52 [info]  Closing server A on socket 7 listening on port 8082
-2024/07/18 15:07:52 [info]  Closing server A on socket 8 listening on port 8083
-2024/07/18 15:07:52 [info]  Closing server B on socket 9 listening on port 8090
-2024/07/18 15:07:52 [info]  Closing server B on socket 10 listening on port 8091
-2024/07/18 15:07:52 [info]  Closing server B on socket 11 listening on port 8092
-2024/07/18 15:07:52 [info]  Closing server B on socket 12 listening on port 8093
-2024/07/18 15:08:42 [info]  Server created A on socket 5 listening on port 8080
-2024/07/18 15:08:42 [info]  Server created A on socket 6 listening on port 8081
-2024/07/18 15:08:42 [info]  Server created A on socket 7 listening on port 8082
-2024/07/18 15:08:42 [info]  Server created A on socket 8 listening on port 8083
-2024/07/18 15:08:42 [info]  Server created B on socket 9 listening on port 8090
-2024/07/18 15:08:42 [info]  Server created B on socket 10 listening on port 8091
-2024/07/18 15:08:42 [info]  Server created B on socket 11 listening on port 8092
-2024/07/18 15:08:42 [info]  Server created B on socket 12 listening on port 8093
-2024/07/18 15:08:45 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:08:45 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:08:45 [info]  Client IP 127.0.0.1 Client disconnected on socket 13
-2024/07/18 15:08:45 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:08:45 [info]  Client IP 127.0.0.1 accepted connection on socket 14
-2024/07/18 15:08:46 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:08:46 [info]  Client IP 127.0.0.1 Client disconnected on socket 14
-2024/07/18 15:08:46 [info]  Client IP 127.0.0.1 closed connection on socket 14
-2024/07/18 15:08:46 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:08:46 [info]  Client IP 127.0.0.1 accepted connection on socket 14
-2024/07/18 15:08:46 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:08:46 [info]  Client IP 127.0.0.1 Client disconnected on socket 14
-2024/07/18 15:08:46 [info]  Client IP 127.0.0.1 closed connection on socket 14
-2024/07/18 15:08:51 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:08:51 [info]  Client IP 127.0.0.1 accepted connection on socket 14
-2024/07/18 15:08:51 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:08:51 [info]  Client IP 127.0.0.1 Client disconnected on socket 13
-2024/07/18 15:08:51 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:08:58 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:08:59 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:08:59 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:08:59 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:09:26 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:09:27 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:09:45 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:09:45 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:09:47 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:09:47 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:10:04 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:10:04 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:10:10 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:10:10 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:10:10 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:10:10 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:10:19 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:10:26 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:10:38 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:10:38 [info]  Client IP 127.0.0.1 accepted connection on socket 15
-2024/07/18 15:10:38 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:10:40 [info]  Client IP 127.0.0.1 closed connection on socket 15
-2024/07/18 15:13:47 [info]  Signal received, closing server connection
-2024/07/18 15:13:47 [info]  Closing server A on socket 5 listening on port 8080
-2024/07/18 15:13:47 [info]  Closing server A on socket 6 listening on port 8081
-2024/07/18 15:13:47 [info]  Closing server A on socket 7 listening on port 8082
-2024/07/18 15:13:47 [info]  Closing server A on socket 8 listening on port 8083
-2024/07/18 15:13:47 [info]  Closing server B on socket 9 listening on port 8090
-2024/07/18 15:13:47 [info]  Closing server B on socket 10 listening on port 8091
-2024/07/18 15:13:47 [info]  Closing server B on socket 11 listening on port 8092
-2024/07/18 15:13:47 [info]  Closing server B on socket 12 listening on port 8093
-2024/07/18 15:14:11 [info]  Server created A on socket 5 listening on port 8080
-2024/07/18 15:14:11 [info]  Server created A on socket 6 listening on port 8081
-2024/07/18 15:14:11 [info]  Server created A on socket 7 listening on port 8082
-2024/07/18 15:14:11 [info]  Server created A on socket 8 listening on port 8083
-2024/07/18 15:14:11 [info]  Server created B on socket 9 listening on port 8090
-2024/07/18 15:14:11 [info]  Server created B on socket 10 listening on port 8091
-2024/07/18 15:14:11 [info]  Server created B on socket 11 listening on port 8092
-2024/07/18 15:14:11 [info]  Server created B on socket 12 listening on port 8093
-2024/07/18 15:14:44 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:14:44 [info]  Client IP 127.0.0.1 accepted connection on socket 14
-2024/07/18 15:14:44 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:14:49 [info]  Signal received, closing server connection
-2024/07/18 15:14:49 [info]  Client IP 127.0.0.1 connection closed on socket 14
-2024/07/18 15:14:49 [info]  Closing server A on socket 5 listening on port 8080
-2024/07/18 15:14:49 [info]  Closing server A on socket 6 listening on port 8081
-2024/07/18 15:14:49 [info]  Closing server A on socket 7 listening on port 8082
-2024/07/18 15:14:49 [info]  Closing server A on socket 8 listening on port 8083
-2024/07/18 15:14:49 [info]  Closing server B on socket 9 listening on port 8090
-2024/07/18 15:14:49 [info]  Closing server B on socket 10 listening on port 8091
-2024/07/18 15:14:49 [info]  Closing server B on socket 11 listening on port 8092
-2024/07/18 15:14:49 [info]  Closing server B on socket 12 listening on port 8093
-2024/07/18 15:14:55 [info]  Server created A on socket 5 listening on port 8080
-2024/07/18 15:14:55 [info]  Server created A on socket 6 listening on port 8081
-2024/07/18 15:14:55 [info]  Server created A on socket 7 listening on port 8082
-2024/07/18 15:14:55 [info]  Server created A on socket 8 listening on port 8083
-2024/07/18 15:14:55 [info]  Server created B on socket 9 listening on port 8090
-2024/07/18 15:14:55 [info]  Server created B on socket 10 listening on port 8091
-2024/07/18 15:14:55 [info]  Server created B on socket 11 listening on port 8092
-2024/07/18 15:14:55 [info]  Server created B on socket 12 listening on port 8093
-2024/07/18 15:14:57 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:14:57 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:14:57 [info]  Client IP 127.0.0.1 Client disconnected on socket 13
-2024/07/18 15:14:57 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:14:57 [info]  Client IP 127.0.0.1 accepted connection on socket 14
-2024/07/18 15:14:58 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:14:58 [info]  Client IP 127.0.0.1 Client disconnected on socket 14
-2024/07/18 15:14:58 [info]  Client IP 127.0.0.1 closed connection on socket 14
-2024/07/18 15:14:58 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:14:58 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:14:58 [info]  Client IP 127.0.0.1 Client disconnected on socket 13
-2024/07/18 15:15:01 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:15:01 [info]  Client IP 127.0.0.1 accepted connection on socket 14
-2024/07/18 15:15:01 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:15:02 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:15:02 [info]  Client IP 127.0.0.1 closed connection on socket 14
-2024/07/18 15:15:02 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:15:02 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:15:02 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:18:19 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:18:19 [info]  Client IP 127.0.0.1 accepted connection on socket 14
-2024/07/18 15:18:19 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 15:18:20 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 15:18:20 [info]  Client IP 127.0.0.1 closed connection on socket 14
-2024/07/18 15:18:51 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 16:06:30 [info]  Signal received, closing server connection
-2024/07/18 16:06:30 [info]  Closing server A on socket 5 listening on port 8080
-2024/07/18 16:06:30 [info]  Closing server A on socket 6 listening on port 8081
-2024/07/18 16:06:30 [info]  Closing server A on socket 7 listening on port 8082
-2024/07/18 16:06:30 [info]  Closing server A on socket 8 listening on port 8083
-2024/07/18 16:06:30 [info]  Closing server B on socket 9 listening on port 8090
-2024/07/18 16:06:30 [info]  Closing server B on socket 10 listening on port 8091
-2024/07/18 16:06:30 [info]  Closing server B on socket 11 listening on port 8092
-2024/07/18 16:06:30 [info]  Closing server B on socket 12 listening on port 8093
-2024/07/18 16:08:58 [info]  Server created A on socket 5 listening on port 8080
-2024/07/18 16:08:58 [info]  Server created A on socket 6 listening on port 8081
-2024/07/18 16:08:58 [info]  Server created A on socket 7 listening on port 8082
-2024/07/18 16:08:58 [info]  Server created A on socket 8 listening on port 8083
-2024/07/18 16:08:58 [info]  Server created B on socket 9 listening on port 8090
-2024/07/18 16:08:58 [info]  Server created B on socket 10 listening on port 8091
-2024/07/18 16:08:58 [info]  Server created B on socket 11 listening on port 8092
-2024/07/18 16:08:58 [info]  Server created B on socket 12 listening on port 8093
-2024/07/18 16:09:02 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 16:09:02 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 16:09:02 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 16:09:02 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 16:09:11 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 16:09:11 [info]  Client IP 127.0.0.1 accepted connection on socket 14
-2024/07/18 16:09:11 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 16:09:12 [info]  Client IP 127.0.0.1 accepted connection on socket 13
-2024/07/18 16:09:12 [info]  Client IP 127.0.0.1 closed connection on socket 14
-2024/07/18 16:09:43 [info]  Client IP 127.0.0.1 closed connection on socket 13
-2024/07/18 16:15:21 [info]  Signal received, closing server connection
-2024/07/18 16:15:21 [info]  Closing server A on socket 5 listening on port 8080
-2024/07/18 16:15:21 [info]  Closing server A on socket 6 listening on port 8081
-2024/07/18 16:15:21 [info]  Closing server A on socket 7 listening on port 8082
-2024/07/18 16:15:21 [info]  Closing server A on socket 8 listening on port 8083
-2024/07/18 16:15:21 [info]  Closing server B on socket 9 listening on port 8090
-2024/07/18 16:15:21 [info]  Closing server B on socket 10 listening on port 8091
-2024/07/18 16:15:21 [info]  Closing server B on socket 11 listening on port 8092
-2024/07/18 16:15:21 [info]  Closing server B on socket 12 listening on port 8093
+2024/07/22 15:21:43 [info]  Server created A on socket 5 listening on port 8080
+2024/07/22 15:21:43 [info]  Server created A on socket 6 listening on port 8081
+2024/07/22 15:21:43 [info]  Server created A on socket 7 listening on port 8082
+2024/07/22 15:21:43 [info]  Server created A on socket 8 listening on port 8083
+2024/07/22 15:21:43 [info]  Server created B on socket 9 listening on port 8090
+2024/07/22 15:21:43 [info]  Server created B on socket 10 listening on port 8091
+2024/07/22 15:21:43 [info]  Server created B on socket 11 listening on port 8092
+2024/07/22 15:21:43 [info]  Server created B on socket 12 listening on port 8093
+2024/07/22 15:21:45 [info]  Client IP 127.0.0.1 accepted connection on socket 13
+2024/07/22 15:21:45 [info]  Client IP 127.0.0.1 accepted connection on socket 14
+2024/07/22 15:21:45 [info]  Client IP 127.0.0.1 closed connection on socket 13
+2024/07/22 15:21:45 [info]  Client IP 127.0.0.1 closed connection on socket 14
+2024/07/22 15:21:46 [info]  Client IP 127.0.0.1 accepted connection on socket 13
+2024/07/22 15:21:46 [info]  Client IP 127.0.0.1 closed connection on socket 13
+2024/07/22 15:21:46 [info]  Client IP 127.0.0.1 accepted connection on socket 13
+2024/07/22 15:21:46 [info]  Client IP 127.0.0.1 closed connection on socket 13
+2024/07/22 15:21:51 [info]  Client IP 127.0.0.1 accepted connection on socket 13
+2024/07/22 15:21:51 [info]  Client IP 127.0.0.1 accepted connection on socket 14
+2024/07/22 15:21:51 [info]  Client IP 127.0.0.1 closed connection on socket 13
+2024/07/22 15:21:51 [info]  Client IP 127.0.0.1 closed connection on socket 14
+2024/07/22 15:22:10 [info]  Client IP 127.0.0.1 accepted connection on socket 13
+2024/07/22 15:22:10 [info]  Client IP 127.0.0.1 closed connection on socket 13
+2024/07/22 15:22:10 [info]  Client IP 127.0.0.1 accepted connection on socket 13
+2024/07/22 15:22:10 [info]  Client IP 127.0.0.1 closed connection on socket 13
+2024/07/22 15:24:21 [info]  Signal received, closing server connection
+2024/07/22 15:24:21 [info]  Closing server A on socket 5 listening on port 8080
+2024/07/22 15:24:21 [info]  Closing server A on socket 6 listening on port 8081
+2024/07/22 15:24:21 [info]  Closing server A on socket 7 listening on port 8082
+2024/07/22 15:24:21 [info]  Closing server A on socket 8 listening on port 8083
+2024/07/22 15:24:21 [info]  Closing server B on socket 9 listening on port 8090
+2024/07/22 15:24:21 [info]  Closing server B on socket 10 listening on port 8091
+2024/07/22 15:24:21 [info]  Closing server B on socket 11 listening on port 8092
+2024/07/22 15:24:21 [info]  Closing server B on socket 12 listening on port 8093

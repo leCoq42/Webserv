@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <system_error>
 
+
 ClientConnection::ClientConnection() {}
 
 ClientConnection::ClientConnection(std::shared_ptr<ServerConnection> ServerConnection)
@@ -80,11 +81,12 @@ ssize_t ClientConnection::receiveData(int index, int activeClientsIndex)
 		_activeClients[activeClientsIndex].totalBytesReceived += bytesReceived;
 		_activeClients[activeClientsIndex].buff_str.append(std::string(buffer.begin(), buffer.begin() + bytesReceived));
 	}
-	else if (bytesReceived < 0 && (errno != EAGAIN || errno != EWOULDBLOCK))
-	{
-		logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
-					_activeClients[activeClientsIndex].clientIP, _polledFds[index].fd);
-	}
+	// else if (bytesReceived < 0 && (errno != EAGAIN || errno != EWOULDBLOCK))
+	// {
+	// 	logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
+	// 				_activeClients[activeClientsIndex].clientIP, _polledFds[index].fd);
+	// 	removeClientSocket(_polledFds[index].fd);
+	// }
 	return (bytesReceived);
 }
 
@@ -148,44 +150,47 @@ void ClientConnection::handleInputEvent(int polledFdsIndex)
     int activeClientsIndex = findClientIndex(_polledFds[polledFdsIndex].fd);
 
     ssize_t bytesReceived = receiveData(polledFdsIndex, activeClientsIndex);
-    if (bytesReceived < 0 && (errno != EAGAIN && errno != EWOULDBLOCK))
+    if (bytesReceived < 0 && (errno != EAGAIN && errno != EWOULDBLOCK)) {
+        logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
+                _activeClients[activeClientsIndex].clientIP, _polledFds[polledFdsIndex].fd);
+        removeClientSocket(_polledFds[polledFdsIndex].fd);
         return;
-    if (bytesReceived == 0)
-    {
+    }
+    if (bytesReceived == 0) {
         logClientConnection("Client disconnected", _activeClients[activeClientsIndex].clientIP, _polledFds[polledFdsIndex].fd);
         removeClientSocket(_polledFds[polledFdsIndex].fd);
         return;
     }
-	if (!_activeClients[activeClientsIndex].request)
+    if (!_activeClients[activeClientsIndex].request) 
+    {
+        size_t headerEnd = _activeClients[activeClientsIndex].buff_str.find(CRLFCRLF);
+        if (headerEnd != std::string::npos) 
+		{
+            _activeClients[activeClientsIndex].request = 
+                std::make_shared<Request>(_activeClients[activeClientsIndex].buff_str.substr(0, headerEnd + 4));
+            std::cout << "REQUEST CREATED" << std::endl;
+            if (headerEnd + 4 < _activeClients[activeClientsIndex].buff_str.length()) 
+			{
+                _activeClients[activeClientsIndex].request->appendToBody(
+                    _activeClients[activeClientsIndex].buff_str.substr(headerEnd + 4));
+            }
+            _activeClients[activeClientsIndex].buff_str.clear();
+        } 
+        else
+            return;
+    } 
+    else 
 	{
-        _activeClients[activeClientsIndex].request = std::make_shared<Request>(_activeClients[activeClientsIndex].buff_str);
-		std::cout << "REQUEST CREATED" << std::endl;
-	}
-	if (_activeClients[activeClientsIndex].request->get_requestStatus() == requestStatus::INCOMPLETE) //check for fileupload
-	{
-		_activeClients[activeClientsIndex].isFileUpload = true;
-		_activeClients[activeClientsIndex].expectedContentLength = _activeClients[activeClientsIndex].request->get_contentLength();
-	}
-	else 
         _activeClients[activeClientsIndex].request->appendToBody(_activeClients[activeClientsIndex].buff_str);
-    _activeClients[activeClientsIndex].buff_str.clear();
-    if (_activeClients[activeClientsIndex].isFileUpload) {
-		if (_activeClients[activeClientsIndex].request->get_body().size() < _activeClients[activeClientsIndex].expectedContentLength) {
-            std::cout << "File upload in progress. Received " << _activeClients[activeClientsIndex].request->get_body().size() 
-                      << " of " << _activeClients[activeClientsIndex].expectedContentLength << " bytes." << std::endl;
-            return; // Wait for more data
-        }
+        _activeClients[activeClientsIndex].buff_str.clear();
     }
 
-    if (_activeClients[activeClientsIndex].request->get_requestStatus() == requestStatus::INCOMPLETE) {
-        std::cout << "INCOMPLETE REQUEST" << std::endl;
-        return; // Wait for more data
+    if (_activeClients[activeClientsIndex].request->get_requestStatus() == true) {
+        std::cout << "REQUEST COMPLETE" << std::endl;
+        Response response(_activeClients[activeClientsIndex].request, *_activeClients[activeClientsIndex]._config);
+        sendData(polledFdsIndex, response);
+        removeClientSocket(_polledFds[polledFdsIndex].fd);
     }
-
-    // Process the complete request
-    Response response(_activeClients[activeClientsIndex].request, *_activeClients[activeClientsIndex]._config);
-    sendData(polledFdsIndex, response);
-    removeClientSocket(_polledFds[polledFdsIndex].fd);
 }
 
 clientInfo	ClientConnection::initClientInfo(int clientFD, int index, sockaddr_in clientAddr)
@@ -200,6 +205,7 @@ clientInfo	ClientConnection::initClientInfo(int clientFD, int index, sockaddr_in
 	info.timeOut = 30; // will be configurable later, limits upload size // What is 30? Seconds?
 	info.lastRequestTime = currentTime;
 	info._config = _serverConfigs[index];
+	info.buff_str = "";
 	return (info);
 }
 
