@@ -190,8 +190,6 @@ bool Request::parseRequestHeaders(std::istringstream &requestStream)
 
 		headerValue =
 			line.substr(headerPos, line.find_last_not_of("/r") - headerPos);
-		for (auto &c : headerValue)
-			c = tolower(c);
 		_headers[headerKey] = headerValue;
 		}
 	}

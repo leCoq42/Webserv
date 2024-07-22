@@ -195,14 +195,8 @@ void Response::handle_multipart() {
 	if (_bufferFile.empty())
 	{
 		std::vector<std::string> parts = split_multipart(requestBody, boundary);
-		for (auto &part : parts)
-		{
-			std::cout << "komt ie hierrooooo????" << std::endl;
-			std::cout << MSG_BORDER << "part content: "  << part << std::endl;
-		}
 		for (const std::string &part: parts)
 		{
-		// std::cout << "komt ie hierrooooo????" << std::endl;
 			if (part.empty())
 				continue;
 
@@ -224,7 +218,6 @@ void Response::handle_multipart() {
 			filename = extract_filename(headers);
 
 			std::cout << MSG_BORDER << "[part content:]" << MSG_BORDER << "\n" << content << std::endl;
-			std::cout << "Writing to file!!!!!!!!!" << std::endl;
 			status = write_file(      "html/uploads/" + filename, content, append);
 			if (status != statusCode::OK)
 				break;
@@ -249,7 +242,6 @@ std::vector<std::string> Response::split_multipart(std::string requestBody,
 	std::vector<std::string> parts;
 	std::string fullBoundary = "--" + boundary;
 	size_t pos = 0;
-
 	while (pos < requestBody.size())
 	{
 		size_t start = requestBody.find(fullBoundary, pos);

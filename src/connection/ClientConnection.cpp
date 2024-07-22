@@ -186,6 +186,9 @@ void ClientConnection::handleInputEvent(int polledFdsIndex)
     }
 
     if (_activeClients[activeClientsIndex].request->get_requestStatus() == true) {
+		std::cout << "total bytes received: " << _activeClients[activeClientsIndex].totalBytesReceived << std::endl;
+		std::cout << "_body.length(): " << _activeClients[activeClientsIndex].request->get_body().length() << std::endl;
+		std::cout << "content-length: " << _activeClients[activeClientsIndex].request->get_contentLength() << std::endl;
         std::cout << "REQUEST COMPLETE" << std::endl;
         Response response(_activeClients[activeClientsIndex].request, *_activeClients[activeClientsIndex]._config);
         sendData(polledFdsIndex, response);
