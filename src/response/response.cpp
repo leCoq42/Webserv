@@ -19,15 +19,23 @@ Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
     : _request(request), _responseString(""), _contentType(""), _bufferFile(""), _config(config), _fileAccess(config) {
 	int return_code = 0;
 
-	std::filesystem::path newPath = _fileAccess.isFilePermissioned(request->get_requestPath(), return_code);
+	_finalPath = _request->get_requestPath();
+
+	if (!_finalPath.empty() && _finalPath.string()[0] == '/')
+		_finalPath = _finalPath.string().substr(1);
+	if (_finalPath.empty())
+		_finalPath = "index.html";
+
+	_finalPath = _fileAccess.isFilePermissioned( _finalPath, return_code);
 	if (return_code) {
-		std::cout << "New Path:" << _request->get_requestPath() << std::endl;
-		_request->set_requestPath (_fileAccess.getErrorPage(return_code)); // wrong place
+		std::cout << "Return code2: " << return_code << std::endl;
+		std::cout << "New Path:" << _finalPath << std::endl;
+		_finalPath = _fileAccess.getErrorPage(return_code); // wrong place
 		buildResponse(static_cast<int>(return_code), "Not Found", "");
 	}
 	else {
-		_request->set_requestPath(newPath);
-		std::cout << "New Path:" << _request->get_requestPath() << std::endl;
+		// _request->set_requestPath(_finalPath);
+		std::cout << "New Path:" << _finalPath << std::endl;
 		handleRequest(request);
 	}
 	#ifdef DEBUG
@@ -36,25 +44,26 @@ Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
 
 }
 
-Response::Response(std::shared_ptr<Request> request, ServerStruct &config, std::string filename)
-    : _request(request), _responseString(""), _contentType(""), _bufferFile(filename), _config(config), _fileAccess(config) {
-	int return_code = 0;
-
-	std::filesystem::path newPath = _fileAccess.isFilePermissioned(request->get_requestPath(), return_code);
-	if (return_code) {
-		std::cout << "New Path:" << _request->get_requestPath() << std::endl;
-		_request->set_requestPath (_fileAccess.getErrorPage(return_code)); // wrong place
-		buildResponse(static_cast<int>(return_code), "Not Found", "");
-	}
-	else {
-		_request->set_requestPath(newPath);
-		std::cout << "New Path:" << _request->get_requestPath() << std::endl;
-		handleRequest(request);
-	}
-	#ifdef DEBUG
-	printResponse();
-	#endif
-}
+// Response::Response(std::shared_ptr<Request> request, ServerStruct &config, std::string filename)
+//     : _request(request), _responseString(""), _contentType(""), _bufferFile(filename), _config(config), _fileAccess(config) {
+// 	int return_code = 0;
+//
+// 	std::filesystem::path newPath = _fileAccess.isFilePermissioned(request->get_requestPath(), return_code);
+// 	if (return_code) {
+// 		std::cout << "Return code: " << return_code << std::endl;
+// 		std::cout << "New Path:" << _request->get_requestPath() << std::endl;
+// 		_request->set_requestPath (_fileAccess.getErrorPage(return_code)); // wrong place
+// 		buildResponse(static_cast<int>(return_code), "Not Found", "");
+// 	}
+// 	else {
+// 		_request->set_requestPath(newPath);
+// 		std::cout << "New Path:" << _request->get_requestPath() << std::endl;
+// 		handleRequest(request);
+// 	}
+// 	#ifdef DEBUG
+// 	printResponse();
+// 	#endif
+// }
 
 Response::~Response() {}
 
@@ -139,7 +148,6 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 	std::string requestBody = request->get_body();
 	std::string requestContentType = request->get_contentType();
-	// std::filesystem::path path = "html/";
 	std::filesystem::path resourcePath = request->get_requestPath();
 	std::string body;
 	bool isCGI = false;
@@ -229,7 +237,7 @@ void Response::handle_multipart() {
 			std::cout << MSG_BORDER << "[part content:]" << MSG_BORDER << "\n" << content << std::endl;
 			#endif
 
-			status = write_file(      "html/uploads/" + filename, content, append);
+			status = write_file(      "html/uploads/" + filename, content, append); //TODO:make customizable via config
 			if (status != statusCode::OK)
 				break;
 			append = true;

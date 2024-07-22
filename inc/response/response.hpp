@@ -4,6 +4,7 @@
 #include "fileAccess.hpp"
 #include <iostream>
 #include <memory>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 #include <map>
@@ -59,6 +60,7 @@ private:
 	std::string					_bufferFile;
 	ServerStruct				&_config;
 	FileAccess					_fileAccess;
+	std::filesystem::path		_finalPath;
 
 	bool	handleGetRequest(const std::shared_ptr<Request> &request);
 	bool	handlePostRequest(const std::shared_ptr<Request> &request);
