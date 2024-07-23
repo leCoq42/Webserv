@@ -53,6 +53,7 @@ class ClientConnection : ServerConnection, public virtual Log {
 		int 		findClientIndex(int clientFD);
 		ssize_t		receiveData(int index, int activeClientsIndex);
 		bool		initializeRequest(int activeClientsIndex);
-		void		sendData(int polledIndex, int activeClientsIndex);
+		bool		clientHasTimedOut(int polledFdsIndex, int activeClientsIndex);
+		void		sendData(int polledIndex, Response response);
 };
 

@@ -57,23 +57,24 @@ ssize_t	ClientConnection::receiveData(int polledFdsIndex, int activeClientsIndex
 	}
 	return (bytesReceived);
 }
-void	ClientConnection::sendData(int polledIndex, int activeClientsIndex)
+void	ClientConnection::sendData(int polledFdsIndex, Response response)
 {
-	Response response(_activeClients[activeClientsIndex].request, *_activeClients[activeClientsIndex]._config);
 	const std::string responseString = response.get_response();
-	ssize_t bytesSent = send(_polledFds[polledIndex].fd, responseString.c_str(), responseString.length(), 0);
+	ssize_t bytesSent = send(_polledFds[polledFdsIndex].fd, responseString.c_str(), responseString.length(), 0);
 	if (bytesSent == -1) {
-		removeClientSocket(_polledFds[polledIndex].fd);
-		logClientError("Failed to send data to client: " + std::string(strerror(errno)),_activeClients[findClientIndex(_polledFds[polledIndex].fd)].clientIP, _polledFds[polledIndex].fd);
+		removeClientSocket(_polledFds[polledFdsIndex].fd);
+		logClientError("Failed to send data to client: " + std::string(strerror(errno)),_activeClients[findClientIndex(_polledFds[polledFdsIndex].fd)].clientIP, _polledFds[polledFdsIndex].fd);
 	}
 	else if (bytesSent == 0) {
-		removeClientSocket(_polledFds[polledIndex].fd);
-		logClientConnection( "Client disconnected", _activeClients[findClientIndex(_polledFds[polledIndex].fd)].clientIP, _polledFds[polledIndex].fd);
+		removeClientSocket(_polledFds[polledFdsIndex].fd);
+		logClientConnection( "Client disconnected", _activeClients[findClientIndex(_polledFds[polledFdsIndex].fd)].clientIP, _polledFds[polledFdsIndex].fd);
 	}
 }
 
 bool	ClientConnection::initializeRequest(int activeClientsIndex) 
 {
+	time_t currentTime;
+	time(&currentTime);
 	size_t headerEnd = _activeClients[activeClientsIndex].buff_str.find(CRLFCRLF);
 	if (headerEnd != std::string::npos) {
 		_activeClients[activeClientsIndex].request = 
@@ -83,14 +84,31 @@ bool	ClientConnection::initializeRequest(int activeClientsIndex)
 				_activeClients[activeClientsIndex].buff_str.substr(headerEnd + 4));
 		}
 		_activeClients[activeClientsIndex].buff_str.clear();
+		_activeClients[activeClientsIndex].lastRequestTime = currentTime;
 		return (true);
 	} 
+	return (false);
+}
+
+bool	ClientConnection::clientHasTimedOut(int polledFdsIndex, int activeClientsIndex) 
+{
+	time_t currentTime;
+	time(&currentTime);
+	if (currentTime - _activeClients[activeClientsIndex].lastRequestTime > _activeClients[activeClientsIndex].timeOut) {
+		logClientConnection("Client timed out", _activeClients[activeClientsIndex].clientIP, _activeClients[activeClientsIndex].clientFD);
+		// Response response(*_activeClients[activeClientsIndex]._config, 408); // todo: doesnt work
+		// sendData(polledFdsIndex, response);
+		removeClientSocket(_polledFds[polledFdsIndex].fd);
+		return (true);
+	}
 	return (false);
 }
 
 void	ClientConnection::handleInputEvent(int polledFdsIndex) 
 {
 	int activeClientsIndex = findClientIndex(_polledFds[polledFdsIndex].fd);
+	if (clientHasTimedOut(polledFdsIndex, activeClientsIndex) == true)
+		return;
 	ssize_t bytesReceived = receiveData(polledFdsIndex, activeClientsIndex);
 	if (bytesReceived < 0 && (errno != EAGAIN && errno != EWOULDBLOCK))
 		return;
@@ -105,7 +123,8 @@ void	ClientConnection::handleInputEvent(int polledFdsIndex)
 		_activeClients[activeClientsIndex].buff_str.clear();
 	}
 	if (_activeClients[activeClientsIndex].request->get_requestStatus() == true) {
-		sendData(polledFdsIndex, activeClientsIndex);
+		Response response(_activeClients[activeClientsIndex].request, *_activeClients[activeClientsIndex]._config);
+		sendData(polledFdsIndex, response);
 		removeClientSocket(_polledFds[polledFdsIndex].fd);
 	}
 }
@@ -118,13 +137,11 @@ clientInfo	ClientConnection::initClientInfo(int clientFD, int serverIndex, socka
 	time(&currentTime);
 	inet_ntop(AF_INET, &clientAddr.sin_addr, info.clientIP, sizeof(info.clientIP));
 	info.clientFD = clientFD;
-	info.isFileUpload = false;
 	std::shared_ptr<Request> request;
-	info.timeOut = 30; // will be configurable later, limits upload size // What is 30? Seconds?
+	info.timeOut = 1; 
 	info.lastRequestTime = currentTime;
 	info._config = _serverConfigs[serverIndex];
 	info.buff_str = "";
-	info.totalBytesReceived = 0;
 	return (info);
 }
 
