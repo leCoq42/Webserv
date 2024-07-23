@@ -3,25 +3,19 @@
 
 ServerConnection::ServerConnection() {}
 
-ServerConnection::~ServerConnection() {
+ServerConnection::~ServerConnection() 
+{
   for (size_t i = 0; i < _connectedServers.size(); i++) {
     logServerConnection("Closing server", _connectedServers[i].serverID, _connectedServers[i].serverFD, _connectedServers[i].serverPort);
     close(_connectedServers[i].serverFD);
   }
 }
 
-void ServerConnection::initServerInfo(ServerStruct &serverStruct, ServerInfo &info, std::list<std::string>::iterator it) {
+void ServerConnection::initServerInfo(ServerStruct &serverStruct, ServerInfo &info, std::list<std::string>::iterator it) 
+{
 	struct sockaddr_in server_addr;
 	memset(&server_addr, 0, sizeof(server_addr));
-
-	// _config = serverStruct;
-	info._config = &serverStruct; //added points to serverstruct
-	//
-	#ifdef DEBUG
-	std::cout << "SERVERINFO:" <<  std::endl;
-	info._config->show_self(); // added
-	#endif // DEBUG
-	//
+	info._config = &serverStruct; 
 	info.serverPort = atoi(it->c_str());
 	info.serverID = serverStruct._id;
 	server_addr.sin_family = AF_INET;
@@ -30,13 +24,15 @@ void ServerConnection::initServerInfo(ServerStruct &serverStruct, ServerInfo &in
 	info.server_addr = server_addr;
 }
 
-void ServerConnection::createServerSocket(ServerInfo &info) {
+void ServerConnection::createServerSocket(ServerInfo &info) 
+{
   info.serverFD = socket(AF_INET, SOCK_STREAM, 0);
   if (info.serverFD == -1)
     logServerError("Failed to create server socket", info.serverID, info.serverPort);
 }
 
-void ServerConnection::bindServerSocket(ServerInfo &info) {
+void ServerConnection::bindServerSocket(ServerInfo &info) 
+{
   const int reuse = 1;
   if (setsockopt(info.serverFD, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) != 0) {
     close(info.serverFD);
@@ -57,7 +53,8 @@ void ServerConnection::listenIncomingConnections(ServerInfo &info) {
   }
 }
 
-void ServerConnection::setUpServerConnection(ServerStruct &serverStruct) {
+void ServerConnection::setUpServerConnection(ServerStruct &serverStruct) 
+{
   std::list<std::string>::iterator it = serverStruct._port.content_list.begin();
   for (; it != serverStruct._port.content_list.end(); ++it) {
     if (atoi(it->c_str()) > 0 && atoi(it->c_str()) < 65536) {

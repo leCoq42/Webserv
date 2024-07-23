@@ -12,18 +12,18 @@
 
 
 struct clientInfo {
-	char			clientIP[INET_ADDRSTRLEN];
-	int				clientFD;
-	bool			isFileUpload;
-	uint32_t		expectedContentLength;// check int!
+	char						clientIP[INET_ADDRSTRLEN];
+	int							clientFD;
+	bool						isFileUpload;
+	uint32_t					expectedContentLength;// check int!
 	std::shared_ptr<Request>	request;
-	bool			unchunking;
-	long int		timeOut;
-	long int		lastRequestTime;
-	ServerStruct	*_config; //port/server config for multiple server setup
-	Chunked			unchunker; //unchunker object to save multipart requests into an bufferfile
-	std::string		buff_str;
-	ssize_t			totalBytesReceived = 0; //buffered amount
+	bool						unchunking;
+	long int					timeOut;
+	long int					lastRequestTime;
+	ServerStruct				*_config; //port/server config for multiple server setup
+	Chunked						unchunker; //unchunker object to save multipart requests into an bufferfile
+	std::string					buff_str;
+	ssize_t						totalBytesReceived; //buffered amount
 };
 
 class ClientConnection : ServerConnection, public virtual Log {
@@ -45,13 +45,14 @@ class ClientConnection : ServerConnection, public virtual Log {
 		void		setupClientConnection();
 		void		removeClientSocket(int clientFD);
 		bool		isServerSocket(int fd);
-		void		handlePollOutEvent(size_t index);
-		void		handlePollErrorEvent(size_t index);
+		void		handlePollOutEvent(int index);
+		void		handlePollErrorEvent(int index);
 		clientInfo	initClientInfo(int clientFD, int index, sockaddr_in clientAddr);
-		void		manageClientInfo(int polledFDIndex, int activeClientsIndex);
+		// void		manageClientInfo(int polledFDIndex, int activeClientsIndex);
 		void		checkConnectedClientsStatus();
 		int 		findClientIndex(int clientFD);
 		ssize_t		receiveData(int index, int activeClientsIndex);
-		void		sendData(int polledIndex, Response response);
+		bool		initializeRequest(int activeClientsIndex);
+		void		sendData(int polledIndex, int activeClientsIndex);
 };
 
