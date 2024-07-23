@@ -49,8 +49,9 @@ std::filesystem::path	FileAccess::find_location(std::filesystem::path path, std:
 
 	current = &_config._location;
 	_currentRoot = _root;
-	// uri.string().insert(0, "/");
-	// std::cout << "find location:" << uri << "}{" << uri.substr(0, uri.find_last_of("/")) << std::endl;
+	uri = "/" + uri.string();
+	std::cout << "Find location of uri: " << uri << std::endl;
+	std::cout << "Uri parent path: " << uri.parent_path() << std::endl;
 	if (path.parent_path().string().find_last_of(_root) != std::string::npos)
 	{
 		while (current)
@@ -63,22 +64,17 @@ std::filesystem::path	FileAccess::find_location(std::filesystem::path path, std:
 				}
 
 				std::cout << "Try Path:" << _currentRoot << std::endl;
-				std::cout << "Requested: " << uri << " = " << content << std::endl;
+				std::cout << "Content: " << content << std::endl;
 
 				if (path.has_extension())
 				{
 					std::cout << "test2" << std::endl;
-					if (uri.has_parent_path() || uri.parent_path() != content) {
+					if (uri.has_parent_path() || uri.parent_path() == content) {
 						std::cout << "test3" << std::endl;
-						std::cout << "parent path = " << uri.parent_path() << std::endl;
-						std::cout << "content = " << content << std::endl;
 						return (root_or_path(path, _currentRoot, _root, (LocationStruct *)current->childs));
 					}
-					// if (!uri.substr(0, uri.find_last_of("/")).compare(content) || !uri.substr(0, uri.find_last_of("/")).compare("")) {
-					// 	return (root_or_path(path, _currentRoot, _root, (LocationStruct *)current->childs));
-					// }
 				}
-				if (!uri.compare(content)) {
+				if (uri == content) {
 
 					std::cout << "test4" << std::endl;
 					if (!((LocationStruct *)current->childs)->_return.content_list.empty()) {

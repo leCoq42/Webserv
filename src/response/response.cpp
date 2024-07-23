@@ -23,8 +23,8 @@ Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
 
 	if (!_finalPath.empty() && _finalPath.string()[0] == '/')
 		_finalPath = _finalPath.string().substr(1);
-	if (_finalPath.empty())
-		_finalPath = "index.html";
+	// if (_finalPath.empty())
+	// 	_finalPath = "index.html";
 
 	_finalPath = _fileAccess.isFilePermissioned( _finalPath, return_code);
 	if (return_code) {
@@ -98,8 +98,7 @@ void Response::handleRequest(const std::shared_ptr<Request> &request)
 			buildResponse(static_cast<int>(statusCode::METHOD_NOT_ALLOWED),
 						"Method Not Allowed", "");
 	}
-	catch (const std::exception &e)
-	{
+	catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		buildResponse(static_cast<int>(statusCode::INTERNAL_SERVER_ERROR),
 					"Internal Server Error", "");
@@ -109,13 +108,12 @@ void Response::handleRequest(const std::shared_ptr<Request> &request)
 bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 	std::string body;
 	std::stringstream buffer;
-	std::filesystem::path resourcePath = _request->get_requestPath();
 	bool isCGI = false;
 
-	if (!resourcePath.empty() && resourcePath.has_extension())
+	if (!_finalPath.empty() && _finalPath.has_extension())
 	{
 		std::unordered_map<std::string, std::string>::const_iterator it =
-			contentTypes.find(resourcePath.extension());
+			contentTypes.find(_finalPath.extension());
 		if (it == contentTypes.end())
 		{
 			_responseString =
@@ -125,21 +123,21 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 		}
 		_contentType = it->second;
 
-		if (interpreters.find(resourcePath.extension()) == interpreters.end())
+		if (interpreters.find(_finalPath.extension()) == interpreters.end())
 		{
-			body = readFileToBody(resourcePath);
+			body = readFileToBody(_finalPath);
 			if (body.empty())
 				return false;
 		}
 		else
 		{
 			isCGI = true;
-			CGI CGI(_request, interpreters.at(resourcePath.extension()));
+			CGI CGI(_request, interpreters.at(_finalPath.extension()));
 			body = CGI.executeCGI();
 		}
 	}
 	else
-		body = list_dir(resourcePath, request->get_requestPath(), request->get_referer());
+		body = list_dir(_finalPath, request->get_requestPath(), request->get_referer());
 	_responseString = buildResponse(static_cast<int>(statusCode::OK), "OK", body,
 			 						isCGI); // when cgi double padded?
 	return true;
@@ -148,21 +146,20 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 	std::string requestBody = request->get_body();
 	std::string requestContentType = request->get_contentType();
-	std::filesystem::path resourcePath = request->get_requestPath();
 	std::string body;
 	bool isCGI = false;
 
-	if (!resourcePath.empty() && resourcePath.string()[0] == '/')
-		resourcePath = resourcePath.string().substr(1);
-	if (resourcePath.empty())
-		resourcePath = "index.html";
+	if (!_finalPath.empty() && _finalPath.string()[0] == '/')
+		_finalPath = _finalPath.string().substr(1);
+	// if (_finalPath.empty())
+	// 	_finalPath = "index.html";
 
-	std::cout << "ResourcePath:" << resourcePath << std::endl;
-	if (resourcePath.has_extension()) {
-		if (interpreters.find(resourcePath.extension()) != interpreters.end()) {
+	std::cout << "_finalPath:" << _finalPath << std::endl;
+	if (_finalPath.has_extension()) {
+		if (interpreters.find(_finalPath.extension()) != interpreters.end()) {
 			isCGI = true;
-			// path.append(resourcePath.string());
-			CGI CGI(_request, interpreters.at(resourcePath.extension()));
+			// path.append(_finalPath.string());
+			CGI CGI(_request, interpreters.at(_finalPath.extension()));
 			body = CGI.executeCGI();
 		}
 		else {
