@@ -138,7 +138,7 @@ clientInfo	ClientConnection::initClientInfo(int clientFD, int serverIndex, socka
 	inet_ntop(AF_INET, &clientAddr.sin_addr, info.clientIP, sizeof(info.clientIP));
 	info.clientFD = clientFD;
 	std::shared_ptr<Request> request;
-	info.timeOut = 1; 
+	info.timeOut = 10; 
 	info.lastRequestTime = currentTime;
 	info._config = _serverConfigs[serverIndex];
 	info.buff_str = "";
@@ -147,17 +147,25 @@ clientInfo	ClientConnection::initClientInfo(int clientFD, int serverIndex, socka
 
 void ClientConnection::acceptClients(int serverFD, int serverIndex) 
 {
-	struct sockaddr_in clientAddr;
-	socklen_t clientAddrLen = sizeof(clientAddr);
-	int clientFD = accept(serverFD, (struct sockaddr *)&clientAddr, &clientAddrLen);
-	if (clientFD == -1 || clientFD == std::numeric_limits<int>::max()) {
-		logError("Failed to connect client");
-		return;
-	}
-	if (getpeername(clientFD, (struct sockaddr *)&clientAddr, &clientAddrLen) != 0)
-		logError("Failed to read client IP");
-	_activeClients.push_back(initClientInfo(clientFD, serverIndex, clientAddr));
-	logClientConnection("accepted connection", _activeClients.back().clientIP, clientFD);
+    struct sockaddr_in clientAddr;
+    socklen_t clientAddrLen = sizeof(clientAddr);
+    int clientFD = accept(serverFD, (struct sockaddr *)&clientAddr, &clientAddrLen);
+    if (clientFD == -1) {
+        logError("Failed to connect client: " + std::string(strerror(errno)));
+        return;
+    }
+    
+    // Set socket to non-blocking mode
+    int flags = fcntl(clientFD, F_GETFL, 0);
+    fcntl(clientFD, F_SETFL, flags | O_NONBLOCK);
+    
+    if (getpeername(clientFD, (struct sockaddr *)&clientAddr, &clientAddrLen) != 0) {
+        logError("Failed to read client IP: " + std::string(strerror(errno)));
+        close(clientFD);
+        return;
+    }
+    _activeClients.push_back(initClientInfo(clientFD, serverIndex, clientAddr));
+    logClientConnection("accepted connection", _activeClients.back().clientIP, clientFD);
 }
 
 void ClientConnection::removeClientSocket(int clientFD)

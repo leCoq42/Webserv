@@ -9,6 +9,8 @@
 #include <vector>
 #include "request.hpp"
 #include "response.hpp"
+#include <fcntl.h>
+#include <unistd.h>
 
 
 struct clientInfo {
