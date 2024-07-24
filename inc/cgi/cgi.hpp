@@ -6,7 +6,7 @@
 class CGI {
 	public:
 		CGI();
-		CGI(const std::shared_ptr<Request> &request, const std::string &interpreter);
+		CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &scriptPath);
 		~CGI();
 
 		void parseCGI();
@@ -21,9 +21,9 @@ class CGI {
 
 	private:
 		const std::shared_ptr<Request>	_request;
-		const std::string				_interpreter;
-		std::vector<char *>		_cgiEnvp;
-		std::vector<char *>		_cgiArgv;
+		std::filesystem::path			_scriptPath;
+		std::vector<std::string>		_cgiEnvp;
+		std::vector<std::string>		_cgiArgv;
 
 	static const inline std::vector<std::string> metaVarNames = {
 		"AUTH_TYPE",      "CONTENT_LENGTH",  "CONTENT_TYPE", "GATEWAY_INTERFACE",

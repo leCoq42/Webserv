@@ -59,7 +59,7 @@ std::filesystem::path	FileAccess::find_location(std::filesystem::path path, std:
 			for (std::string content : current->content_list)
 			{
 				if (!((LocationStruct *)current->childs)->root.content_list.empty()) {
-					std::cout << "test1" << std::endl;
+					// std::cout << "test1" << std::endl;
 					_currentRoot.append(((std::string)((LocationStruct *)current->childs)->root.content_list.back()));
 				}
 
@@ -68,28 +68,28 @@ std::filesystem::path	FileAccess::find_location(std::filesystem::path path, std:
 
 				if (path.has_extension())
 				{
-					std::cout << "test2" << std::endl;
+					// std::cout << "test2" << std::endl;
 					if (uri.has_parent_path() || uri.parent_path() == content) {
-						std::cout << "test3" << std::endl;
+						// std::cout << "test3" << std::endl;
 						return (root_or_path(path, _currentRoot, _root, (LocationStruct *)current->childs));
 					}
 				}
 				if (uri == content) {
 
-					std::cout << "test4" << std::endl;
+					// std::cout << "test4" << std::endl;
 					if (!((LocationStruct *)current->childs)->_return.content_list.empty()) {
-						std::cout << "test5" << std::endl;
+						// std::cout << "test5" << std::endl;
 						std::cout << "Redirecting" << std::endl;
 						path = _currentRoot;
 						path.append(((LocationStruct *)current->childs)->_return.content_list.back());
 						return (find_location(path, ((LocationStruct *)current->childs)->_return.content_list.back(), return_code));
 					}
-					if (!((LocationStruct *)current->childs)->autoindex.content_list.back().compare("on")) {
-						std::cout << "test6" << std::endl;
+					if (((LocationStruct *)current->childs)->autoindex.content_list.back() == "on") {
+						// std::cout << "test6" << std::endl;
 						return (root_or_path(path, _currentRoot, _root, (LocationStruct *)current->childs));
 					}
 					else {
-						std::cout << "test7" << std::endl;
+						// std::cout << "test7" << std::endl;
 						path.append(((LocationStruct *)current->childs)->index.content_list.back());
 						return (root_or_path(path, _currentRoot, _root, (LocationStruct *)current->childs));
 					}
@@ -110,6 +110,7 @@ std::filesystem::path	FileAccess::isFilePermissioned(std::filesystem::path uri, 
 
 	path = _root;
 	path /= uri;
+
 	//look through locations in server
 	path = find_location(path, uri, return_code);
 	// std::cout << return_code << ":error\n";

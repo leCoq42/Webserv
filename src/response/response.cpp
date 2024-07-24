@@ -132,14 +132,16 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 		else
 		{
 			isCGI = true;
-			CGI CGI(_request, interpreters.at(_finalPath.extension()));
+			CGI CGI(_request, _finalPath);
 			body = CGI.executeCGI();
+			std::cout << "CGI result1: " << body << std::endl;
 		}
 	}
 	else
 		body = list_dir(_finalPath, request->get_requestPath(), request->get_referer());
 	_responseString = buildResponse(static_cast<int>(statusCode::OK), "OK", body,
 			 						isCGI); // when cgi double padded?
+	std::cout << "response string: " << _responseString << std::endl;
 	return true;
 }
 
@@ -159,8 +161,9 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 		if (interpreters.find(_finalPath.extension()) != interpreters.end()) {
 			isCGI = true;
 			// path.append(_finalPath.string());
-			CGI CGI(_request, interpreters.at(_finalPath.extension()));
+			CGI CGI(_request, _finalPath);
 			body = CGI.executeCGI();
+			std::cout << "CGI result2: " << body << std::endl;
 		}
 		else {
 			buildResponse(static_cast<int>(statusCode::NO_CONTENT), "No Content", "");
@@ -172,6 +175,7 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 		return true;
 	}
 	buildResponse(static_cast<int>(statusCode::OK), "OK", body, isCGI);
+	std::cout << "response string: " << _responseString << std::endl;
 	return true;
 }
 
