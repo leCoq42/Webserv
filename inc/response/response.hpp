@@ -4,7 +4,6 @@
 #include "fileAccess.hpp"
 #include <iostream>
 #include <memory>
-#include <type_traits>
 #include <unordered_map>
 #include <vector>
 #include <map>
@@ -55,8 +54,10 @@ public:
 
 private:
 	std::shared_ptr<Request>	_request;
-	std::string					_responseString;
 	std::string					_contentType;
+	std::string					_body;
+	size_t						_contentLength;
+	std::string					_responseString;
 	std::string					_bufferFile;
 	ServerStruct				&_config;
 	FileAccess					_fileAccess;
@@ -75,8 +76,7 @@ private:
 	statusCode										write_file(const std::string &path,
 																const std::string &content, bool append);
 	const std::string								readFileToBody(std::filesystem::path path);
-	std::string										buildResponse(int status, const std::string &message,
-																	const std::string &body, bool isCGI = false);
+	std::string										buildResponse(int status, const std::string &message, bool isCGI = false);
 
 	static const inline std::unordered_map<std::string, std::string> contentTypes{
 		{".html", "text/html"},

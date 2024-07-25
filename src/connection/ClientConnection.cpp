@@ -156,7 +156,6 @@ void ClientConnection::handleInputEvent(int index)
 	std::cout << MSG_BORDER << "[Total Bytes Send: " << bytesSent << "]" << MSG_BORDER << std::endl;
 	_activeClients[connectedClientFD].keepAlive = request->get_keepAlive(); //keep alive as in header
 	manageKeepAlive(index);
-	std::cout << ">>>Respnse String>>\n" << responseString << std::endl;
 }
 
 Client ClientConnection::initClientInfo(int clientFD, int index, sockaddr_in clientAddr)

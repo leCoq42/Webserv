@@ -16,7 +16,7 @@
 Response::Response(ServerStruct &config) : _request(nullptr), _responseString(""), _config(config), _fileAccess(config) {}
 
 Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
-    : _request(request), _responseString(""), _contentType(""), _bufferFile(""), _config(config), _fileAccess(config) {
+    : _request(request), _contentType(""), _body(""), _contentLength(0), _responseString(""), _bufferFile(""), _config(config), _fileAccess(config) {
 	int return_code = 0;
 
 	_finalPath = _request->get_requestPath();
@@ -34,9 +34,9 @@ Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
 		std::cout << "New Path:" << _finalPath << std::endl;
 		handleRequest(request);
 	}
-	#ifdef DEBUG
+	// #ifdef DEBUG
 	printResponse();
-	#endif
+	// #endif
 
 }
 
@@ -64,8 +64,10 @@ Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
 Response::~Response() {}
 
 Response::Response(const Response &src)
-    : _request(src._request), _responseString(src._responseString),
-      _contentType(src._contentType), _config(src._config), _fileAccess(src._config) {}
+    : _request(src._request), _contentType(src._contentType), _body(src._body), _contentLength(src._contentLength),
+	_responseString(src._responseString), _bufferFile(src._bufferFile), _config(src._config),
+	_fileAccess(src._config), _finalPath(src._finalPath)
+{}
 
 Response &Response::operator=(const Response &rhs) {
 	Response temp(rhs);
@@ -75,8 +77,8 @@ Response &Response::operator=(const Response &rhs) {
 
 void Response::swap(Response &lhs) {
 	std::swap(_request, lhs._request);
-	std::swap(_responseString, lhs._responseString);
 	std::swap(_contentType, lhs._contentType);
+	std::swap(_responseString, lhs._responseString);
 }
 
 void Response::handleRequest(const std::shared_ptr<Request> &request)
@@ -92,17 +94,16 @@ void Response::handleRequest(const std::shared_ptr<Request> &request)
 			handleDeleteRequest(request);
 		else
 			buildResponse(static_cast<int>(statusCode::METHOD_NOT_ALLOWED),
-						"Method Not Allowed", "");
+						"Method Not Allowed", false);
 	}
 	catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		buildResponse(static_cast<int>(statusCode::INTERNAL_SERVER_ERROR),
-					"Internal Server Error", "");
+					"Internal Server Error", false);
 	}
 }
 
 bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
-	std::string body;
 	std::stringstream buffer;
 	bool isCGI = false;
 
@@ -114,35 +115,35 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 		{
 			_responseString =
 				buildResponse(static_cast<int>(statusCode::UNSUPPORTED_MEDIA_TYPE),
-				  "Unsupported Media Type", "");
+				  "Unsupported Media Type", false);
 			return false;
 		}
 		_contentType = it->second;
 
 		if (interpreters.find(_finalPath.extension()) == interpreters.end())
 		{
-			body = readFileToBody(_finalPath);
-			if (body.empty())
+			_body = readFileToBody(_finalPath);
+			if (_body.empty())
 				return false;
 		}
 		else
 		{
 			isCGI = true;
-			CGI CGI(_request, _finalPath, interpreters.at(_finalPath.extension()));
-			body = CGI.executeScript();
+			CGI cgi(_request, _finalPath, interpreters.at(_finalPath.extension()));
+			_body = cgi.get_result();
+			_contentLength = cgi.get_contentLength();
+			std::cout << ">>> cl: " << _contentLength << std::endl;
 		}
 	}
 	else
-		body = list_dir(_finalPath, request->get_requestPath(), request->get_referer());
-	_responseString = buildResponse(static_cast<int>(statusCode::OK), "OK", body,
-			 						isCGI); // when cgi double padded?
+		_body = list_dir(_finalPath, request->get_requestPath(), request->get_referer());
+	_responseString = buildResponse(static_cast<int>(statusCode::OK), "OK", isCGI); // when cgi double padded?
 	return true;
 }
 
 bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 	std::string requestBody = request->get_body();
 	std::string requestContentType = request->get_contentType();
-	std::string body;
 	bool isCGI = false;
 
 	if (!_finalPath.empty() && _finalPath.string()[0] == '/')
@@ -152,8 +153,9 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 	if (_finalPath.has_extension()) {
 		if (interpreters.find(_finalPath.extension()) != interpreters.end()) {
 			isCGI = true;
-			CGI CGI(_request, _finalPath, interpreters.at(_finalPath.extension()));
-			body = CGI.executeScript();
+			CGI cgi(_request, _finalPath, interpreters.at(_finalPath.extension()));
+			_body = cgi.get_result();
+			_contentLength = cgi.get_contentLength();
 		}
 		else {
 			buildResponse(static_cast<int>(statusCode::NO_CONTENT), "No Content", "");
@@ -164,7 +166,7 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 		handle_multipart();
 		return true;
 	}
-	buildResponse(static_cast<int>(statusCode::OK), "OK", body, isCGI);
+	buildResponse(static_cast<int>(statusCode::OK), "OK", isCGI);
 	return true;
 }
 
@@ -240,7 +242,7 @@ void Response::handle_multipart() {
 	else {//TODO should be able to run cgi as well
 		status = statusCode::OK;
 	}
-	buildResponse(static_cast<int>(status), statusCodeMap.at(status), responseBody);
+	buildResponse(static_cast<int>(status), statusCodeMap.at(status), false);
 }
 
 std::vector<std::string> Response::split_multipart(std::string requestBody,
@@ -286,25 +288,30 @@ statusCode Response::write_file(const std::string &path, const std::string &cont
 		return statusCode::INTERNAL_SERVER_ERROR;
 }
 
-std::string Response::buildResponse(int status, const std::string &message,
-                                    const std::string &body, bool isCGI) {
+std::string Response::buildResponse(int status, const std::string &message, bool isCGI)
+{
 	_responseString.append("HTTP/1.1 " + std::to_string(status) + " " + message +
 							CRLF);
-	if (!body.empty()) {
-		_responseString.append("Content-Length: " + std::to_string(body.length()) +
-							CRLF);
-	}
 	if (_request->get_keepAlive()) {
 		_responseString.append(
 			"Keep-Alive: timeout=" + std::to_string(KEEP_ALIVE_TIMOUT) +
 			", max=" + std::to_string(KEEP_ALIVE_N) + CRLF);
 	}
 	if (isCGI) {
-		_responseString.append(CRLFCRLF + body);
+		_responseString.append("Content-Length: " + std::to_string(_contentLength) +
+							CRLF);
+		_responseString.append(_body);
 	}
 	else {
-		_responseString.append("Content-Type: " + get_contentType() + CRLF);
-		_responseString.append(CRLF + body);
+		if (_body.empty()) {
+			return _responseString;
+		}
+		else {
+			_responseString.append("Content-Length: " + std::to_string(_body.length()) +
+						  CRLF);
+			_responseString.append("Content-Type: " + get_contentType() + CRLF);
+			_responseString.append(CRLF + _body);
+		}
 	}
 	return _responseString;
 }

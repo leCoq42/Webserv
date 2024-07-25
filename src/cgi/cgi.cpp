@@ -1,9 +1,7 @@
 #include "cgi.hpp"
 #include "defines.hpp"
-#include "response.hpp"
+#include <cstddef>
 #include <cstring>
-#include <exception>
-#include <iostream>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <vector>
@@ -11,18 +9,19 @@
 #include <clocale>
 #include <cmath>
 #include <cstring>
-#include <iostream>
 #include <algorithm>
 
 // REFERENCE :( chapter 4:
 // http://www.faqs.org/rfcs/rfc3875.html
 
-CGI::CGI() : _request() {}
+CGI::CGI() : _request(nullptr) {}
 
 CGI::CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &scriptPath, const std::string &interpreter) :
 	_request(request), _scriptPath(scriptPath), _interpreter(interpreter)
 {
 	parseCGI();
+	executeScript();
+	calculateContentLength();
 }
  
 CGI::~CGI() {}
@@ -39,7 +38,7 @@ void CGI::parseCGI()
 			add_to_envp(it.first, it.second, "");
 	}
 	_cgiArgv.push_back(nullptr);
-	_cgiEnvp.push_back(NULL);
+	_cgiEnvp.push_back(nullptr);
 }
 
 void CGI::init_envp()
@@ -82,7 +81,7 @@ bool CGI::validate_key(std::string key) {
 	return false;
 }
 
-std::string CGI::executeScript() {
+void CGI::executeScript() {
     int pipefd[2];
     if (pipe(pipefd) == -1) {
         throw std::runtime_error("Failed to create pipe");
@@ -127,9 +126,41 @@ std::string CGI::executeScript() {
         if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
             throw std::runtime_error("Script exited with non-zero status");
         }
-        return output;
+        _result = output;
     }
 }
+
+void	CGI::calculateContentLength()
+{
+	std::string body;
+
+	size_t start = _result.find(CRLFCRLF);
+	if (start != std::string::npos) {
+		body = _result.substr(start + 4);
+		_contentLength = body.length();
+	}
+	else
+		_contentLength = 0;
+
+}
+
+size_t	CGI::get_contentLength() { return _contentLength; }
+std::string CGI::get_result() {return _result; }
+
+// std::string	CGI::get_contentType()
+// {
+// 	std::string contentType;
+//
+// 	auto start = _result.find("Content-Type");
+// 	if (start != std::string::npos) {
+// 		auto end = _result.find(CRLF, start);
+// 		if (end != std::string::npos)
+// 			contentType = _result.substr(start, end);
+// 		else
+// 			contentType = _result.substr(start);
+// 	}
+// 	return contentType;
+// }
 
 // // fd in added for request body:
 // std::string CGI::executeScript()

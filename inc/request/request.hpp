@@ -1,9 +1,6 @@
 #pragma once
 
-#include <cstddef>
-#include <iostream>
 #include <unordered_map>
-#include <vector>
 #include <filesystem>
 
 // doesn't seem to be the standard but it is an security issue not to check
@@ -15,7 +12,6 @@ enum class requestStatus {INCOMPLETE, STUCK, COMPLETE, FAILED};
 
 class Request {
 	public:
-		Request();
 		Request(const std::string str);
 		Request(const Request &src);
 		Request &operator=(const Request &rhs);
@@ -53,6 +49,8 @@ class Request {
 		void appendToBody(std::string requestString);
 
 	private:
+		Request();
+
 		const std::string		_rawRequest;
 		std::string				_requestMethod;
 		std::filesystem::path	_requestPath;

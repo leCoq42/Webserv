@@ -2,29 +2,34 @@
 
 #include "request.hpp"
 #include <memory>
+#include <iostream>
+#include <vector>
 
 class CGI {
 	public:
-		CGI();
 		CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &scriptPath, const std::string &interpreter);
 		~CGI();
 
-		void parseCGI();
-		void createArgs(std::vector<char *> &argv, std::string &path, std::string &args);
-
-		std::string executeScript();
-
-		// void createEnv(std::vector<char *> &envp);
-		void init_envp();
-		bool add_to_envp(std::string name, std::string value, std::string prefix);
-		bool validate_key(std::string key);
+		size_t		get_contentLength();
+		std::string	get_result();
 
 	private:
+		CGI();
+		void		parseCGI();
+		void		executeScript();
+		void		createArgs(std::vector<char *> &argv, std::string &path, std::string &args);
+		void		init_envp();
+		bool		add_to_envp(std::string name, std::string value, std::string prefix);
+		bool		validate_key(std::string key);
+		void		calculateContentLength();
+
 		const std::shared_ptr<Request>	_request;
 		std::filesystem::path			_scriptPath;
 		std::string						_interpreter;
 		std::vector<char *>				_cgiEnvp;
 		std::vector<char *>				_cgiArgv;
+		std::string						_result;
+		size_t							_contentLength;
 
 	static const inline std::vector<std::string> metaVarNames = {
 		"AUTH_TYPE",      "CONTENT_LENGTH",  "CONTENT_TYPE", "GATEWAY_INTERFACE",
