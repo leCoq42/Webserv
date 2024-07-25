@@ -3,7 +3,6 @@
 #include <iostream>
 
 int main() {
-  std::cout << "Content-type: " << "text/html\r\n\r\n";
   std::cout << "<!DOCTYPE html><html lang=\"en\"><head><title>Datetime</title></head><body>"
 		<< std::endl;
 

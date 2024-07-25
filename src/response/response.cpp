@@ -23,18 +23,14 @@ Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
 
 	if (!_finalPath.empty() && _finalPath.string()[0] == '/')
 		_finalPath = _finalPath.string().substr(1);
-	// if (_finalPath.empty())
-	// 	_finalPath = "index.html";
 
 	_finalPath = _fileAccess.isFilePermissioned( _finalPath, return_code);
 	if (return_code) {
-		std::cout << "Return code2: " << return_code << std::endl;
 		std::cout << "New Path:" << _finalPath << std::endl;
 		_finalPath = _fileAccess.getErrorPage(return_code); // wrong place
 		buildResponse(static_cast<int>(return_code), "Not Found", "");
 	}
 	else {
-		// _request->set_requestPath(_finalPath);
 		std::cout << "New Path:" << _finalPath << std::endl;
 		handleRequest(request);
 	}
@@ -132,16 +128,14 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 		else
 		{
 			isCGI = true;
-			CGI CGI(_request, _finalPath);
-			body = CGI.executeCGI();
-			std::cout << "CGI result1: " << body << std::endl;
+			CGI CGI(_request, _finalPath, interpreters.at(_finalPath.extension()));
+			body = CGI.executeScript();
 		}
 	}
 	else
 		body = list_dir(_finalPath, request->get_requestPath(), request->get_referer());
 	_responseString = buildResponse(static_cast<int>(statusCode::OK), "OK", body,
 			 						isCGI); // when cgi double padded?
-	std::cout << "response string: " << _responseString << std::endl;
 	return true;
 }
 
@@ -153,17 +147,13 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 
 	if (!_finalPath.empty() && _finalPath.string()[0] == '/')
 		_finalPath = _finalPath.string().substr(1);
-	// if (_finalPath.empty())
-	// 	_finalPath = "index.html";
 
 	std::cout << "_finalPath:" << _finalPath << std::endl;
 	if (_finalPath.has_extension()) {
 		if (interpreters.find(_finalPath.extension()) != interpreters.end()) {
 			isCGI = true;
-			// path.append(_finalPath.string());
-			CGI CGI(_request, _finalPath);
-			body = CGI.executeCGI();
-			std::cout << "CGI result2: " << body << std::endl;
+			CGI CGI(_request, _finalPath, interpreters.at(_finalPath.extension()));
+			body = CGI.executeScript();
 		}
 		else {
 			buildResponse(static_cast<int>(statusCode::NO_CONTENT), "No Content", "");
@@ -175,7 +165,6 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 		return true;
 	}
 	buildResponse(static_cast<int>(statusCode::OK), "OK", body, isCGI);
-	std::cout << "response string: " << _responseString << std::endl;
 	return true;
 }
 
@@ -242,8 +231,6 @@ void Response::handle_multipart() {
 			if (status != statusCode::OK)
 				break;
 			append = true;
-			// _request->set_bufferFile(_requestPath.root_path().append("html/uploads/" + filename));
-			// _request->set_startContentLength(requestBody.length());//content.length());
 		}
 		if (status == statusCode::OK)
 			responseBody = readFileToBody("html/upload_success.html");
@@ -303,7 +290,7 @@ std::string Response::buildResponse(int status, const std::string &message,
                                     const std::string &body, bool isCGI) {
 	_responseString.append("HTTP/1.1 " + std::to_string(status) + " " + message +
 							CRLF);
-	if (!body.empty() && !isCGI) {
+	if (!body.empty()) {
 		_responseString.append("Content-Length: " + std::to_string(body.length()) +
 							CRLF);
 	}
@@ -313,7 +300,7 @@ std::string Response::buildResponse(int status, const std::string &message,
 			", max=" + std::to_string(KEEP_ALIVE_N) + CRLF);
 	}
 	if (isCGI) {
-		_responseString.append(body);
+		_responseString.append(CRLFCRLF + body);
 	}
 	else {
 		_responseString.append("Content-Type: " + get_contentType() + CRLF);
