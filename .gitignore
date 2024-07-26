@@ -2,8 +2,8 @@ webserv
 
 */uploads/*
 
-obj/
-./log
+./obj/
+./logDir/
 
 .DS_Store
 .cache

@@ -4,16 +4,11 @@
 #include <iostream>
 #include <vector>
 
-// const long MAX_LOG_SIZE = 10 * 1024 * 1024;
-#define PATH_LOGFILE "./logDir/logfile.log"
 
-Log::Log() {
-	addLogFile(PATH_LOGFILE);
 
-	_logFile.open(PATH_LOGFILE, std::ios_base::app);
-	if (!_logFile.is_open()) {
-		std::cerr << getTimeStamp() << " [error] Unable to open access.log file" << std::endl;
-	}
+Log::Log() : _logCount(0), _buffer("") {
+	checkPath(PATH_LOGFILE);
+	createLogFile();
 }
 
 Log::~Log() {
@@ -21,27 +16,59 @@ Log::~Log() {
 		_logFile.close();
 }
 
-void Log::addLogFile(const std::string &fileName) {
-	std::filesystem::path logFilePath(fileName);
+void Log::checkPath(const std::string &path_Logfile) {
+	std::filesystem::path logFilePath(path_Logfile);
 	if (!std::filesystem::exists(logFilePath))
 	{
 		std::filesystem::path folderPath(logFilePath.parent_path());
 		if (!std::filesystem::exists(folderPath)) {
 			std::filesystem::create_directory(folderPath);
 		}
-		std::ofstream file(logFilePath);
-		if (!file) {
-			std::cerr << "[error] creating logfile: " << logFilePath.string() << std::endl;
-			return;
-		}
-		file.close(); // not necessary?
+
 	}
 }
 
-long Log::getFileSize() {
-	std::ifstream file(PATH_LOGFILE, std::ios::binary | std::ios::ate);
-	return file.tellg();
+void	log::createLogFile() {
+	std::ofstream file(PATH_LOGFILE);
+		if (!file) {
+			std::cerr << "[error] creating logfile: " << PATH_LOGFILE << std::endl;
+			return;
+		}
+	_logFile.open(PATH_LOGFILE, std::ios_base::app);
+	if (!_logFile.is_open()) {
+		std::cerr << getTimeStamp() << " [error] Unable to open access.log file" << std::endl;
+	}
 }
+
+void	Log::swapLogs() {
+		const char* pathTempFile = "./logDir/tempFile.log";
+		std::ofstream tempFile(pathTempFile);
+		if (!tempFile) {
+			std::cerr << "[error] creating tempFile: " << pathTempFile << std::endl;
+			return;
+		}
+		std::string line;
+		while(std::getline, line) {
+			tempFile << line << std::endl;
+		}
+		_logFile.close();
+		if (remove(PATH_LOGFILE) == 0) 
+			std::cout << "File deleted successfully" << std::endl;
+		createLogFile();
+		while(getline(tempFile, line)) {
+			_logFile << line << std::endl;
+		}
+		tempFile.close();
+}
+
+void	Log::manageLogSize() {
+	_logCount += 1;
+	if (_logCount > MAX_LOG_SIZE) {
+		swapLogs();
+		_logCount = 0;
+	}
+}
+
 
 std::string Log::getTimeStamp() {
 	std::time_t now = std::time(nullptr);
@@ -52,6 +79,7 @@ std::string Log::getTimeStamp() {
 
 // General log functions
 void Log::logAdd(const std::string &message) {
+	manageLogSize();
 	if (_logFile.is_open()) {
 		_logFile << getTimeStamp() << " [info]  " << message << std::endl;
 		_logFile.flush();
@@ -63,6 +91,7 @@ void Log::logAdd(const std::string &message) {
 }
 
 void Log::logError(const std::string &message) {
+	manageLogSize();
 	if (_logFile.is_open()) {
 		_logFile << getTimeStamp() << " [error] " << message << std::endl;
 		_logFile.flush();
@@ -74,8 +103,8 @@ void Log::logError(const std::string &message) {
 }
 
 // Client connection log functions
-void Log::logClientError(const std::string &message, char *clientIP,
-												 int clientFD) {
+void Log::logClientError(const std::string &message, char *clientIP, int clientFD) {
+	manageLogSize();
 	if (_logFile.is_open()) {
 		_logFile << getTimeStamp() << " [error] " << "Client IP " << clientIP << " "
 						 << message << " on socket " << clientFD << std::endl;
@@ -87,8 +116,8 @@ void Log::logClientError(const std::string &message, char *clientIP,
 	}
 }
 
-void Log::logClientConnection(const std::string &message, std::string clientIP,
-															int clientFD) {
+void Log::logClientConnection(const std::string &message, std::string clientIP, int clientFD) {
+	manageLogSize();
 	if (_logFile.is_open()) {
 		_logFile << getTimeStamp() << " [info]  " << "Client IP " << clientIP << " "
 						 << message << " on socket " << clientFD << std::endl;
@@ -103,6 +132,7 @@ void Log::logClientConnection(const std::string &message, std::string clientIP,
 // Server connection log functions
 void Log::logServerError(const std::string &message,
 												 const std::string &serverName, int port) {
+	manageLogSize();
 	if (_logFile.is_open()) {
 		_logFile << getTimeStamp() << " [error] " << message << " on server "
 						 << serverName << "on port " << port << std::endl;
@@ -117,6 +147,7 @@ void Log::logServerError(const std::string &message,
 void Log::logServerConnection(const std::string &message,
 															const std::string &serverName, int socket,
 															int port) {
+	manageLogSize();
 	if (_logFile.is_open()) {
 		_logFile << getTimeStamp() << " [info]  " << message << " " << serverName
 						 << "on socket " << socket << " listening on port " << port
@@ -131,6 +162,7 @@ void Log::logServerConnection(const std::string &message,
 
 // Response log functions
 void Log::logResponse(int status, const std::string &message) {
+	manageLogSize();
 	if (_logFile.is_open()) {
 		_logFile << getTimeStamp() << " [response] " << " Statuscode " << status
 						 << "  " << message << " has been send to client" << std::endl;
