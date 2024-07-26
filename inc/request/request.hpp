@@ -59,7 +59,7 @@ class Request {
 		std::string				_bufferFile;//added
 		size_t					_contentLength;
 		bool					_chunked;
-		requestStatus			_requestStatus;
+		bool					_requestStatus;
 		std::unordered_map<std::string, std::string>	_headers;
 		std::unordered_map<std::string, std::string>	_requestArgs;
 		
@@ -69,12 +69,4 @@ class Request {
 		std::string	parseRequestBody(const std::string &_rawRequest);
 		void		parseUrlArgs(const std::string uri);
 		void		splitUrlArgs(std::string argStr);
-		std::unordered_map<std::string, std::string>	_headers;
-		bool				_isValid;
-		std::string			_body;
-		std::unordered_map<std::string, std::string>	_cgiEnv;
-		std::string			_bufferFile;//added
-		size_t				_contentLength;
-		bool				_chunked;
-		bool				_requestStatus;
 };
