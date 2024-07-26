@@ -1,0 +1,110 @@
+2024/06/27 10:41:00 [info]  Server created A on socket 5 listening on port 8080
+2024/06/27 10:41:00 [info]  Server created A on socket 6 listening on port 8081
+2024/06/27 10:41:00 [info]  Server created A on socket 7 listening on port 8082
+2024/06/27 10:41:00 [info]  Server created A on socket 8 listening on port 8083
+2024/06/27 10:41:00 [info]  Server created B on socket 9 listening on port 8084
+2024/06/27 10:41:00 [info]  Server created B on socket 10 listening on port 8085
+2024/06/27 10:41:00 [error] Invalid port number on server B on port 0
+2024/06/27 10:41:00 [error] Invalid port number on server B on port 0
+2024/06/27 10:41:02 [info]  Signal received, closing server connection
+2024/06/27 10:41:02 [info]  Closing server A on socket 5 listening on port 8080
+2024/06/27 10:41:02 [info]  Closing server A on socket 6 listening on port 8081
+2024/06/27 10:41:02 [info]  Closing server A on socket 7 listening on port 8082
+2024/06/27 10:41:02 [info]  Closing server A on socket 8 listening on port 8083
+2024/06/27 10:41:02 [info]  Closing server B on socket 9 listening on port 8084
+2024/06/27 10:41:02 [info]  Closing server B on socket 10 listening on port 8085
+2024/06/27 10:41:20 [info]  Server created A on socket 5 listening on port 8080
+2024/06/27 10:41:20 [info]  Server created A on socket 6 listening on port 8081
+2024/06/27 10:41:20 [info]  Server created A on socket 7 listening on port 8082
+2024/06/27 10:41:20 [info]  Server created A on socket 8 listening on port 8083
+2024/06/27 10:41:20 [info]  Server created B on socket 9 listening on port 8084
+2024/06/27 10:41:20 [info]  Server created B on socket 10 listening on port 8085
+2024/06/27 10:41:20 [error] Invalid port number on server B on port 0
+2024/06/27 10:41:20 [error] Invalid port number on server B on port 0
+2024/06/27 10:41:23 [info]  Signal received, closing server connection
+2024/06/27 10:41:23 [info]  Closing server A on socket 5 listening on port 8080
+2024/06/27 10:41:23 [info]  Closing server A on socket 6 listening on port 8081
+2024/06/27 10:41:23 [info]  Closing server A on socket 7 listening on port 8082
+2024/06/27 10:41:23 [info]  Closing server A on socket 8 listening on port 8083
+2024/06/27 10:41:23 [info]  Closing server B on socket 9 listening on port 8084
+2024/06/27 10:41:23 [info]  Closing server B on socket 10 listening on port 8085
+2024/06/27 10:49:03 [info]  Server created A on socket 5 listening on port 8080
+2024/06/27 10:49:03 [info]  Server created A on socket 6 listening on port 8081
+2024/06/27 10:49:03 [info]  Server created A on socket 7 listening on port 8082
+2024/06/27 10:49:03 [info]  Server created A on socket 8 listening on port 8083
+2024/06/27 10:49:03 [info]  Server created B on socket 9 listening on port 8084
+2024/06/27 10:49:03 [info]  Server created B on socket 10 listening on port 8085
+2024/06/27 10:49:03 [error] Invalid port number on server B on port 0
+2024/06/27 10:49:03 [error] Invalid port number on server B on port 0
+2024/06/27 10:49:06 [info]  Signal received, closing server connection
+2024/06/27 10:49:06 [info]  Closing server A on socket 5 listening on port 8080
+2024/06/27 10:49:06 [info]  Closing server A on socket 6 listening on port 8081
+2024/06/27 10:49:06 [info]  Closing server A on socket 7 listening on port 8082
+2024/06/27 10:49:06 [info]  Closing server A on socket 8 listening on port 8083
+2024/06/27 10:49:06 [info]  Closing server B on socket 9 listening on port 8084
+2024/06/27 10:49:06 [info]  Closing server B on socket 10 listening on port 8085
+2024/06/27 10:54:50 [info]  Server created A on socket 5 listening on port 8080
+2024/06/27 10:54:50 [info]  Server created A on socket 6 listening on port 8081
+2024/06/27 10:54:50 [info]  Server created A on socket 7 listening on port 8082
+2024/06/27 10:54:50 [info]  Server created A on socket 8 listening on port 8083
+2024/06/27 10:54:50 [info]  Server created B on socket 9 listening on port 8084
+2024/06/27 10:54:50 [info]  Server created B on socket 10 listening on port 8085
+2024/06/27 10:54:50 [error] Invalid port number on server B on port 0
+2024/06/27 10:54:50 [error] Invalid port number on server B on port 0
+2024/06/27 10:54:51 [info]  Signal received, closing server connection
+2024/06/27 10:54:51 [info]  Closing server A on socket 5 listening on port 8080
+2024/06/27 10:54:51 [info]  Closing server A on socket 6 listening on port 8081
+2024/06/27 10:54:51 [info]  Closing server A on socket 7 listening on port 8082
+2024/06/27 10:54:51 [info]  Closing server A on socket 8 listening on port 8083
+2024/06/27 10:54:51 [info]  Closing server B on socket 9 listening on port 8084
+2024/06/27 10:54:51 [info]  Closing server B on socket 10 listening on port 8085
+2024/06/27 10:55:35 [info]  Server created A on socket 5 listening on port 8080
+2024/06/27 10:55:35 [info]  Server created A on socket 6 listening on port 8081
+2024/06/27 10:55:35 [info]  Server created A on socket 7 listening on port 8082
+2024/06/27 10:55:35 [info]  Server created A on socket 8 listening on port 8083
+2024/06/27 10:55:35 [info]  Server created B on socket 9 listening on port 8084
+2024/06/27 10:55:35 [info]  Server created B on socket 10 listening on port 8085
+2024/06/27 10:55:35 [error] Invalid port number on server B on port 0
+2024/06/27 10:55:35 [error] Invalid port number on server B on port 0
+2024/06/27 10:55:36 [info]  Signal received, closing server connection
+2024/06/27 10:55:36 [info]  Closing server A on socket 5 listening on port 8080
+2024/06/27 10:55:36 [info]  Closing server A on socket 6 listening on port 8081
+2024/06/27 10:55:36 [info]  Closing server A on socket 7 listening on port 8082
+2024/06/27 10:55:36 [info]  Closing server A on socket 8 listening on port 8083
+2024/06/27 10:55:36 [info]  Closing server B on socket 9 listening on port 8084
+2024/06/27 10:55:36 [info]  Closing server B on socket 10 listening on port 8085
+2024/06/27 10:56:10 [info]  Server created A on socket 5 listening on port 8080
+2024/06/27 10:56:10 [info]  Server created A on socket 6 listening on port 8081
+2024/06/27 10:56:10 [info]  Server created A on socket 7 listening on port 8082
+2024/06/27 10:56:10 [info]  Server created A on socket 8 listening on port 8083
+2024/06/27 10:56:10 [info]  Server created B on socket 9 listening on port 8084
+2024/06/27 10:56:10 [info]  Server created B on socket 10 listening on port 8085
+2024/06/27 10:56:10 [error] Invalid port number on server B on port 0
+2024/06/27 10:56:10 [error] Invalid port number on server B on port 0
+2024/06/27 10:56:17 [info]  Client IP 127.0.0.1 accepted connection on socket 11
+2024/06/27 10:56:17 [info]  Client IP 127.0.0.1 closed connection on socket 11
+2024/06/27 10:56:17 [info]  Client IP 127.0.0.1 accepted connection on socket 11
+2024/06/27 10:56:17 [info]  Client IP 127.0.0.1 closed connection on socket 11
+2024/06/27 10:56:17 [info]  Client IP 127.0.0.1 accepted connection on socket 11
+2024/06/27 10:56:17 [info]  Client IP 127.0.0.1 closed connection on socket 11
+2024/06/27 10:56:19 [info]  Client IP 127.0.0.1 accepted connection on socket 11
+2024/06/27 10:56:19 [info]  Client IP 127.0.0.1 closed connection on socket 11
+2024/06/27 10:56:19 [info]  Client IP 127.0.0.1 accepted connection on socket 11
+2024/06/27 10:56:19 [info]  Client IP 127.0.0.1 closed connection on socket 11
+2024/06/27 10:56:20 [info]  Client IP 127.0.0.1 accepted connection on socket 11
+2024/06/27 10:56:20 [info]  Client IP 127.0.0.1 closed connection on socket 11
+2024/06/27 10:56:22 [info]  Client IP 127.0.0.1 accepted connection on socket 11
+2024/06/27 10:56:22 [info]  Client IP 127.0.0.1 closed connection on socket 11
+2024/06/27 10:56:22 [info]  Client IP 127.0.0.1 accepted connection on socket 11
+2024/06/27 10:56:22 [info]  Client IP 127.0.0.1 closed connection on socket 11
+2024/06/27 10:56:24 [info]  Client IP 127.0.0.1 accepted connection on socket 11
+2024/06/27 10:56:24 [info]  Client IP 127.0.0.1 closed connection on socket 11
+2024/06/27 10:56:24 [info]  Client IP 127.0.0.1 accepted connection on socket 11
+2024/06/27 10:56:24 [info]  Client IP 127.0.0.1 closed connection on socket 11
+2024/06/27 10:56:26 [info]  Signal received, closing server connection
+2024/06/27 10:56:26 [info]  Closing server A on socket 5 listening on port 8080
+2024/06/27 10:56:26 [info]  Closing server A on socket 6 listening on port 8081
+2024/06/27 10:56:26 [info]  Closing server A on socket 7 listening on port 8082
+2024/06/27 10:56:26 [info]  Closing server A on socket 8 listening on port 8083
+2024/06/27 10:56:26 [info]  Closing server B on socket 9 listening on port 8084
+2024/06/27 10:56:26 [info]  Closing server B on socket 10 listening on port 8085

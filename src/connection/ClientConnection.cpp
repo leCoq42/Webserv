@@ -32,12 +32,11 @@ void ClientConnection::handlePollErrorEvent(int polledFdIndex) {
 
 int ClientConnection::findClientIndex(int clientFD)
 {
-	int activeClientsIndex = 0;
 	for (size_t i = 0; i < _activeClients.size(); i++) {
 		if (_activeClients[i].clientFD == clientFD)
-			activeClientsIndex = i;
+			return (i); 
 	}
-	return (activeClientsIndex);
+	return (-1);
 }
 
 ssize_t	ClientConnection::receiveData(int polledFdsIndex, int activeClientsIndex)
@@ -107,6 +106,8 @@ bool	ClientConnection::clientHasTimedOut(int polledFdsIndex, int activeClientsIn
 void	ClientConnection::handleInputEvent(int polledFdsIndex) 
 {
 	int activeClientsIndex = findClientIndex(_polledFds[polledFdsIndex].fd);
+	if (activeClientsIndex == -1)
+        return;
 	if (clientHasTimedOut(polledFdsIndex, activeClientsIndex) == true)
 		return;
 	ssize_t bytesReceived = receiveData(polledFdsIndex, activeClientsIndex);
@@ -129,20 +130,24 @@ void	ClientConnection::handleInputEvent(int polledFdsIndex)
 	}
 }
 
-clientInfo	ClientConnection::initClientInfo(int clientFD, int serverIndex, sockaddr_in clientAddr)
-{
-	clientInfo info;
-	time_t currentTime;
-	memset(&info, 0, sizeof(info));
-	time(&currentTime);
-	inet_ntop(AF_INET, &clientAddr.sin_addr, info.clientIP, sizeof(info.clientIP));
-	info.clientFD = clientFD;
-	std::shared_ptr<Request> request;
-	info.timeOut = 10; 
-	info.lastRequestTime = currentTime;
-	info._config = _serverConfigs[serverIndex];
-	info.buff_str = "";
-	return (info);
+clientInfo ClientConnection::initClientInfo(int clientFD, int serverIndex, sockaddr_in clientAddr) {
+    clientInfo info;
+    time_t currentTime;
+    time(&currentTime);
+    
+    inet_ntop(AF_INET, &clientAddr.sin_addr, info.clientIP, sizeof(info.clientIP));
+    info.clientFD = clientFD;
+    info.isFileUpload = false;
+    info.expectedContentLength = 0;
+    info.request = nullptr;
+    info.unchunking = false;
+    info.timeOut = 10;
+    info.lastRequestTime = currentTime;
+    info._config = _serverConfigs[serverIndex];
+    info.buff_str = "";
+    info.totalBytesReceived = 0;
+
+    return info;
 }
 
 void ClientConnection::acceptClients(int serverFD, int serverIndex) 
@@ -173,6 +178,8 @@ void ClientConnection::removeClientSocket(int clientFD)
 	if (_activeClients.empty())
 		return ;
 	int activeClientIndex = findClientIndex(clientFD);
+	if (activeClientIndex == -1)
+		return ;
 	close(clientFD);
 	logClientConnection("closed connection", _activeClients[activeClientIndex].clientIP, clientFD);
 	_activeClients[activeClientIndex].unchunker.close_file();
@@ -186,6 +193,25 @@ void ClientConnection::removeClientSocket(int clientFD)
 		}
 	}
 }
+// void ClientConnection::removeClientSocket(int clientFD)
+// {
+//     int clientIndex = findClientIndex(clientFD);
+//     if (clientIndex == -1)
+//         return;
+
+//     close(_activeClients[clientIndex].clientFD);
+//     _activeClients[clientIndex].unchunker.close_file();
+//     _activeClients.erase(_activeClients.begin() + clientIndex);
+
+//     for (size_t i = 0; i < _polledFds.size(); i++)
+//     {
+//         if (_polledFds[i].fd == clientFD)
+//         {
+//             _polledFds.erase(_polledFds.begin() + i);
+//             break;
+//         }
+//     }
+// }
 
 bool ClientConnection::isServerSocket(int index)
 {
