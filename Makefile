@@ -13,7 +13,7 @@ CC          := c++ --std=c++20
 INCLUDES    := $(shell find inc -type d -exec echo -I {} \;)
 
 #Compiler Flags
-CFLAGS := -Wall -Wextra -Werror -Wunreachable-code#-Ofast
+CFLAGS := -Wall -Wextra -Werror -Wunreachable-code -g
 
 #Debug Flags
 ifdef DEBUG
@@ -52,7 +52,6 @@ cgi:
 
 $(NAME): $(OBJS) $(MAIN_OBJ)
 	$(CC) $(CFLAGS) $(INCLUDES) $^ -o $(NAME)
-	@echo "$(GREEN)$(NAME) executable created$(RESET_COLOR)"
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
@@ -63,17 +62,19 @@ $(CGI_BIN_DIR)/%.cgi: $(CGI_DIR)/%.cpp
 	$(CC) $(CFLAGS) $(INCLUDES) $< -o $@
 	@echo "$(GREEN)CGI script $@ created$(RESET_COLOR)"
 
+	@echo "$(GREEN)./$(NAME) executable created$(RESET_COLOR)"
+
 # Cleaning Targets
 clean:
 	@find ./obj -name "*.o" -type f -delete 
-	@$(RM) ./log
+	@$(RM) ./logDir/*
 	@echo "$(YELLOW)Object files deleted$(RESET_COLOR)"
 	@echo "$(YELLOW)Log deleted$(RESET_COLOR)"
 	
 fclean: clean
 	@$(RM) $(NAME)
 	@$(RM) $(CGI_BIN_DIR)/*.cgi
-	@echo "$(YELLOW)$(NAME) executable deleted$(RESET_COLOR)"
+	@echo "$(YELLOW)./$(NAME) executable deleted$(RESET_COLOR)"
 
 re: fclean all
 

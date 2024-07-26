@@ -16,18 +16,22 @@
 // };
 
 Request::Request() : _rawRequest(""), _requestMethod(""), _requestPath(""),
-	_htmlVersion(""), _keepAlive(false), _isValid(0), _body(""), _bufferFile(""),
-	_contentLength(0), _chunked(false), _requestStatus(requestStatus::COMPLETE) {}
+	_htmlVersion(""), _isValid(0), _body(""), _bufferFile(""),
+	_contentLength(0), _chunked(false), _requestStatus(false) {}
 
-Request::Request(const std::string rawStr) : _rawRequest(rawStr), _contentLength(0), _chunked(false) {
+Request::Request(const std::string rawStr) : _rawRequest(rawStr), _requestMethod(""), _requestPath(""),
+	_htmlVersion(""), _isValid(0), _body(""), _bufferFile(""),
+	_contentLength(0), _chunked(false), _requestStatus(false)  {
 	parseRequest();
 
-	if (get_requestMethod() != "GET"  && _contentLength != _body.length()) {// TODO: not sure which length to compare with
-		std::cout << "<<< Incomplete Request >>>" << std::endl;
-		_requestStatus = requestStatus::INCOMPLETE;
+	if (_body.length() != _contentLength) {// TODO: not sure which length to compare with
+		_requestStatus = false;
+		std::cout << "Incomplete Request >>>>>>>>>>>" << std::endl;
+		printRequest();
 	}
 	else{
-		_requestStatus = requestStatus::COMPLETE;
+		_requestStatus = true;
+		std::cout << "complete request >>>>>>>>>>>>" << std::endl;
 		#ifdef DEBUG
 		printRequest();
 		#endif // DEBUG
@@ -56,7 +60,6 @@ void Request::swap(Request &lhs) {
 	std::swap(_htmlVersion, lhs._htmlVersion);
 	std::swap(_requestArgs, lhs._requestArgs);
 	std::swap(_headers, lhs._headers);
-	std::swap(_keepAlive, lhs._keepAlive);
 	std::swap(_isValid, lhs._isValid);
 	std::swap(_body, lhs._body);
 	std::swap(_bufferFile, lhs._bufferFile);
@@ -93,20 +96,12 @@ void Request::parseRequest()
 		return;
 	}
 
-	if (_requestMethod != "GET") {
-		_body = parseRequestBody(_rawRequest);
-		_contentLength = parse_contentLen();
-	}
-
-	if (_headers.find("connection") != _headers.end()) {
-		if (_headers["connection"] == "keep-alive") {
-			_keepAlive = true;
-		}
-	}
-
+	_contentLength = parse_contentLen();
+	_body = parseRequestBody(_rawRequest);
 	if (_headers.find("transfer-encoding") != _headers.end()) {
-		if (_headers["transfer-encoding"].find("chunked") != std::string::npos) 
+		if (_headers["transfer-encoding"].find("chunked") != std::string::npos)  {
 			_chunked = true;
+		}
 	}
 	_isValid = checkRequestValidity();
 	return;
@@ -176,8 +171,6 @@ bool Request::parseRequestHeaders(std::istringstream &requestStream)
 
 		headerValue =
 			line.substr(headerPos, line.find_last_not_of("/r") - headerPos);
-		for (auto &c : headerValue)
-			c = tolower(c);
 		_headers[headerKey] = headerValue;
 		}
 	}
@@ -192,15 +185,33 @@ std::string Request::parseRequestBody(const std::string &_rawRequest)
 	if (body_start == std::string::npos) {
 		return "";
 	}
-	std::string body = _rawRequest.substr(body_start + 4, parse_contentLen());
+	std::string body = _rawRequest.substr(body_start + 4, _contentLength);
 	return body;
 }
 
-void Request::appendToBody(std::string requestString) {
-	std::string chunk = parseRequestBody(requestString);
-	_body.append(chunk);
-	if (_body.length() == _contentLength)
-		_requestStatus = requestStatus::COMPLETE;
+// void Request::appendToBody(std::string requestString) {
+// 	// std::string chunk = parseRequestBody(requestString);
+// 	// _body.append(chunk);
+// 	_body.append(requestString);
+// 	std::cout << "_body: " << _body.length() << std::endl;
+// 	std::cout << "_contentLength: " << _contentLength << std::endl;
+// 	if (_body.length() == _contentLength) {
+// 		_requestStatus = true;
+// 	}
+// }
+
+void Request::appendToBody(const std::string requestString) {
+    size_t remainingBytes = _contentLength - _body.length();
+    size_t bytesToAppend = requestString.length() - remainingBytes;
+    
+    _body.append(requestString.substr(0, bytesToAppend)); // TODO: Deze logica klopt denk ik niet??
+    
+    std::cout << "_body: " << _body.length() << std::endl;
+    std::cout << "_contentLength: " << _contentLength << std::endl;
+    
+    if (_body.length() >= _contentLength) {
+        _requestStatus = true;
+    }
 }
 
 // TODO: max length of GET request 2048 bytes?
@@ -272,6 +283,8 @@ const std::string Request::get_boundary() const {
 	return ret;
 }
 
+const bool &Request::get_chunked() const { return _chunked; }
+
 const std::string &Request::get_body() const { return _body; }
 
 const std::filesystem::path &Request::get_requestPath() const { return _requestPath; }
@@ -294,7 +307,7 @@ const std::unordered_map<std::string, std::string> &Request::get_headers() const
 
 const bool &Request::get_validity() const { return _isValid; }
 
-const requestStatus	&Request::get_requestStatus() const { return _requestStatus; }
+const bool	&Request::get_requestStatus() const { return _requestStatus; }
 
 void	Request::set_bufferFile(std::string buffer_file) { _bufferFile = buffer_file; }
 
@@ -302,9 +315,7 @@ void	Request::set_contentLength(size_t contentLength) {
 	_contentLength = contentLength;
 } // added
 
-void	Request::set_requestStatus(requestStatus status) { _requestStatus = status; }
-
-void	Request::set_keepAlive(bool keepAlive) { _keepAlive = keepAlive; } // added
+void	Request::set_requestStatus(bool status) { _requestStatus = status; }
 
 void		Request::set_requestPath(std::filesystem::path newPath) { _requestPath = newPath; }
 
@@ -337,10 +348,11 @@ void Request::printRequest() const {
 		std::cout << "ContentLen: " << get_contentLength() << std::endl;
 	}
 
-	std::cout << "<Keep-Alive>" << std::endl;
-	bool keepAlive = get_keepAlive();
-	(keepAlive ? std::cout << "Keep-Alive: true" << std::endl
-				: std::cout << "Keep-Alive: false" << std::endl);
+	std::cout << "<chunked>" << std::endl;
+	std::cout << "chunked: " << _chunked << std::endl;
+	(_chunked ? std::cout << "chunked: true" << std::endl
+				: std::cout << "chunked: false" << std::endl);
+
 
 	std::cout << "<Body>" << std::endl;
 	std::string body = get_body();
