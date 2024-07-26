@@ -202,7 +202,6 @@ void Response::handle_multipart()
 	std::string	requestBody = _request->get_body();
 	std::string	boundary = _request->get_boundary();
 	std::string	filename = "";
-	std::string	responseBody = "";
 	bool		append = false;
 
 	std::cout << MSG_BORDER << "[MULTIPART REQUEST]" << MSG_BORDER << std::endl;
@@ -235,9 +234,9 @@ void Response::handle_multipart()
 			append = true;
 		}
 		if (status == statusCode::OK)
-			responseBody = readFileToBody("html/upload_success.html");
+			_body = readFileToBody("html/upload_success.html");
 		else
-			responseBody = readFileToBody("html/standard_404.html");
+			_body = readFileToBody("html/standard_404.html");
 	}
 	else {//TODO should be able to run cgi as well
 		status = statusCode::OK;
@@ -292,11 +291,11 @@ std::string Response::buildResponse(int status, const std::string &message, bool
 {
 	_responseString.append("HTTP/1.1 " + std::to_string(status) + " " + message +
 							CRLF);
-	if (_request->get_keepAlive()) {
-		_responseString.append(
-			"Keep-Alive: timeout=" + std::to_string(KEEP_ALIVE_TIMOUT) +
-			", max=" + std::to_string(KEEP_ALIVE_N) + CRLF);
-	}
+	// if (_request->get_keepAlive()) {
+	// 	_responseString.append(
+	// 		"Keep-Alive: timeout=" + std::to_string(KEEP_ALIVE_TIMOUT) +
+	// 		", max=" + std::to_string(KEEP_ALIVE_N) + CRLF);
+	// }
 	if (isCGI) {
 		_responseString.append("Content-Length: " + std::to_string(_contentLength) +
 							CRLF);
