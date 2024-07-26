@@ -184,11 +184,14 @@ void ClientConnection::removeClientSocket(int clientFD)
 	logClientConnection("closed connection", _activeClients[activeClientIndex].clientIP, clientFD);
 	_activeClients[activeClientIndex].unchunker.close_file();
 	_activeClients.erase(activeClientIndex + _activeClients.begin());
+	// _activeClients.remove(clientFD);
 	for (auto it = _polledFds.begin(); it != _polledFds.end(); ++it) {
 		if (it->fd == clientFD)
 		{
 			_polledFds.erase(it);
-			_serverConfigs.erase(_serverConfigs.begin());
+			// We removed this, because it doesn't make sense to remove a server config whenever a client disconnects,
+			// because even when every client has disconnected, we still want to keep the server configs around for any future clients.
+			// _serverConfigs.erase(_serverConfigs.begin() + );
 			break;
 		}
 	}
