@@ -78,6 +78,10 @@
         "stack": "cpp",
         "variant": "cpp",
         "codecvt": "cpp",
-        "csignal": "cpp"
-    }
+        "csignal": "cpp",
+        "__tree": "cpp",
+        "map": "cpp",
+        "filesystem": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }

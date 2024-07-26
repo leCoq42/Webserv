@@ -218,7 +218,6 @@ void Response::handle_multipart() {
 			filename = extract_filename(headers);
 
 			std::cout << MSG_BORDER << "[part content:]" << MSG_BORDER << "\n" << content << std::endl;
-
 			status = write_file(      "html/uploads/" + filename, content, append);
 			if (status != statusCode::OK)
 				break;
@@ -243,7 +242,6 @@ std::vector<std::string> Response::split_multipart(std::string requestBody,
 	std::vector<std::string> parts;
 	std::string fullBoundary = "--" + boundary;
 	size_t pos = 0;
-
 	while (pos < requestBody.size())
 	{
 		size_t start = requestBody.find(fullBoundary, pos);
@@ -294,12 +292,6 @@ std::string Response::buildResponse(int status, const std::string &message,
 	{
 		_responseString.append("Content-Length: " + std::to_string(body.length()) +
 							CRLF);
-	}
-	if (_request->get_keepAlive())
-	{
-		_responseString.append(
-			"Keep-Alive: timeout=" + std::to_string(KEEP_ALIVE_TIMOUT) +
-			", max=" + std::to_string(KEEP_ALIVE_N) + CRLF);
 	}
 	if (isCGI)
 	{

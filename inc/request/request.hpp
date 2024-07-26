@@ -10,7 +10,7 @@
 // https://datatracker.ietf.org/doc/html/rfc3875#section-4
 //  std::string	specifiedCgiEnv[] = {}
 
-enum class requestStatus {INCOMPLETE, STUCK, COMPLETE, FAILED};
+// enum class requestStatus {INCOMPLETE, STUCK, COMPLETE, FAILED};
 
 class Request {
 	public:
@@ -35,18 +35,17 @@ class Request {
 		const std::string	&get_htmlVersion() const;
 		const std::string	&get_connection() const;
 		const std::string	&get_body() const;
+		const bool			&get_chunked() const;
 		const std::unordered_map<std::string, std::string> &get_headers() const;
 		const std::string	&get_bufferFile() const; //added
 		size_t				parse_contentLen() const;
 		const size_t		&get_contentLength() const; //added
-		const bool			&get_keepAlive() const;
 		const bool			&get_validity() const;
-		const requestStatus	&get_requestStatus() const;
+		const bool	&get_requestStatus() const;
 		void				printRequest() const;
-		void				set_keepAlive(bool keepAlive); //added
 		void				set_bufferFile(std::string buffer_file); //added
 		void				set_contentLength(size_t contentLength); //added
-		void				set_requestStatus(requestStatus);
+		void				set_requestStatus(bool status);
 		void appendToBody(std::string requestString);
 
 	private:
@@ -56,14 +55,14 @@ class Request {
 		std::string			_htmlVersion;
 		std::unordered_map<std::string, std::string>	_requestArgs;
 		std::unordered_map<std::string, std::string>	_headers;
-		bool				_keepAlive;
 		bool				_isValid;
 		std::string			_body;
 		std::unordered_map<std::string, std::string>	_cgiEnv;
 		std::string			_bufferFile;//added
 		size_t				_contentLength;
 		bool				_chunked;
-		requestStatus		_requestStatus;
+		bool				_requestStatus;
+		
 		
 
 		void parseRequest();

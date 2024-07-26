@@ -10,24 +10,29 @@
 #include <sstream>
 
 
+
 auto print_key_value = [](const auto &key, const auto &value)
 {
 	std::cout << "Key:[" << key << "] Value:[" << value << "]\n";
 };
 
 Request::Request() : _rawRequest(""), _requestMethod(""), _requestPath(""),
-	_htmlVersion(""), _keepAlive(false), _isValid(0), _body(""), _bufferFile(""),
-	_contentLength(0), _chunked(false), _requestStatus(requestStatus::COMPLETE) {}
+	_htmlVersion(""), _isValid(0), _body(""), _bufferFile(""),
+	_contentLength(0), _chunked(false), _requestStatus(false) {}
 
-Request::Request(const std::string rawStr) : _rawRequest(rawStr), _keepAlive(false) {
+Request::Request(const std::string rawStr) : _rawRequest(rawStr), _requestMethod(""), _requestPath(""),
+	_htmlVersion(""), _isValid(0), _body(""), _bufferFile(""),
+	_contentLength(0), _chunked(false), _requestStatus(false)  {
 	parseRequest();
 
-	if (_chunked && _body.length() != _contentLength) {// TODO: not sure which length to compare with
-		_requestStatus = requestStatus::INCOMPLETE;
-		std::cout << "Chunked Request >>>>>>>>>>>" << std::endl;
+	if (_body.length() != _contentLength) {// TODO: not sure which length to compare with
+		_requestStatus = false;
+		std::cout << "Incomplete Request >>>>>>>>>>>" << std::endl;
+		printRequest();
 	}
 	else{
-		_requestStatus = requestStatus::COMPLETE;
+		_requestStatus = true;
+		std::cout << "complete request >>>>>>>>>>>>" << std::endl;
 		printRequest();
 	}
 }
@@ -38,7 +43,7 @@ Request::Request(const Request &src) :
 	_rawRequest(src._rawRequest), _requestMethod(src._requestMethod),
 	_requestPath(src._requestPath), _htmlVersion(src._htmlVersion),
 	_requestArgs(src._requestArgs), _headers(src._headers),
-	_keepAlive(src._keepAlive), _isValid(src._isValid), _body(src._body),
+	_isValid(src._isValid), _body(src._body),
 	_cgiEnv(src._cgiEnv), _bufferFile(src._bufferFile),
 	_contentLength(src._contentLength), _chunked(src._chunked),
 	_requestStatus(src._requestStatus) {
@@ -57,7 +62,6 @@ void Request::swap(Request &lhs) {
 	std::swap(_htmlVersion, lhs._htmlVersion);
 	std::swap(_requestArgs, lhs._requestArgs);
 	std::swap(_headers, lhs._headers);
-	std::swap(_keepAlive, lhs._keepAlive);
 	std::swap(_isValid, lhs._isValid);
 	std::swap(_body, lhs._body);
 	std::swap(_cgiEnv, lhs._cgiEnv);
@@ -109,20 +113,12 @@ void Request::parseRequest()
 		return;
 	}
 
-	if (_requestMethod != "GET") {
-		_body = parseRequestBody(_rawRequest);
-		_contentLength = parse_contentLen();
-	}
-
-	if (_headers.find("connection") != _headers.end()) {
-		if (_headers["connection"] == "keep-alive") {
-			_keepAlive = true;
-		}
-	}
-
+	_contentLength = parse_contentLen();
+	_body = parseRequestBody(_rawRequest);
 	if (_headers.find("transfer-encoding") != _headers.end()) {
-		if (_headers["transfer-encoding"].find("chunked") != std::string::npos) 
+		if (_headers["transfer-encoding"].find("chunked") != std::string::npos)  {
 			_chunked = true;
+		}
 	}
 	_isValid = checkRequestValidity();
 	return;
@@ -194,8 +190,6 @@ bool Request::parseRequestHeaders(std::istringstream &requestStream)
 
 		headerValue =
 			line.substr(headerPos, line.find_last_not_of("/r") - headerPos);
-		for (auto &c : headerValue)
-			c = tolower(c);
 		_headers[headerKey] = headerValue;
 		}
 	}
@@ -210,13 +204,33 @@ std::string Request::parseRequestBody(const std::string &_rawRequest)
 	if (body_start == std::string::npos) {
 		return "";
 	}
-	std::string body = _rawRequest.substr(body_start + 4, parse_contentLen());
+	std::string body = _rawRequest.substr(body_start + 4, _contentLength);
 	return body;
 }
 
-void Request::appendToBody(std::string requestString) {
-	std::string chunk = parseRequestBody(requestString);
-	_body.append(chunk);
+// void Request::appendToBody(std::string requestString) {
+// 	// std::string chunk = parseRequestBody(requestString);
+// 	// _body.append(chunk);
+// 	_body.append(requestString);
+// 	std::cout << "_body: " << _body.length() << std::endl;
+// 	std::cout << "_contentLength: " << _contentLength << std::endl;
+// 	if (_body.length() == _contentLength) {
+// 		_requestStatus = true;
+// 	}
+// }
+
+void Request::appendToBody(const std::string requestString) {
+    size_t remainingBytes = _contentLength - _body.length();
+    size_t bytesToAppend = std::min(requestString.length(), remainingBytes);
+    
+    _body.append(requestString.substr(0, bytesToAppend));
+    
+    std::cout << "_body: " << _body.length() << std::endl;
+    std::cout << "_contentLength: " << _contentLength << std::endl;
+    
+    if (_body.length() >= _contentLength) {
+        _requestStatus = true;
+    }
 }
 
 // TODO: max length of GET request 2048 bytes?
@@ -290,6 +304,8 @@ const std::string Request::get_boundary() const {
 	return ret;
 }
 
+const bool &Request::get_chunked() const { return _chunked; }
+
 const std::string &Request::get_body() const { return _body; }
 
 
@@ -297,9 +313,6 @@ const std::string &Request::get_bufferFile() const { return _bufferFile; }//adde
 
 
 const size_t &Request::get_contentLength() const { return (_contentLength); }//added
-
-
-const bool &Request::get_keepAlive() const { return _keepAlive; }
 
 const std::string &Request::get_htmlVersion() const { return _htmlVersion; }
 
@@ -313,7 +326,7 @@ const std::unordered_map<std::string, std::string> &Request::get_headers() const
 
 const bool &Request::get_validity() const { return _isValid; }
 
-const requestStatus	&Request::get_requestStatus() const { return _requestStatus; }
+const bool	&Request::get_requestStatus() const { return _requestStatus; }
 
 void	Request::set_bufferFile(std::string buffer_file) { _bufferFile = buffer_file; }
 
@@ -321,9 +334,7 @@ void	Request::set_contentLength(size_t contentLength) {
 	_contentLength = contentLength;
 } // added
 
-void	Request::set_requestStatus(requestStatus status) { _requestStatus = status; }
-
-void	Request::set_keepAlive(bool keepAlive) { _keepAlive = keepAlive; } // added
+void	Request::set_requestStatus(bool status) { _requestStatus = status; }
 
 void Request::printRequest() const {
 	std::cout << MSG_BORDER << "[Complete Request:]" << MSG_BORDER << std::endl;
@@ -351,13 +362,14 @@ void Request::printRequest() const {
 		std::cout << "Referer: " << get_referer() << std::endl;
 		std::cout << "ContentType: " << get_contentType() << std::endl;
 		std::cout << "Boundary: " << get_boundary() << std::endl;
-		std::cout << "ContentLen: " << get_contentLen() << std::endl;
+		std::cout << "ContentLen: " << get_contentLength() << std::endl;
 	}
 
-	std::cout << "<Keep-Alive>" << std::endl;
-	bool keepAlive = get_keepAlive();
-	(keepAlive ? std::cout << "Keep-Alive: true" << std::endl
-				: std::cout << "Keep-Alive: false" << std::endl);
+	std::cout << "<chunked>" << std::endl;
+	std::cout << "chunked: " << _chunked << std::endl;
+	(_chunked ? std::cout << "chunked: true" << std::endl
+				: std::cout << "chunked: false" << std::endl);
+
 
 	std::cout << "<Body>" << std::endl;
 	std::string body = get_body();
