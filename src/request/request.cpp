@@ -180,38 +180,37 @@ bool Request::parseRequestHeaders(std::istringstream &requestStream)
 std::string Request::parseRequestBody(const std::string &_rawRequest)
 {
 	size_t body_start;
+	std::string body;
 
 	body_start = _rawRequest.find(CRLFCRLF);
-	if (body_start == std::string::npos) {
+	if (body_start == std::string::npos)
 		return "";
-	}
-	std::string body = _rawRequest.substr(body_start + 4, _contentLength);
+	body = _rawRequest.substr(body_start + 4, _contentLength);
 	return body;
 }
 
-// void Request::appendToBody(std::string requestString) {
-// 	// std::string chunk = parseRequestBody(requestString);
-// 	// _body.append(chunk);
-// 	_body.append(requestString);
-// 	std::cout << "_body: " << _body.length() << std::endl;
-// 	std::cout << "_contentLength: " << _contentLength << std::endl;
-// 	if (_body.length() == _contentLength) {
-// 		_requestStatus = true;
+// std::string Request::parseRequestBody(const std::string &_rawRequest)
+// {
+// 	size_t body_start;
+//
+// 	body_start = _rawRequest.find(CRLFCRLF);
+// 	if (body_start == std::string::npos) {
+// 		return "";
 // 	}
+// 	std::string body = _rawRequest.substr(body_start + 4, _contentLength);
+// 	return body;
 // }
 
-void Request::appendToBody(const std::string requestString) {
-    size_t remainingBytes = _contentLength - _body.length();
-    size_t bytesToAppend = requestString.length() - remainingBytes;
-    
-    _body.append(requestString.substr(0, bytesToAppend)); // TODO: Deze logica klopt denk ik niet??
-    
-    std::cout << "_body: " << _body.length() << std::endl;
-    std::cout << "_contentLength: " << _contentLength << std::endl;
-    
-    if (_body.length() >= _contentLength) {
-        _requestStatus = true;
-    }
+void Request::appendToBody(std::string part)
+{
+	_body.append(part);
+	#ifdef DEBUG
+	std::cout << "_body: " << _body.length() << std::endl;
+	std::cout << "_contentLength: " << _contentLength << std::endl;
+	#endif
+	if (_body.length() == _contentLength) {
+		_requestStatus = true;
+	}
 }
 
 // TODO: max length of GET request 2048 bytes?
@@ -293,8 +292,6 @@ const std::string &Request::get_bufferFile() const { return _bufferFile; }//adde
 
 const size_t &Request::get_contentLength() const { return (_contentLength); }//added
 
-const bool &Request::get_keepAlive() const { return _keepAlive; }
-
 const std::string &Request::get_htmlVersion() const { return _htmlVersion; }
 
 const std::unordered_map<std::string, std::string> &Request::get_requestArgs() const {
@@ -316,8 +313,6 @@ void	Request::set_contentLength(size_t contentLength) {
 } // added
 
 void	Request::set_requestStatus(bool status) { _requestStatus = status; }
-
-void		Request::set_requestPath(std::filesystem::path newPath) { _requestPath = newPath; }
 
 void Request::printRequest() const {
 	std::cout << MSG_BORDER << "[Complete Request:]" << MSG_BORDER << std::endl;
