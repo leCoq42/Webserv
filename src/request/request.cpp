@@ -3,7 +3,6 @@
 #include "stringUtils.hpp"
 #include <cstddef>
 #include <iostream>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -313,7 +312,7 @@ void Request::printRequest() const {
 	std::cout << MSG_BORDER << "[Complete Request:]" << MSG_BORDER << std::endl;
 	std::cout << get_rawRequest() << std::endl;
 
-#ifdef DEBUG
+	#ifdef DEBUG
 	std::cout << MSG_BORDER << "[Parsed Request]" << MSG_BORDER << std::endl;
 	std::cout << "request method: " << get_requestMethod() << std::endl;
 	std::cout << "request path: " << get_requestPath() << std::endl;
@@ -351,5 +350,5 @@ void Request::printRequest() const {
 	std::cout << "<Request Validity>" << std::endl;
 	(checkRequestValidity() == true) ? (std::cout << "Valid!" << std::endl)
 									: (std::cout << "Invalid!" << std::endl);
-#endif // DEBUG
+	#endif
 }

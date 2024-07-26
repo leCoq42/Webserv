@@ -4,8 +4,9 @@
 #include <memory>
 #include <iostream>
 #include <vector>
+#include "log.hpp"
 
-class CGI {
+class CGI : public virtual Log {
 	public:
 		CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &scriptPath, const std::string &interpreter);
 		~CGI();

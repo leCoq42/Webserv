@@ -46,7 +46,7 @@ class Request {
 		void				set_contentLength(size_t contentLength); //added
 		void				set_requestStatus(requestStatus);
 		void				set_requestPath(std::filesystem::path newPath);
-		void appendToBody(std::string requestString);
+		void				appendToBody(std::string requestString);
 
 	private:
 		Request();

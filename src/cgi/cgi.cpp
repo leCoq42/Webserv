@@ -82,16 +82,21 @@ bool CGI::validate_key(std::string key) {
 }
 
 void CGI::executeScript() {
-    int pipefd[2];
-    if (pipe(pipefd) == -1) {
-        throw std::runtime_error("Failed to create pipe");
-    }
+	int		pipefd[2];
+    // int 	pipeIn[2];
+	// int		pipeOut[2];
+	pid_t	pid;
 
-    pid_t pid = fork();
+    // if (pipe(pipeIn) == -1 || pipe(pipeOut) == -1)
+    if (pipe(pipefd) == -1)
+		logError("Failed to create pipe");
+
+    pid = fork();
     if (pid == -1) {
         close(pipefd[0]);
         close(pipefd[1]);
-        throw std::runtime_error("Failed to fork");
+        logError("Failed to fork");
+		exit(1);
     }
 
     if (pid == 0) {  // Child process
@@ -104,7 +109,7 @@ void CGI::executeScript() {
         execve(_cgiArgv.data()[0], _cgiArgv.data(), _cgiEnvp.data());
 
         // If execve fails, exit
-        _exit(1);
+        exit(1);
     }
 	else {  // Parent process
     	close(pipefd[1]);  // Close write end of pipe
@@ -118,14 +123,13 @@ void CGI::executeScript() {
         }
         close(pipefd[0]);
 		if (bytesRead < 0)
-			throw "CGI: read failed";
+			logError("CGI: read failed");
 
         int status;
         waitpid(pid, &status, 0);
 
-        if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
-            throw std::runtime_error("Script exited with non-zero status");
-        }
+        if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+			logError("Script exited with non-zero status");
         _result = output;
     }
 }

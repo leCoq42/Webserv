@@ -34,9 +34,9 @@ Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
 		std::cout << "New Path:" << _finalPath << std::endl;
 		handleRequest(request);
 	}
-	// #ifdef DEBUG
+	#ifdef DEBUG
 	printResponse();
-	// #endif
+	#endif
 
 }
 
@@ -69,13 +69,15 @@ Response::Response(const Response &src)
 	_fileAccess(src._config), _finalPath(src._finalPath)
 {}
 
-Response &Response::operator=(const Response &rhs) {
+Response &Response::operator=(const Response &rhs)
+{
 	Response temp(rhs);
 	temp.swap(*this);
 	return *this;
 }
 
-void Response::swap(Response &lhs) {
+void Response::swap(Response &lhs)
+{
 	std::swap(_request, lhs._request);
 	std::swap(_contentType, lhs._contentType);
 	std::swap(_responseString, lhs._responseString);
@@ -141,7 +143,8 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 	return true;
 }
 
-bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
+bool Response::handlePostRequest(const std::shared_ptr<Request> &request)
+{
 	std::string requestBody = request->get_body();
 	std::string requestContentType = request->get_contentType();
 	bool isCGI = false;
@@ -170,14 +173,16 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request) {
 	return true;
 }
 
-bool Response::handleDeleteRequest(const std::shared_ptr<Request> &request) {
+bool Response::handleDeleteRequest(const std::shared_ptr<Request> &request)
+{
 	std::filesystem::path Path = request->get_requestPath();
 
 	buildResponse(static_cast<int>(statusCode::OK), "OK", "");
 	return true;
 }
 
-const std::string	Response::readFileToBody(std::filesystem::path path) {
+const std::string	Response::readFileToBody(std::filesystem::path path)
+{
 	std::stringstream buffer;
 	std::string body;
 	std::ifstream file( path, std::ios::binary);
@@ -191,12 +196,13 @@ const std::string	Response::readFileToBody(std::filesystem::path path) {
 	return body;
 }
 
-void Response::handle_multipart() {
-	statusCode status = statusCode::OK;
-	std::string requestBody = _request->get_body();
-	std::string boundary = _request->get_boundary();
-	std::string filename = "";
-	std::string responseBody = "";
+void Response::handle_multipart()
+{
+	statusCode	status = statusCode::OK;
+	std::string	requestBody = _request->get_body();
+	std::string	boundary = _request->get_boundary();
+	std::string	filename = "";
+	std::string	responseBody = "";
 	bool		append = false;
 
 	std::cout << MSG_BORDER << "[MULTIPART REQUEST]" << MSG_BORDER << std::endl;
@@ -219,16 +225,10 @@ void Response::handle_multipart() {
 
 			size_t contentType = headers.find("content-type:");
 			if (contentType == std::string::npos) {
-				std::cout << "Part without content" << std::endl;
 				continue;
 			}
 
 			filename = extract_filename(headers);
-
-			#ifdef DEBUG
-			std::cout << MSG_BORDER << "[part content:]" << MSG_BORDER << "\n" << content << std::endl;
-			#endif
-
 			status = write_file(      "html/uploads/" + filename, content, append); //TODO:make customizable via config
 			if (status != statusCode::OK)
 				break;
@@ -245,8 +245,8 @@ void Response::handle_multipart() {
 	buildResponse(static_cast<int>(status), statusCodeMap.at(status), false);
 }
 
-std::vector<std::string> Response::split_multipart(std::string requestBody,
-                                             std::string boundary) {
+std::vector<std::string> Response::split_multipart(std::string requestBody, std::string boundary)
+{
 	std::vector<std::string> parts;
 	std::string fullBoundary = "--" + boundary;
 	size_t pos = 0;
