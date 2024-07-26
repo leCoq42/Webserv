@@ -52,7 +52,6 @@ cgi:
 
 $(NAME): $(OBJS) $(MAIN_OBJ)
 	$(CC) $(CFLAGS) $(INCLUDES) $^ -o $(NAME)
-	@echo "$(GREEN)$(NAME) executable created$(RESET_COLOR)"
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
@@ -62,6 +61,8 @@ $(CGI_BIN_DIR)/%.cgi: $(CGI_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INCLUDES) $< -o $@
 	@echo "$(GREEN)CGI script $@ created$(RESET_COLOR)"
+
+	@echo "$(GREEN)./$(NAME) executable created$(RESET_COLOR)"
 
 # Cleaning Targets
 clean:
@@ -73,7 +74,7 @@ clean:
 fclean: clean
 	@$(RM) $(NAME)
 	@$(RM) $(CGI_BIN_DIR)/*.cgi
-	@echo "$(YELLOW)$(NAME) executable deleted$(RESET_COLOR)"
+	@echo "$(YELLOW)./$(NAME) executable deleted$(RESET_COLOR)"
 
 re: fclean all
 
