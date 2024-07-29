@@ -13,11 +13,11 @@ CC          := c++ --std=c++20
 INCLUDES    := $(shell find inc -type d -exec echo -I {} \;)
 
 #Compiler Flags
-CFLAGS := -Wall -Wextra -Werror -Wunreachable-code -g
+CFLAGS := -Wall -Wextra -Werror -Wunreachable-code
 
 #Debug Flags
 ifdef DEBUG
-	CFLAGS += -g -D DEBUG
+	CFLAGS += -g #-fsanitize=address,undefined #-D DEBUG
 endif
 
 #Source files
