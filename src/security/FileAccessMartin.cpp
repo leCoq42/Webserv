@@ -9,7 +9,7 @@
 
 FileAccess::FileAccess(ServerStruct &config): _config(config)
 {
-	std::cout << MSG_BORDER << "[FILEACCESS SETUP]" << MSG_BORDER << std::endl;
+	// std::cout << MSG_BORDER << "[FILEACCESS SETUP]" << MSG_BORDER << std::endl;
 	_root = config._root.content_list.back();//configPaths.push_back(config.root.content_list.back());
 	_currentRoot = _root;
 	_allowedMethods = config._allowMethods.content_list;
@@ -50,8 +50,8 @@ std::filesystem::path	FileAccess::find_location(std::filesystem::path path, std:
 	current = &_config._location;
 	_currentRoot = _root;
 	uri = "/" + uri.string();
-	std::cout << "Find location of uri: " << uri << std::endl;
-	std::cout << "Uri parent path: " << uri.parent_path() << std::endl;
+	// std::cout << "Find location of uri: " << uri << std::endl;
+	// std::cout << "Uri parent path: " << uri.parent_path() << std::endl;
 	if (path.parent_path().string().find_last_of(_root) != std::string::npos)
 	{
 		while (current)
@@ -62,10 +62,8 @@ std::filesystem::path	FileAccess::find_location(std::filesystem::path path, std:
 					// std::cout << "test1" << std::endl;
 					_currentRoot.append(((std::string)((LocationStruct *)current->childs)->root.content_list.back()));
 				}
-
-				std::cout << "Try Path:" << _currentRoot << std::endl;
-				std::cout << "Content: " << content << std::endl;
-
+				// std::cout << "Try Path:" << _currentRoot << std::endl;
+				// std::cout << "Content: " << content << std::endl;
 				if (path.has_extension())
 				{
 					// std::cout << "test2" << std::endl;
