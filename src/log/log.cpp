@@ -56,7 +56,7 @@ void Log::swapLogs()
 	std::deque<std::string> lastLines;
 	std::string line;
 	while (std::getline(oldLogFile, line)) {
-		if (lastLines.size() >= 50) {
+		if (lastLines.size() >= AMOUNT_LINES_APPEND) {
 			lastLines.pop_front();
 		}
 		lastLines.push_back(line);

@@ -8,6 +8,7 @@
 #include <string>
 #include <defines.hpp>
 #include <fstream>
+#include <deque>
 
 
 class Log {
