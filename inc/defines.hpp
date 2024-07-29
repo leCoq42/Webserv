@@ -2,7 +2,7 @@
 
 #define MSG_BORDER "---------------------------"
 
-#define BUFFSIZE 4096
+#define BUFFSIZE 1024
 
 #define QUEUESIZE 128
 
@@ -10,6 +10,8 @@
 
 #define CRLFCRLF "\r\n\r\n"
 
-#define KEEP_ALIVE_TIMOUT 10
+#define PATH_LOGFILE "./logDir/logfile.log"
 
-#define KEEP_ALIVE_N 100
+#define MAX_LOG_SIZE 10000
+
+#define AMOUNT_LINES_APPEND 100
