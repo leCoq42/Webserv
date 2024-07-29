@@ -16,7 +16,7 @@ public:
 	Log();
 	~Log();
 
-	void 	createPath(const std::string &fileName);
+	void	createPath(const std::string &fileName);
 	void	createLogFile();
 	void    swapLogs();
 	void	logError(const std::string &message);
