@@ -22,6 +22,7 @@ class CGI : public virtual Log {
 		void		init_envp();
 		bool		add_to_envp(std::string name, std::string value, std::string prefix);
 		bool		validate_key(std::string key);
+		ssize_t		execute_script(int cgi_fd);
 		void		calculateContentLength();
 
 		const std::shared_ptr<Request>	_request;

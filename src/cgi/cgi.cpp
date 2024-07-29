@@ -107,9 +107,7 @@ void CGI::executeScript() {
 
         // Execute the script
         execve(_cgiArgv.data()[0], _cgiArgv.data(), _cgiEnvp.data());
-
-        // If execve fails, exit
-        exit(1);
+		logError("Execve error.");
     }
 	else {  // Parent process
     	close(pipefd[1]);  // Close write end of pipe
@@ -132,6 +130,12 @@ void CGI::executeScript() {
 			logError("Script exited with non-zero status");
         _result = output;
     }
+}
+
+ssize_t	CGI::execute_script(int cgi_fd) {
+	(void)cgi_fd;
+
+	return 0;
 }
 
 void	CGI::calculateContentLength()
