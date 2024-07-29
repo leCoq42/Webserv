@@ -134,7 +134,6 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 			CGI cgi(_request, _finalPath, interpreters.at(_finalPath.extension()));
 			_body = cgi.get_result();
 			_contentLength = cgi.get_contentLength();
-			std::cout << ">>> cl: " << _contentLength << std::endl;
 		}
 	}
 	else
@@ -232,6 +231,7 @@ void Response::handle_multipart()
 			if (status != statusCode::OK)
 				break;
 			append = true;
+			std::cout << "File Upload success!" << std::endl;
 		}
 		if (status == statusCode::OK)
 			_body = readFileToBody("html/upload_success.html");
@@ -306,6 +306,7 @@ std::string Response::buildResponse(int status, const std::string &message, bool
 			return _responseString;
 		}
 		else {
+			std::cout << "Respnonse content length: " << std::to_string(_body.length()) << std::endl;
 			_responseString.append("Content-Length: " + std::to_string(_body.length()) +
 						  CRLF);
 			_responseString.append("Content-Type: " + get_contentType() + CRLF);
