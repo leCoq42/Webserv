@@ -1,5 +1,6 @@
 #include "cgi.hpp"
 #include "defines.hpp"
+#include "log.hpp"
 #include <cstddef>
 #include <cstring>
 #include <sys/types.h>
@@ -89,7 +90,7 @@ void CGI::executeScript() {
 
     // if (pipe(pipeIn) == -1 || pipe(pipeOut) == -1)
     if (pipe(pipefd) == -1)
-		logError("Failed to create pipe");
+		Log::logError("Failed to create pipe");
 
     pid = fork();
     if (pid == -1) {
@@ -107,7 +108,7 @@ void CGI::executeScript() {
 
         // Execute the script
         execve(_cgiArgv.data()[0], _cgiArgv.data(), _cgiEnvp.data());
-		logError("Execve error.");
+		Log::logError("Execve error.");
     }
 	else {  // Parent process
     	close(pipefd[1]);  // Close write end of pipe
@@ -121,13 +122,13 @@ void CGI::executeScript() {
         }
         close(pipefd[0]);
 		if (bytesRead < 0)
-			logError("CGI: read failed");
+			Log::logError("CGI: read failed");
 
         int status;
         waitpid(pid, &status, 0);
 
         if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
-			logError("Script exited with non-zero status");
+			Log::logError("Script exited with non-zero status");
         _result = output;
     }
 }

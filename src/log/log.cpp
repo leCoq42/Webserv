@@ -107,7 +107,7 @@ void Log::logAdd(const std::string &message)
 	}
 }
 
-void Log::logError(const std::string &message) 
+void Log::logError(const std::string &message)
 {
 	manageLogSize();
 	if (_logFile.is_open()) {
