@@ -27,14 +27,16 @@ Request::Request(const std::string rawStr) : _rawRequest(rawStr), _requestMethod
 	if (_body.length() != _contentLength) {// TODO: not sure which length to compare with
 		_requestStatus = false;
 		std::cout << "Incomplete Request >>>>>>>>>>>" << std::endl;
+		#ifdef DEBUG
 		printRequest();
+		#endif
 	}
 	else{
 		_requestStatus = true;
-		std::cout << "complete request >>>>>>>>>>>>" << std::endl;
+		std::cout << "Complete request >>>>>>>>>>>>" << std::endl;
 		#ifdef DEBUG
 		printRequest();
-		#endif // DEBUG
+		#endif
 	}
 }
 

@@ -26,12 +26,12 @@ Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
 
 	_finalPath = _fileAccess.isFilePermissioned( _finalPath, return_code);
 	if (return_code) {
-		std::cout << "New Path:" << _finalPath << std::endl;
+		std::cout << "Path error:" << _finalPath << std::endl;
 		_finalPath = _fileAccess.getErrorPage(return_code); // wrong place
 		buildResponse(static_cast<int>(return_code), "Not Found", "");
 	}
 	else {
-		std::cout << "New Path:" << _finalPath << std::endl;
+		std::cout << "File Access Path -> " << _finalPath << std::endl;
 		handleRequest(request);
 	}
 	#ifdef DEBUG
@@ -203,11 +203,13 @@ void Response::handle_multipart()
 	std::string	filename = "";
 	bool		append = false;
 
-	std::cout << MSG_BORDER << "[MULTIPART REQUEST]" << MSG_BORDER << std::endl;
 	if (_bufferFile.empty())
 	{
 		std::vector<std::string> parts = split_multipart(requestBody, boundary);
+		#ifdef DEBUG
+		std::cout << MSG_BORDER << "[MULTIPART REQUEST]" << MSG_BORDER << std::endl;
 		std::cout << "Number of Parts: " << parts.size() << std::endl;
+		#endif
 		for (const std::string &part: parts) {
 			if (part.empty())
 				continue;
@@ -231,7 +233,10 @@ void Response::handle_multipart()
 			if (status != statusCode::OK)
 				break;
 			append = true;
+			#ifdef DEBUG
 			std::cout << "File Upload success!" << std::endl;
+			std::cout << MSG_BORDER << MSG_BORDER << std::endl;
+			#endif // DEBUG
 		}
 		if (status == statusCode::OK)
 			_body = readFileToBody("html/upload_success.html");
@@ -306,7 +311,7 @@ std::string Response::buildResponse(int status, const std::string &message, bool
 			return _responseString;
 		}
 		else {
-			std::cout << "Respnonse content length: " << std::to_string(_body.length()) << std::endl;
+			std::cout << "Response content length: " << std::to_string(_body.length()) << std::endl;
 			_responseString.append("Content-Length: " + std::to_string(_body.length()) +
 						  CRLF);
 			_responseString.append("Content-Type: " + get_contentType() + CRLF);
