@@ -161,14 +161,14 @@ std::string	FileAccess::redirect(int &return_code)
 }
 
 //NEW FUNCTION:
-std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &return_code)
+std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &return_code, int port)
 {
 	std::string		new_uri;
 	ConfigContent	*location_config;
 	std::filesystem::path	path;
 
 	//find server_name in config and swap to that config.
-	swap_to_right_server_config(uri, 8092);
+	swap_to_right_server_config(uri, port);
 
 	//check if redirect, if so return redirect.
 	new_uri = redirect(return_code);

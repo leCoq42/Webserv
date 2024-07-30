@@ -27,7 +27,7 @@ class	FileAccess
 	~FileAccess();
 	std::filesystem::path	root_or_path(std::filesystem::path path, std::filesystem::path current_root, std::filesystem::path root, LocationStruct	*current);
 	// std::filesystem::path	isFilePermissioned(std::string uri, int &return_code);
-	std::filesystem::path	isFilePermissioned(std::string uri, int &return_code);
+	std::filesystem::path	isFilePermissioned(std::string uri, int &return_code, int port);
 	// std::filesystem::path	find_location(std::filesystem::path path, std::string uri, int &return_code);
 	std::filesystem::path	find_location(std::filesystem::path path, std::string uri, int &return_code);
 	std::filesystem::path	getErrorPage(int return_code);

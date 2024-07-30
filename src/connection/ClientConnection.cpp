@@ -126,7 +126,7 @@ void ClientConnection::handleInputEvent(int polledFdsIndex, std::list<ServerStru
         _activeClients[activeClientsIndex].buff_str.clear();
     }
     if (_activeClients[activeClientsIndex].request->get_requestStatus() == true) {
-        Response response(_activeClients[activeClientsIndex].request, serverStruct); // serverStruct
+        Response response(_activeClients[activeClientsIndex].request, serverStruct, _activeClients[activeClientsIndex].port); // serverStruct
         sendData(polledFdsIndex, response);
         removeClientSocket(_polledFds[polledFdsIndex].fd);
     }

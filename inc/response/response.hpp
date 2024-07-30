@@ -38,7 +38,7 @@ enum class statusCode {
 class Response {
 public:
   Response(std::list<ServerStruct> *config);
-  Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config);
+  Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, int port);
   Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, std::string filename);
   ~Response();
 
