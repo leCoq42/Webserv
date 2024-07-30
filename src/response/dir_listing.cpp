@@ -59,3 +59,24 @@ std::string list_dir(std::filesystem::path &path, const std::string &uri, const 
 	// std::cout << "PATH:" << relative_path << std::endl;
 	return (return_html);
 }
+
+std::string	redirect(std::string redirect_string)
+{
+	std::string	response_str;
+
+	response_str = "HTTP/1.1 301 Moved Permanently\nLocation: ";
+	response_str += redirect_string;
+	return response_str;
+}
+
+std::string	standard_error(int error_code)
+{
+	std::string	response_str;
+
+	response_str = "<!DOCTYPE html><html lang=\"en\"><head><title>";
+	response_str += std::to_string(error_code);
+	response_str += " Page Not Found</title></head><body><div class=\"error-container\"><h1> ";
+	response_str += std::to_string(error_code);
+	response_str += " </h1><p>Standard error page.</p><a href=\"root\">Go Back to Home</a></div></body></html>";
+	return (response_str);
+}
