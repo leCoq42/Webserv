@@ -54,21 +54,34 @@ void ServerConnection::listenIncomingConnections(ServerInfo &info) {
   }
 }
 
+bool	already_in_servers(int port_number, std::vector<ServerInfo>	_connectedServers)
+{
+	for (ServerInfo connected : _connectedServers)
+	{
+		if (connected.serverPort == port_number)
+			return (true);
+	}
+	return (false);
+}
+
 void ServerConnection::setUpServerConnection(ServerStruct &serverStruct) 
 {
   std::list<std::string>::iterator it = serverStruct._port.content_list.begin();
   for (; it != serverStruct._port.content_list.end(); ++it) {
-    if (atoi(it->c_str()) > 0 && atoi(it->c_str()) < 65536) {
-      ServerInfo info;
-      initServerInfo(serverStruct, info, it);
-      createServerSocket(info);
-      bindServerSocket(info);
-      listenIncomingConnections(info);
-      _connectedServers.push_back(info);
-      logServerConnection("Server created", info.serverID, info.serverFD, info.serverPort);
-    } 
-    else {
-      logServerError("Invalid port number", serverStruct._id, atoi(it->c_str()));
-    }
+	if (!already_in_servers(atoi(it->c_str()), _connectedServers))
+	{
+		if (atoi(it->c_str()) > 0 && atoi(it->c_str()) < 65536) {
+		ServerInfo info;
+		initServerInfo(serverStruct, info, it);
+		createServerSocket(info);
+		bindServerSocket(info);
+		listenIncomingConnections(info);
+		_connectedServers.push_back(info);
+		logServerConnection("Server created", info.serverID, info.serverFD, info.serverPort);
+		} 
+		else {
+		logServerError("Invalid port number", serverStruct._id, atoi(it->c_str()));
+		}
+	}
   }
 }
