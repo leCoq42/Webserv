@@ -105,17 +105,30 @@ ConfigContent	*FileAccess::find_location_config(std::string uri, ConfigContent *
 			&& uri.length() >= loc_conf->length())
 		{
 			if (match_type_requested == MATCH_TYPE_EXACT && !uri.compare(*loc_conf))
-				return (current);
+			{
+				previous_match = current;
+				break;
+			}
 			else
 			{
 				if (!previous_match || previous_match->content_list.back().length() < loc_conf->length())
 					previous_match = current;
 			}
 		}
-		else if (match_type_requested == MATCH_TYPE_POSTFIX && uri.find_first_of(*loc_conf, (uri.length() - loc_conf->length())))
-			return (current);
+		else if (match_type_requested == MATCH_TYPE_POSTFIX)
+		{
+			std::cout << "post+fix" << std::endl;
+			std::cout << *loc_conf << "==" << uri << "_" << uri.find(*loc_conf, (uri.length() - loc_conf->length())) << "=" << uri.length() - loc_conf->length() << std::endl;
+			if (uri.find(*loc_conf, (uri.length() - loc_conf->length())) == uri.length() - loc_conf->length())
+			{
+				previous_match = current;
+				break;
+			}
+		}
 		current = current->next;
 	}
+	if (!((LocationStruct *)previous_match->childs)->allow_methods.content_list.empty())
+		_currentAllowedMethods = &((LocationStruct *)previous_match->childs)->allow_methods.content_list;
 	return (previous_match);
 }
 
