@@ -16,6 +16,7 @@
 struct clientInfo {
 	char						clientIP[INET_ADDRSTRLEN];
 	int							clientFD;
+	int							port;
 	bool						isFileUpload;
 	uint32_t					expectedContentLength;// check int!
 	std::shared_ptr<Request>	request;
@@ -41,10 +42,10 @@ class ClientConnection : ServerConnection, public virtual Log {
 		~ClientConnection();
 
 	//TODO: Zijn veel van deze functies niet const?
-		void		handleInputEvent(int index);
+		void		handleInputEvent(int polledFdsIndex, std::list<ServerStruct> *serverStruct);
 		void		acceptClients(int server_fd, int index);
-		void		addSocketsToPollfdContainer();
-		void		setupClientConnection();
+		void		initializeServerSockets();
+		void 		setupClientConnection(std::list<ServerStruct> *serverStruct);
 		void		removeClientSocket(int clientFD);
 		bool		isServerSocket(int fd);
 		void		handlePollOutEvent(int index);
@@ -58,4 +59,3 @@ class ClientConnection : ServerConnection, public virtual Log {
 		bool		clientHasTimedOut(int polledFdsIndex, int activeClientsIndex);
 		void		sendData(int polledIndex, Response response);
 };
-
