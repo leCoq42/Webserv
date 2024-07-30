@@ -48,7 +48,7 @@ void ServerConnection::bindServerSocket(ServerInfo &info)
 }
 
 void ServerConnection::listenIncomingConnections(ServerInfo &info) {
-  if (listen(info.serverFD, QUEUESIZE) == -1) { 
+  if (listen(info.serverFD, QUEUESIZE) == -1) {
     close(info.serverFD);
     logServerError("Failed to listen for connection on server", info.serverID, info.serverPort);
   }
