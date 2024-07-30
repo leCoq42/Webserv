@@ -16,7 +16,9 @@
 Response::Response(ServerStruct &config) : _request(nullptr), _responseString(""), _config(config), _fileAccess(config) {}
 
 Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
-    : _request(request), _contentType(""), _body(""), _contentLength(0), _responseString(""), _bufferFile(""), _config(config), _fileAccess(config) {
+    : _request(request), _contentType(""), _body(""), _contentLength(0), _responseString(""),
+	_bufferFile(""), _config(config), _fileAccess(config), _isComplete(false)
+{
 	int return_code = 0;
 
 	_finalPath = _request->get_requestPath();
@@ -66,7 +68,7 @@ Response::~Response() {}
 Response::Response(const Response &src)
     : _request(src._request), _contentType(src._contentType), _body(src._body), _contentLength(src._contentLength),
 	_responseString(src._responseString), _bufferFile(src._bufferFile), _config(src._config),
-	_fileAccess(src._config), _finalPath(src._finalPath)
+	_fileAccess(src._config), _finalPath(src._finalPath), _cgi(src._cgi), _isComplete(src._isComplete)
 {}
 
 Response &Response::operator=(const Response &rhs)
@@ -105,6 +107,11 @@ void Response::handleRequest(const std::shared_ptr<Request> &request)
 	}
 }
 
+void Response::resumeCGI()
+{
+	
+}
+
 bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 	std::stringstream buffer;
 	bool isCGI = false;
@@ -132,8 +139,14 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 		{
 			isCGI = true;
 			CGI cgi(_request, _finalPath, interpreters.at(_finalPath.extension()));
-			_body = cgi.get_result();
-			_contentLength = cgi.get_contentLength();
+			if (cgi.get_status()) {
+				_isComplete = true;
+				_body = cgi.get_result();
+				_contentLength = cgi.get_contentLength();
+			}
+			else {
+				_isComplete = false;
+			}
 		}
 	}
 	else
@@ -296,11 +309,6 @@ std::string Response::buildResponse(int status, const std::string &message, bool
 {
 	_responseString.append("HTTP/1.1 " + std::to_string(status) + " " + message +
 							CRLF);
-	// if (_request->get_keepAlive()) {
-	// 	_responseString.append(
-	// 		"Keep-Alive: timeout=" + std::to_string(KEEP_ALIVE_TIMOUT) +
-	// 		", max=" + std::to_string(KEEP_ALIVE_N) + CRLF);
-	// }
 	if (isCGI) {
 		_responseString.append("Content-Length: " + std::to_string(_contentLength) +
 							CRLF);

@@ -19,7 +19,7 @@
 CGI::CGI() : _request(nullptr) {}
 
 CGI::CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &scriptPath, const std::string &interpreter) :
-	_request(request), _scriptPath(scriptPath), _interpreter(interpreter)
+	_request(request), _scriptPath(scriptPath), _interpreter(interpreter), _cgiFD(0)
 {
 	parseCGI();
 	executeScript();
@@ -85,33 +85,32 @@ bool CGI::validate_key(std::string key) {
 
 void CGI::executeScript()
 {
-    int 	pipeIn[2];
-	int		pipeOut[2];
+    int 	pipeServertoCGI[2];
+	int		pipeCGItoServer[2];
 	pid_t	pid;
 
-	// if (pipe(pipefd) == -1)
-    if (pipe(pipeIn) == -1 || pipe(pipeOut) == -1)
+    if (pipe(pipeServertoCGI) == -1 || pipe(pipeCGItoServer) == -1)
 		_log.logError("Failed to create pipe");
 
     pid = fork();
     if (pid == -1) {
-        close(pipeIn[READ]);
-        close(pipeIn[WRITE]);
-		close(pipeOut[READ]);
-		close(pipeOut[WRITE]);
+        close(pipeServertoCGI[READ]);
+        close(pipeServertoCGI[WRITE]);
+		close(pipeCGItoServer[READ]);
+		close(pipeCGItoServer[WRITE]);
         _log.logError("Fork Failed.");
 		return;
     }
 
 	if (pid == 0) {  // Child process
-		close(pipeIn[WRITE]);
-		close(pipeOut[READ]);
+		close(pipeServertoCGI[WRITE]);
+		close(pipeCGItoServer[READ]);
 
-		dup2(pipeIn[READ], STDIN_FILENO);
-		close(pipeIn[READ]);
+		dup2(pipeServertoCGI[READ], STDIN_FILENO);
+		close(pipeServertoCGI[READ]);
 
-        dup2(pipeOut[WRITE], STDOUT_FILENO);
-		close(pipeOut[WRITE]);
+        dup2(pipeCGItoServer[WRITE], STDOUT_FILENO);
+		close(pipeCGItoServer[WRITE]);
 
         // Execute the script
         execve(_cgiArgv.data()[0], _cgiArgv.data(), _cgiEnvp.data());
@@ -120,19 +119,20 @@ void CGI::executeScript()
     }
 	else {  // Parent process
     	// close(pipeOut[READ]);  // Close write end of pipe
-		close(pipeIn[READ]);
-		close(pipeIn[WRITE]);  // Close write end of input pipe
-        close(pipeOut[WRITE]);  // Close write end of output pipe
+		close(pipeServertoCGI[READ]);
+		close(pipeServertoCGI[WRITE]);  // Close write end of input pipe
+        close(pipeCGItoServer[WRITE]);  // Close write end of output pipe
 
-		std::vector<char> buffer(BUFFSIZE);
-        ssize_t bytesRead;
+		_cgiFD = pipeCGItoServer[READ];
+		// std::vector<char> buffer(BUFFSIZE);
+		//       ssize_t bytesRead;
+		//
+		//       while ((bytesRead = read(pipeCGItoServer[READ], &buffer[0], buffer.size())) > 0)
+		//           _result.append(buffer.data(), bytesRead);
 
-        while ((bytesRead = read(pipeOut[READ], &buffer[0], buffer.size())) > 0)
-            _result.append(buffer.data(), bytesRead);
-
-		close(pipeOut[READ]);
-		if (bytesRead < 0 && (errno != EAGAIN || errno != EWOULDBLOCK))
-			_log.logError("CGI: read failed");
+		// close(pipeCGItoServer[READ]);
+		// if (bytesRead < 0 && (errno != EAGAIN || errno != EWOULDBLOCK))
+		// 	_log.logError("CGI: read failed");
 
         int status;
         waitpid(pid, &status, 0);
@@ -162,5 +162,7 @@ void	CGI::calculateContentLength()
 
 }
 
-size_t	CGI::get_contentLength() { return _contentLength; }
-std::string CGI::get_result() {return _result; }
+size_t		CGI::get_contentLength() { return _contentLength; }
+std::string CGI::get_result() { return _result; }
+int			CGI::get_cgiFD() { return _cgiFD; }
+bool		CGI::get_status() { return _isComplete; }

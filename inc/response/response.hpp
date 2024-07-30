@@ -2,6 +2,7 @@
 
 #include "request.hpp"
 #include "fileAccess.hpp"
+#include "cgi.hpp"
 #include <iostream>
 #include <memory>
 #include <unordered_map>
@@ -62,6 +63,8 @@ private:
 	ServerStruct				&_config;
 	FileAccess					_fileAccess;
 	std::filesystem::path		_finalPath;
+	CGI							_cgi;
+	bool						_isComplete;
 
 	bool	handleGetRequest(const std::shared_ptr<Request> &request);
 	bool	handlePostRequest(const std::shared_ptr<Request> &request);

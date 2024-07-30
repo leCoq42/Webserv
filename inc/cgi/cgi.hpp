@@ -8,14 +8,18 @@
 
 class CGI {
 	public:
+		CGI();
 		CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &scriptPath, const std::string &interpreter);
+		//CGI copy constructor
+		//CGI = overload
 		~CGI();
 
 		size_t		get_contentLength();
 		std::string	get_result();
+		int			get_cgiFD();
+		bool		get_status();
 
 	private:
-		CGI();
 		void		parseCGI();
 		void		executeScript();
 		void		createArgs(std::vector<char *> &argv, std::string &path, std::string &args);
@@ -33,6 +37,8 @@ class CGI {
 		std::string						_result;
 		size_t							_contentLength;
 		Log								_log;
+		int								_cgiFD;
+		bool							_isComplete;
 
 	static const inline std::vector<std::string> metaVarNames = {
 		"AUTH_TYPE",      "CONTENT_LENGTH",  "CONTENT_TYPE", "GATEWAY_INTERFACE",
