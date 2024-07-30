@@ -32,13 +32,13 @@ void CGI::parseCGI()
 	if (!_interpreter.empty())
 		_cgiArgv.push_back(const_cast<char *>(_interpreter.c_str()));
 	_cgiArgv.push_back(const_cast<char *>(_scriptPath.c_str()));
-	init_envp();
+	_cgiArgv.push_back(nullptr);
 
+	init_envp();
 	if (!_request->get_requestArgs().empty()) {
 		for (auto it: _request->get_requestArgs())
 			add_to_envp(it.first, it.second, "");
 	}
-	_cgiArgv.push_back(nullptr);
 	_cgiEnvp.push_back(nullptr);
 }
 
@@ -82,36 +82,43 @@ bool CGI::validate_key(std::string key) {
 	return false;
 }
 
-void CGI::executeScript() {
-	int		pipefd[2];
-    // int 	pipeIn[2];
-	// int		pipeOut[2];
+void CGI::executeScript()
+{
+    int 	pipeIn[2];
+	int		pipeOut[2];
 	pid_t	pid;
 
-    // if (pipe(pipeIn) == -1 || pipe(pipeOut) == -1)
-    if (pipe(pipefd) == -1)
+	// if (pipe(pipefd) == -1)
+    if (pipe(pipeIn) == -1 || pipe(pipeOut) == -1)
 		Log::logError("Failed to create pipe");
 
     pid = fork();
     if (pid == -1) {
-        close(pipefd[0]);
-        close(pipefd[1]);
+        close(pipeIn[READ]);
+        close(pipeIn[WRITE]);
+		close(pipeOut[READ]);
+		close(pipeOut[WRITE]);
         logError("Failed to fork");
 		exit(1);
     }
 
     if (pid == 0) {  // Child process
-        close(pipefd[0]);  // Close read end of pipe
-        dup2(pipefd[1], STDOUT_FILENO);  // Redirect stdout to pipe
-        dup2(pipefd[1], STDERR_FILENO);  // Redirect stderr to pipe
-        close(pipefd[1]);
+        close(pipeOut[READ]);
+        close(pipeIn[WRITE]);
+
+        dup2(pipeOut[READ], STDIN_FILENO);
+		close(pipeOut[READ]);
+
+        dup2(pipeIn[WRITE], STDOUT_FILENO);
+		close(pipeIn[WRITE]);
 
         // Execute the script
         execve(_cgiArgv.data()[0], _cgiArgv.data(), _cgiEnvp.data());
 		Log::logError("Execve error.");
     }
 	else {  // Parent process
-    	close(pipefd[1]);  // Close write end of pipe
+    	close(pipeOut[READ]);  // Close write end of pipe
+		close(pipeIn[WRITE]);
 
         std::string output;
 		std::vector<char> buffer(BUFFSIZE);
@@ -120,7 +127,7 @@ void CGI::executeScript() {
         while ((bytesRead = read(pipefd[0], &buffer[0], buffer.size())) > 0) {
             output.append(buffer.data(), bytesRead);
         }
-        close(pipefd[0]);
+        close(pipefd[READ]);
 		if (bytesRead < 0)
 			Log::logError("CGI: read failed");
 
@@ -133,7 +140,8 @@ void CGI::executeScript() {
     }
 }
 
-ssize_t	CGI::execute_script(int cgi_fd) {
+ssize_t	CGI::execute_script(int cgi_fd)
+{
 	(void)cgi_fd;
 
 	return 0;

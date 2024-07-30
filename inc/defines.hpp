@@ -15,3 +15,7 @@
 #define MAX_LOG_SIZE 10000
 
 #define AMOUNT_LINES_APPEND 100
+
+#define READ 0
+
+#define WRITE 1
