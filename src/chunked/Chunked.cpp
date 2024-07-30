@@ -1,5 +1,6 @@
 #include "Chunked.hpp"
 #include <fstream>
+#include <iostream>
 
 Chunked::Chunked() : _contentLength(0), _bufferedLength(0), _justStarted(false), _totalLength(true) {}
 

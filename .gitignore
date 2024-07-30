@@ -1,9 +1,10 @@
 webserv
 
+.vscode/
 */uploads/*
 
-./obj/
-./logDir/
+obj/
+logDir/
 
 .DS_Store
 .cache
@@ -14,3 +15,5 @@ webserv
 
 ubuntu_cgi_tester
 ubuntu_tester
+
+compile_commands.json

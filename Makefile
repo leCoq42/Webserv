@@ -17,7 +17,7 @@ CFLAGS := -Wall -Wextra -Werror -Wunreachable-code
 
 #Debug Flags
 ifdef DEBUG
-	CFLAGS += -g -D DEBUG
+	CFLAGS += -g #-fsanitize=address,undefined #-D DEBUG
 endif
 
 #Source files

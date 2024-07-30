@@ -2,33 +2,44 @@
 
 #include "request.hpp"
 #include <memory>
+#include <iostream>
+#include <vector>
+#include "log.hpp"
 
-class cgi {
-public:
-  cgi();
-  cgi(const std::string &contentType);
-  cgi(const std::string &contentType, const std::string &title);
-  ~cgi();
+class CGI : public virtual Log {
+	public:
+		CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &scriptPath, const std::string &interpreter);
+		~CGI();
 
-  std::string get_header(const std::string &content_type);
-  std::string get_start_html(const std::string &title);
-  std::string get_end_html();
+		size_t		get_contentLength();
+		std::string	get_result();
 
-  void set_header(const std::string &content_type);
-  void set_title(const std::string &title);
+	private:
+		CGI();
+		void		parseCGI();
+		void		executeScript();
+		void		createArgs(std::vector<char *> &argv, std::string &path, std::string &args);
+		void		init_envp();
+		bool		add_to_envp(std::string name, std::string value, std::string prefix);
+		bool		validate_key(std::string key);
+		ssize_t		execute_script(int cgi_fd);
+		void		calculateContentLength();
 
-  std::string get_contentType() const { return _contentType; }
-  std::string get_title() const { return _title; }
+		const std::shared_ptr<Request>	_request;
+		std::filesystem::path			_scriptPath;
+		std::string						_interpreter;
+		std::vector<char *>				_cgiEnvp;
+		std::vector<char *>				_cgiArgv;
+		std::string						_result;
+		size_t							_contentLength;
 
-  void createArgs(std::vector<char *> &argv, std::string &path,
-                  std::string &args);
-  // void createEnv(std::vector<char *> &envp);
-
-  std::string executeCGI(const std::string &path, const std::string &args,
-                         std::shared_ptr<Request> _request,
-                         std::string interpreter);
-
-private:
-  std::string _contentType;
-  std::string _title;
+	static const inline std::vector<std::string> metaVarNames = {
+		"AUTH_TYPE",      "CONTENT_LENGTH",  "CONTENT_TYPE", "GATEWAY_INTERFACE",
+		"PATH_INFO",      "PATH_TRANSLATED", "QUERY_STRING", "REMOTE_ADDR",
+		"REMOTE_HOST",    "REMOTE_IDENT",    "REMOTE_USER",  "REQUEST_METHOD",
+		"SCRIPT_NAME",    "SERVER_NAME",     "SERVER_PORT",  "SERVER_PROTOCOL",
+		"SERVER_SOFTWARE"
+	};
+	
+	static const inline std::vector<std::string> custom_var_prefixes = {};
 };

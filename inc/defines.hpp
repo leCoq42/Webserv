@@ -4,6 +4,8 @@
 
 #define BUFFSIZE 1024
 
+#define QUEUESIZE 128
+
 #define CRLF "\r\n"
 
 #define CRLFCRLF "\r\n\r\n"

@@ -1,130 +1,265 @@
+#include "cgi.hpp"
+#include "defines.hpp"
+#include "log.hpp"
+#include <cstddef>
 #include <cstring>
-#include <iostream>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <vector>
-#include <unistd.h>
-
-// REFERENCE :( chapter 4:
-// http://www.faqs.org/rfcs/rfc3875.html
-
-#include "cgi.hpp"
-#include "cgiParsing.hpp"
 #include <cerrno>
 #include <clocale>
 #include <cmath>
 #include <cstring>
-#include <iostream>
+#include <algorithm>
 
-const std::string CGI_DIR = "/var/www/cgi-bin";
-constexpr size_t BUFF_SIZE = 1024;
+// REFERENCE :( chapter 4:
+// http://www.faqs.org/rfcs/rfc3875.html
 
-cgi::cgi() : _contentType(""), _title("") {}
+CGI::CGI() : _request(nullptr) {}
 
-cgi::cgi(const std::string &contentType)
-    : _contentType(contentType), _title("") {}
-
-cgi::cgi(const std::string &contentType, const std::string &title)
-    : _contentType(contentType), _title(title) {}
-
-cgi::~cgi() {}
-
-void cgi::set_title(const std::string &title) { _title = title; }
-
-// fd in added for request body:
-std::string cgi::executeCGI(const std::string &path, const std::string &args,
-                            std::shared_ptr<Request> _request,
-                            std::string interpreter) {
-  int pipefd_out[2];
-  int pipefd_in[2];
-  int status;
-  pid_t pid;
-  std::string result;
-  int bytes_read;
-  std::vector<char *> argv;
-
-  if (args.empty())
-    ;
-  std::vector<char *> envpp_new;
-    extern char **environ;
-  CgiParsing vars(_request->get_headers(), environ, _request, path,
-                  interpreter); // parses all the magic
-
-  if (pipe(pipefd_out) == -1 || pipe(pipefd_in) == -1) {
-    // throw "Pipe Failed";
-    std::cerr << "Pipe Failed" << std::endl;
-    exit(EXIT_FAILURE); // never dies?
-  }
-
-  pid = fork();
-  if (pid < 0) {
-    // throw "Fork Failed";
-    std::cerr << "Fork Failed" << std::endl;
-    exit(EXIT_FAILURE); // never dies?
-  } else if (pid == 0) {
-    // stdin of request body:
-    close(pipefd_out[0]);
-    close(pipefd_in[1]);
-    dup2(pipefd_out[1], STDOUT_FILENO);
-    dup2(pipefd_in[0], STDIN_FILENO);
-    close(pipefd_out[1]);
-    close(pipefd_in[0]);
-
-    // add argv variables: might have to be at the envpp, from std::string vector in CgiParsing object to char * vector
-    for (const std::string &arg : vars.get_argv()) {
-      argv.push_back(const_cast<char *>(arg.c_str()));
-    }
-    argv.push_back(NULL);
-    // std::cerr << "DEBUG SHOW ARGVS PASSED:\n";
-    // int i = -1;
-    // while (argv[++i])
-    // 	std::cerr << argv[i] << std::endl;
-    // std::cerr << "LAUNCH2" << std::endl;
-
-    // add envp variables: , from std::string vector in CgiParsing object to char * vector
-    for (const std::string &arg : vars.get_envp()) {
-      envpp_new.push_back(const_cast<char *>(arg.c_str()));
-    }
-    envpp_new.push_back(NULL);
-    // std::cerr << "DEBUG SHOW ENV PASSED:\n";
-    // i = -1;
-    // while (envpp_new[++i])
-    // 	std::cerr << envpp_new[i] << std::endl;
-    // std::cerr << "ENV2" << std::endl;
-
-    // LAUNCH
-    execve(argv.data()[0], argv.data(), envpp_new.data());
-    // std::cout << argv[0] << std::endl;
-    std::cout << std::strerror(errno) << std::endl;
-    std::cout << "Exec failed" << std::endl;
-    // throw "Exec failed";
-    _exit(EXIT_FAILURE);
-  } else {
-    close(pipefd_out[1]);
-    close(pipefd_in[0]);
-
-    // std::cout << "TO BE WRITTEN IN STDIN OF EXECVE:" << vars.get_stdin() << "__WRITTEN__" << std::endl;
-    write(pipefd_in[1], vars.get_stdin().c_str(), vars.get_stdin().length()); //WRITES TO STDIN
-    close(pipefd_in[1]);
-    // for chunking check if body is empty otherwise keep.
-	std::vector<char> buffer(BUFF_SIZE);
-    while ((bytes_read = read(pipefd_out[0], &buffer[0], buffer.size())) > 0) {
-      std::string part(&buffer[0], bytes_read);
-      result.append(part);
-    }
-    if (bytes_read == -1) {
-      // std::cerr << "Read failed" << std::endl;
-      throw "Read failed";
-    }
-    close(pipefd_out[0]);
-
-    waitpid(pid, &status, 0);
-    if (WIFEXITED(status)) {
-      int exit_status = WEXITSTATUS(status);
-      if (exit_status != 0) {
-        std::cout << "exit_status: " << exit_status << std::endl;
-      }
-    }
-    return result;
-  }
+CGI::CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &scriptPath, const std::string &interpreter) :
+	_request(request), _scriptPath(scriptPath), _interpreter(interpreter)
+{
+	parseCGI();
+	executeScript();
+	calculateContentLength();
 }
+ 
+CGI::~CGI() {}
+
+void CGI::parseCGI()
+{
+	if (!_interpreter.empty())
+		_cgiArgv.push_back(const_cast<char *>(_interpreter.c_str()));
+	_cgiArgv.push_back(const_cast<char *>(_scriptPath.c_str()));
+	init_envp();
+
+	if (!_request->get_requestArgs().empty()) {
+		for (auto it: _request->get_requestArgs())
+			add_to_envp(it.first, it.second, "");
+	}
+	_cgiArgv.push_back(nullptr);
+	_cgiEnvp.push_back(nullptr);
+}
+
+void CGI::init_envp()
+{
+	add_to_envp("GATEWAY_INTERFACE", "CGI/1.1", "");
+	add_to_envp("REQUEST_METHOD", _request->get_requestMethod(), "");
+	add_to_envp("SCRIPT_FILENAME", _scriptPath, "");
+}
+
+// adds variable to envpp if permissed. additive is a specified prefix
+bool CGI::add_to_envp(std::string key, std::string value, std::string prefix)
+{
+	std::string tmp;
+
+	if (validate_key(prefix + key)) {
+		tmp = prefix + key;
+		for (auto &c : tmp)
+			c = toupper(c);
+		if (!value.empty())
+			tmp += "=" + value;
+		std::replace(tmp.begin(), tmp.end(), '-', '_');
+		_cgiEnvp.push_back(const_cast<char *>(tmp.c_str()));
+		return true;
+	}
+	return false;
+}
+
+bool CGI::validate_key(std::string key) {
+	for (auto &c : key)
+	c = toupper(c);
+
+	auto it = std::find(metaVarNames.begin(), metaVarNames.end(), key);
+	if (it != metaVarNames.end())
+		return true;
+
+	it = std::find(custom_var_prefixes.begin(), custom_var_prefixes.end(), key);
+	if (it != custom_var_prefixes.end())
+		return true;
+
+	return false;
+}
+
+void CGI::executeScript() {
+	int		pipefd[2];
+    // int 	pipeIn[2];
+	// int		pipeOut[2];
+	pid_t	pid;
+
+    // if (pipe(pipeIn) == -1 || pipe(pipeOut) == -1)
+    if (pipe(pipefd) == -1)
+		Log::logError("Failed to create pipe");
+
+    pid = fork();
+    if (pid == -1) {
+        close(pipefd[0]);
+        close(pipefd[1]);
+        logError("Failed to fork");
+		exit(1);
+    }
+
+    if (pid == 0) {  // Child process
+        close(pipefd[0]);  // Close read end of pipe
+        dup2(pipefd[1], STDOUT_FILENO);  // Redirect stdout to pipe
+        dup2(pipefd[1], STDERR_FILENO);  // Redirect stderr to pipe
+        close(pipefd[1]);
+
+        // Execute the script
+        execve(_cgiArgv.data()[0], _cgiArgv.data(), _cgiEnvp.data());
+		Log::logError("Execve error.");
+    }
+	else {  // Parent process
+    	close(pipefd[1]);  // Close write end of pipe
+
+        std::string output;
+		std::vector<char> buffer(BUFFSIZE);
+        ssize_t bytesRead;
+
+        while ((bytesRead = read(pipefd[0], &buffer[0], buffer.size())) > 0) {
+            output.append(buffer.data(), bytesRead);
+        }
+        close(pipefd[0]);
+		if (bytesRead < 0)
+			Log::logError("CGI: read failed");
+
+        int status;
+        waitpid(pid, &status, 0);
+
+        if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+			Log::logError("Script exited with non-zero status");
+        _result = output;
+    }
+}
+
+ssize_t	CGI::execute_script(int cgi_fd) {
+	(void)cgi_fd;
+
+	return 0;
+}
+
+void	CGI::calculateContentLength()
+{
+	std::string body;
+
+	size_t start = _result.find(CRLFCRLF);
+	if (start != std::string::npos) {
+		body = _result.substr(start + 4);
+		_contentLength = body.length();
+	}
+	else
+		_contentLength = 0;
+
+}
+
+size_t	CGI::get_contentLength() { return _contentLength; }
+std::string CGI::get_result() {return _result; }
+
+// std::string	CGI::get_contentType()
+// {
+// 	std::string contentType;
+//
+// 	auto start = _result.find("Content-Type");
+// 	if (start != std::string::npos) {
+// 		auto end = _result.find(CRLF, start);
+// 		if (end != std::string::npos)
+// 			contentType = _result.substr(start, end);
+// 		else
+// 			contentType = _result.substr(start);
+// 	}
+// 	return contentType;
+// }
+
+// // fd in added for request body:
+// std::string CGI::executeScript()
+// {
+// 	int pipefd[2];
+// 	int status;
+// 	pid_t pid;
+// 	std::string result;
+//
+// 	#ifdef DEBUG
+// 	std::cout << "CGI Argv:" << std::endl;
+// 	for (auto it : _cgiArgv)
+// 		std::cout << it << std::endl;
+//
+// 	std::cout << "CGI envp:" << std::endl;
+// 	for (auto it : _cgiEnvp)
+// 		std::cout << it << std::endl;
+// 	#endif
+//
+// 	if (pipe(pipefd) == -1)
+// 		throw statusCode::INTERNAL_SERVER_ERROR;
+//
+// 	pid = fork();
+// 	if (pid < 0) {
+// 		close(pipefd[0]);
+// 		close(pipefd[1]);
+// 		throw statusCode::INTERNAL_SERVER_ERROR;
+// 	}
+// 	else if (pid == 0) {
+// 		// stdin of request body:
+// 		close(pipefd[0]);
+// 		dup2(pipefd[1], STDOUT_FILENO);
+// 		close(pipefd[1]);
+//
+// 		// LAUNCH
+// 		execve(_scriptPath.c_str(), _cgiArgv.data(), _cgiEnvp.data());
+// 		// throw ("execve failed: " + (std::string)std::strerror(errno));
+// 		std::cerr << "execve failed: " << std::strerror(errno) << std::endl;
+// 		_exit(1);
+// 	}
+// 	else {
+// 		// Parent process
+//         close(pipefd[1]);
+//
+// 		// write(pipefd_in[1], vars.get_stdin().c_str(), vars.get_stdin().length()); //WRITES TO STDIN
+//         // Read output from child process
+// 		std::vector<char>buffer(BUFFSIZE);
+//         ssize_t bytes_read;
+//         while ((bytes_read = read(pipefd[0], &buffer[0], buffer.size())) > 0)
+//             result.append(buffer.data(), bytes_read);
+//
+// 		if (bytes_read < 0)
+// 			throw "CGI: read failed";
+//         close(pipefd[0]);
+//
+// 		waitpid(pid, &status, 0);
+// 		if (WIFEXITED(status)) {
+// 			int exit_status = WEXITSTATUS(status);
+// 			if (exit_status != 0) {
+// 				std::cout << "Child process exited with status: " << exit_status << std::endl;
+// 			}
+// 		}
+//         return result;
+// 	}
+// }
+
+	// else {
+	// 	close(pipefd_out[1]);
+	// 	close(pipefd_in[0]);
+	//
+	// 	// std::cout << "TO BE WRITTEN IN STDIN OF EXECVE:" << vars.get_stdin() << "__WRITTEN__" << std::endl;
+	// 	write(pipefd_in[1], _request->get_body().c_str(), _request->get_body().length()); //WRITES TO STDIN
+	// 	close(pipefd_in[1]);
+	//
+	// 	// // for chunking check if body is empty otherwise keep.
+	// 	// std::vector<char> buffer(BUFFSIZE);
+	// 	// while ((ssize_t bytes_read = read(pipefd_out[0], &buffer[0], buffer.size())) > 0) {
+	// 	// 	std::string part(&buffer[0], bytes_read);
+	// 	// 	result.append(part);
+	// 	// }
+	// 	// if (bytes_read == -1)
+	// 	// 	std::cerr << "Read failed" << std::endl;
+	// 	// close(pipefd_out[0]);
+	// 	//
+	// 	waitpid(pid, &status, 0);
+	// 	if (WIFEXITED(status)) {
+	// 		int exit_status = WEXITSTATUS(status);
+	// 		if (exit_status != 0) {
+	// 			std::cout << "exit_status: " << exit_status << std::endl;
+	// 		}
+	// 	}
+		// return result;
+	// }

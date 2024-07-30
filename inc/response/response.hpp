@@ -1,7 +1,7 @@
 #pragma once
 
 #include "request.hpp"
-#include "FileAcces.hpp"
+#include "fileAccess.hpp"
 #include <iostream>
 #include <memory>
 #include <unordered_map>
@@ -44,22 +44,24 @@ public:
 
   Response(const Response &src);
   Response &operator=(const Response &rhs);
-  void swap(Response &lhs);
 
-  void handleRequest(const std::shared_ptr<Request> &request);
-  std::string get_response();
-  std::string get_contentType();
+  void			swap(Response &lhs);
+  void			handleRequest(const std::shared_ptr<Request> &request);
+  std::string	get_response();
+  std::string	get_contentType();
 
   void printResponse();
 
 private:
 	std::shared_ptr<Request>	_request;
-	std::string					_responseString;
 	std::string					_contentType;
+	std::string					_body;
+	size_t						_contentLength;
+	std::string					_responseString;
 	std::string					_bufferFile;
 	ServerStruct				&_config;
 	FileAccess					_fileAccess;
-	std::filesystem::path		_requestPath;
+	std::filesystem::path		_finalPath;
 
 	bool	handleGetRequest(const std::shared_ptr<Request> &request);
 	bool	handlePostRequest(const std::shared_ptr<Request> &request);
@@ -74,8 +76,7 @@ private:
 	statusCode										write_file(const std::string &path,
 																const std::string &content, bool append);
 	const std::string								readFileToBody(std::filesystem::path path);
-	std::string										buildResponse(int status, const std::string &message,
-																	const std::string &body, bool isCGI = false);
+	std::string										buildResponse(int status, const std::string &message, bool isCGI = false);
 
 	static const inline std::unordered_map<std::string, std::string> contentTypes{
 		{".html", "text/html"},
@@ -96,7 +97,8 @@ private:
 	static const inline std::unordered_map<std::string, std::string> interpreters{
 		{".cgi", ""},
 		{".py", "/usr/bin/python3"},
-		{".php", "/ usr / lib / cgi - bin / php"}};
+		{".php", "/usr/lib/cgi-bin/php"},
+	};
 
 	static const inline std::map<statusCode, std::string> statusCodeMap = {
 		{statusCode::OK, "OK"},

@@ -1,9 +1,7 @@
 #pragma once
 
-#include <cstddef>
-#include <iostream>
 #include <unordered_map>
-#include <vector>
+#include <filesystem>
 
 // doesn't seem to be the standard but it is an security issue not to check
 // this, https://www.htmlhelp.com/faq/cgifaq.2.html
@@ -14,7 +12,6 @@
 
 class Request {
 	public:
-		Request();
 		Request(const std::string str);
 		Request(const Request &src);
 		Request &operator=(const Request &rhs);
@@ -41,7 +38,8 @@ class Request {
 		size_t				parse_contentLen() const;
 		const size_t		&get_contentLength() const; //added
 		const bool			&get_validity() const;
-		const bool	&get_requestStatus() const;
+		const bool			&get_requestStatus() const;
+		const std::filesystem::path &get_requestPath() const;
 		void				printRequest() const;
 		void				set_bufferFile(std::string buffer_file); //added
 		void				set_contentLength(size_t contentLength); //added
@@ -49,27 +47,26 @@ class Request {
 		void appendToBody(std::string requestString);
 
 	private:
-		const std::string	_rawRequest;
-		std::string			_requestMethod;
-		std::string			_requestPath;
-		std::string			_htmlVersion;
-		std::unordered_map<std::string, std::string>	_requestArgs;
-		std::unordered_map<std::string, std::string>	_headers;
-		bool				_isValid;
-		std::string			_body;
-		std::unordered_map<std::string, std::string>	_cgiEnv;
-		std::string			_bufferFile;//added
-		size_t				_contentLength;
-		bool				_chunked;
-		bool				_requestStatus;
-		
-		
+		Request();
 
-		void parseRequest();
-		bool parseRequestLine(const std::string &line);
-		bool parseRequestHeaders(std::istringstream &requestStream);
-		std::string parseRequestBody(const std::string &_rawRequest);
-		void extractCgiEnv(void);
-		void splitUrlArgs(std::string argStr);
-		void parseUrlArgs(const std::string uri);
+		const std::string		_rawRequest;
+		std::string				_requestMethod;
+		std::filesystem::path	_requestPath;
+		std::string				_htmlVersion;
+		bool					_keepAlive;
+		bool					_isValid;
+		std::string				_body;
+		std::string				_bufferFile;//added
+		size_t					_contentLength;
+		bool					_chunked;
+		bool					_requestStatus;
+		std::unordered_map<std::string, std::string>	_headers;
+		std::unordered_map<std::string, std::string>	_requestArgs;
+		
+		void		parseRequest();
+		bool		parseRequestLine(const std::string &line);
+		bool		parseRequestHeaders(std::istringstream &requestStream);
+		std::string	parseRequestBody(const std::string &_rawRequest);
+		void		parseUrlArgs(const std::string uri);
+		void		splitUrlArgs(std::string argStr);
 };
