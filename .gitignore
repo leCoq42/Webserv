@@ -4,7 +4,6 @@ webserv
 */uploads/*
 
 obj/
-log/
 logDir/
 
 .DS_Store
