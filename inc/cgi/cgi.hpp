@@ -6,7 +6,7 @@
 #include <vector>
 #include "log.hpp"
 
-class CGI : public virtual Log {
+class CGI {
 	public:
 		CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &scriptPath, const std::string &interpreter);
 		~CGI();
@@ -32,6 +32,7 @@ class CGI : public virtual Log {
 		std::vector<char *>				_cgiArgv;
 		std::string						_result;
 		size_t							_contentLength;
+		Log								_log;
 
 	static const inline std::vector<std::string> metaVarNames = {
 		"AUTH_TYPE",      "CONTENT_LENGTH",  "CONTENT_TYPE", "GATEWAY_INTERFACE",
@@ -41,5 +42,5 @@ class CGI : public virtual Log {
 		"SERVER_SOFTWARE"
 	};
 	
-	static const inline std::vector<std::string> custom_var_prefixes = {};
+	static const inline std::vector<std::string> custom_var_prefixes = {"HTTP_"};
 };
