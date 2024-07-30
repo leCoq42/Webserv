@@ -20,7 +20,7 @@ struct ServerInfo {
   ServerStruct			*_config; //added server config
 };
 
-class ServerConnection : public virtual Log {
+class ServerConnection : public Log {
 private:
 public:
   std::vector<ServerInfo> _connectedServers;

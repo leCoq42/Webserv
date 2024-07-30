@@ -11,30 +11,32 @@
 #include "response.hpp"
 #include <fcntl.h>
 #include <unistd.h>
+#include "log.hpp"
 
 
 struct clientInfo {
-	char						clientIP[INET_ADDRSTRLEN];
 	int							clientFD;
+	char						clientIP[INET_ADDRSTRLEN];
 	int							port;
-	bool						isFileUpload;
-	uint32_t					expectedContentLength;// check int!
 	std::shared_ptr<Request>	request;
-	bool						unchunking;
+	std::shared_ptr<Response>	response;
 	long int					timeOut;
 	long int					lastRequestTime;
-	ServerStruct				*_config; //port/server config for multiple server setup
-	Chunked						unchunker; //unchunker object to save multipart requests into an bufferfile
-	std::string					buff_str;
-	ssize_t						totalBytesReceived; //buffered amount
+	std::string					receiveStr;
+	std::string					responseStr;
+	int							sendStatus;
+	int							totalBytesSent;
+	int							bytesToSend;
 };
 
-class ClientConnection : ServerConnection, public virtual Log {
+#define SENDING 0
+#define SENT 	1
+
+class ClientConnection : ServerConnection {
 	private:
 		std::shared_ptr<ServerConnection>	_ptrServerConnection;
 		std::vector<clientInfo>				_activeClients;
 		std::vector<pollfd>					_polledFds;
-		std::vector<ServerStruct*>			_serverConfigs; //added synchronous to pollfd vector
 
 	public:
 		ClientConnection();
@@ -42,20 +44,20 @@ class ClientConnection : ServerConnection, public virtual Log {
 		~ClientConnection();
 
 	//TODO: Zijn veel van deze functies niet const?
-		void		handleInputEvent(int polledFdsIndex, std::list<ServerStruct> *serverStruct);
+		void		handlePollInEvent(int polledFdsIndex);
 		void		acceptClients(int server_fd, int index);
 		void		initializeServerSockets();
 		void 		setupClientConnection(std::list<ServerStruct> *serverStruct);
 		void		removeClientSocket(int clientFD);
 		bool		isServerSocket(int fd);
-		void		handlePollOutEvent(int index);
+		void		handlePollOutEvent(int index, std::list<ServerStruct> *serverStruct);
 		void		handlePollErrorEvent(int index);
 		clientInfo	initClientInfo(int clientFD, int index, sockaddr_in clientAddr);
 		// void		manageClientInfo(int polledFDIndex, int activeClientsIndex);
 		void		checkConnectedClientsStatus();
 		int 		findClientIndex(int clientFD);
-		ssize_t		receiveData(int index, int activeClientsIndex);
+		void		receiveData(int index, int activeClientsIndex);
 		bool		initializeRequest(int activeClientsIndex);
 		bool		clientHasTimedOut(int polledFdsIndex, int activeClientsIndex);
-		void		sendData(int polledIndex, Response response);
+		void		sendData(int polledIndex, int activeClientsIndex);
 };
