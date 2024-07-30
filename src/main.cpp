@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
 	parse(&parser, &server_structs, &buffer, argv);
 	for (auto &server : server_structs)
 		SS->setUpServerConnection(server);
-	CC.setupClientConnection();
+	CC.setupClientConnection(&server_structs);
 	delete[] buffer;
 	return 0;
 }

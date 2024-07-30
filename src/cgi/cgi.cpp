@@ -11,6 +11,7 @@
 #include <cmath>
 #include <cstring>
 #include <algorithm>
+#include <unistd.h>
 
 // REFERENCE :( chapter 4:
 // http://www.faqs.org/rfcs/rfc3875.html
