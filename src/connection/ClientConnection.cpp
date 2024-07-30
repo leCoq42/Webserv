@@ -152,6 +152,7 @@ clientInfo ClientConnection::initClientInfo(int clientFD, int serverIndex, socka
     inet_ntop(AF_INET, &clientAddr.sin_addr, info.clientIP, sizeof(info.clientIP));
     info.port = _ptrServerConnection->_connectedServers[serverIndex].serverPort;
     info.request = nullptr;
+    info.response = nullptr;
     info.timeOut = 10;
     info.lastRequestTime = currentTime;
     info.receiveStr = "";
@@ -247,7 +248,7 @@ void ClientConnection::initializeServerSockets() {
     for (const auto& server : _ptrServerConnection->_connectedServers) {
         pollfd server_pollfd;
         server_pollfd.fd = server.serverFD;
-        server_pollfd.events = POLLIN | POLLOUT; // check if POLLOUT should be removed
+        server_pollfd.events = POLLIN; // check if POLLOUT should be removed
         _polledFds.push_back(server_pollfd);
     }
 }
