@@ -31,7 +31,7 @@ Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
 		buildResponse(static_cast<int>(return_code), "Not Found", "");
 	}
 	else {
-		std::cout << "File Access Path -> " << _finalPath << std::endl;
+		// std::cout << "File Access Path -> " << _finalPath << std::endl;
 		handleRequest(request);
 	}
 	#ifdef DEBUG
@@ -311,7 +311,7 @@ std::string Response::buildResponse(int status, const std::string &message, bool
 			return _responseString;
 		}
 		else {
-			std::cout << "Response content length: " << std::to_string(_body.length()) << std::endl;
+			// std::cout << "Response content length: " << std::to_string(_body.length()) << std::endl;
 			_responseString.append("Content-Length: " + std::to_string(_body.length()) +
 						  CRLF);
 			_responseString.append("Content-Type: " + get_contentType() + CRLF);

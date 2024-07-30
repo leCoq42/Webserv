@@ -12,6 +12,6 @@
 
 #define PATH_LOGFILE "./logDir/logfile.log"
 
-#define MAX_LOG_SIZE 10000
+#define MAX_LOG_SIZE 100000
 
 #define AMOUNT_LINES_APPEND 100
