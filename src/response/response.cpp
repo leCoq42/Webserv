@@ -13,7 +13,7 @@
 #include <unordered_map>
 #include <vector>
 
-Response::Response(ServerStruct &config) : _request(nullptr), _responseString(""), _config(config), _fileAccess(config), _complete(false) {}
+Response::Response(std::list<ServerStruct> *config) : _request(nullptr), _responseString(""), _config(config), _fileAccess(config) {}
 
 Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
     : _request(request), _contentType(""), _body(""), _contentLength(0), _responseString(""),
@@ -26,9 +26,9 @@ Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
 	if (!_finalPath.empty() && _finalPath.string()[0] == '/')
 		_finalPath = _finalPath.string().substr(1);
 
-	_finalPath = _fileAccess.isFilePermissioned( _finalPath, return_code);
+	_finalPath = _fileAccess.isFilePermissioned( _finalPath, return_code, port);
 	if (return_code) {
-		std::cout << "Path error:" << _finalPath << std::endl;
+		std::cout << return_code << "Path error:" << _finalPath << std::endl;
 		_finalPath = _fileAccess.getErrorPage(return_code); // wrong place
 		buildResponse(static_cast<int>(return_code), "Not Found", "");
 	}
