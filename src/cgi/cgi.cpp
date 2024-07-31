@@ -3,6 +3,7 @@
 #include "log.hpp"
 #include <cstddef>
 #include <cstring>
+#include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <vector>
@@ -16,14 +17,14 @@
 // REFERENCE :( chapter 4:
 // http://www.faqs.org/rfcs/rfc3875.html
 
-CGI::CGI() : _request(nullptr) {}
-
 CGI::CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &scriptPath, const std::string &interpreter) :
-	_request(request), _scriptPath(scriptPath), _interpreter(interpreter), _cgiFD(0)
+	_request(request), _scriptPath(scriptPath), _interpreter(interpreter), _result(""),
+	_contentLength(0), _cgiFD(0), _complete(false)
 {
 	parseCGI();
 	executeScript();
-	calculateContentLength();
+	if (_complete)
+		calculateContentLength();
 }
  
 CGI::~CGI() {}
@@ -33,14 +34,13 @@ void CGI::parseCGI()
 	if (!_interpreter.empty())
 		_cgiArgv.push_back(const_cast<char *>(_interpreter.c_str()));
 	_cgiArgv.push_back(const_cast<char *>(_scriptPath.c_str()));
-	_cgiArgv.push_back(nullptr);
+	_cgiArgv.push_back(NULL);
 
 	init_envp();
 	if (!_request->get_requestArgs().empty()) {
 		for (auto it: _request->get_requestArgs())
 			add_to_envp(it.first, it.second, "HTTP_");
 	}
-	_cgiEnvp.push_back(nullptr);
 }
 
 void CGI::init_envp()
@@ -62,7 +62,7 @@ bool CGI::add_to_envp(std::string key, std::string value, std::string prefix)
 		if (!value.empty())
 			tmp += "=" + value;
 		std::replace(tmp.begin(), tmp.end(), '-', '_');
-		_cgiEnvp.push_back(const_cast<char *>(tmp.c_str()));
+		_cgiEnvp.push_back(tmp);
 		return true;
 	}
 	return false;
@@ -89,6 +89,13 @@ void CGI::executeScript()
 	int		pipeCGItoServer[2];
 	pid_t	pid;
 
+	std::vector<char*> envp;
+	for (const auto& var : _cgiEnvp) {
+		envp.push_back(const_cast<char*>(var.c_str()));
+	}
+
+envp.push_back(nullptr);
+
     if (pipe(pipeServertoCGI) == -1 || pipe(pipeCGItoServer) == -1)
 		_log.logError("Failed to create pipe");
 
@@ -113,7 +120,7 @@ void CGI::executeScript()
 		close(pipeCGItoServer[WRITE]);
 
         // Execute the script
-        execve(_cgiArgv.data()[0], _cgiArgv.data(), _cgiEnvp.data());
+        execve(_cgiArgv.data()[0], _cgiArgv.data(), envp.data());
 		_log.logError("Execve error.");
 		_exit(1);
     }
@@ -124,15 +131,7 @@ void CGI::executeScript()
         close(pipeCGItoServer[WRITE]);  // Close write end of output pipe
 
 		_cgiFD = pipeCGItoServer[READ];
-		// std::vector<char> buffer(BUFFSIZE);
-		//       ssize_t bytesRead;
-		//
-		//       while ((bytesRead = read(pipeCGItoServer[READ], &buffer[0], buffer.size())) > 0)
-		//           _result.append(buffer.data(), bytesRead);
-
-		// close(pipeCGItoServer[READ]);
-		// if (bytesRead < 0 && (errno != EAGAIN || errno != EWOULDBLOCK))
-		// 	_log.logError("CGI: read failed");
+		readCGIfd();
 
         int status;
         waitpid(pid, &status, 0);
@@ -141,11 +140,27 @@ void CGI::executeScript()
     }
 }
 
-ssize_t	CGI::execute_script(int cgi_fd)
+int	CGI::readCGIfd()
 {
-	(void)cgi_fd;
+	ssize_t bytesRead;
+	std::vector<char> buffer(BUFFSIZE);
 
-	return 0;
+	bytesRead = read(_cgiFD, &buffer[0], BUFFSIZE);
+	if (bytesRead == 0) {
+		close(_cgiFD);
+		_complete = true;
+		calculateContentLength();
+		return 0;
+	}
+	else if (bytesRead > 0) {
+		_complete = false;
+		_result.append(buffer.data(), bytesRead);
+		return 0;
+	}
+	else {
+		_complete = true;
+		return 1;
+	}
 }
 
 void	CGI::calculateContentLength()
@@ -159,10 +174,9 @@ void	CGI::calculateContentLength()
 	}
 	else
 		_contentLength = 0;
-
 }
 
 size_t		CGI::get_contentLength() { return _contentLength; }
-std::string CGI::get_result() { return _result; }
+std::string	CGI::get_result() { return _result; }
 int			CGI::get_cgiFD() { return _cgiFD; }
-bool		CGI::get_status() { return _isComplete; }
+bool		CGI::isComplete() { return _complete; }

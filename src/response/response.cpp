@@ -13,11 +13,11 @@
 #include <unordered_map>
 #include <vector>
 
-Response::Response(ServerStruct &config) : _request(nullptr), _responseString(""), _config(config), _fileAccess(config) {}
+Response::Response(ServerStruct &config) : _request(nullptr), _responseString(""), _config(config), _fileAccess(config), _complete(false) {}
 
 Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
     : _request(request), _contentType(""), _body(""), _contentLength(0), _responseString(""),
-	_bufferFile(""), _config(config), _fileAccess(config), _isComplete(false)
+	_bufferFile(""), _config(config), _fileAccess(config), _complete(true)
 {
 	int return_code = 0;
 
@@ -68,7 +68,7 @@ Response::~Response() {}
 Response::Response(const Response &src)
     : _request(src._request), _contentType(src._contentType), _body(src._body), _contentLength(src._contentLength),
 	_responseString(src._responseString), _bufferFile(src._bufferFile), _config(src._config),
-	_fileAccess(src._config), _finalPath(src._finalPath), _cgi(src._cgi), _isComplete(src._isComplete)
+	_fileAccess(src._config), _finalPath(src._finalPath), _complete(src._complete)
 {}
 
 Response &Response::operator=(const Response &rhs)
@@ -88,7 +88,6 @@ void Response::swap(Response &lhs)
 void Response::handleRequest(const std::shared_ptr<Request> &request)
 {
 	std::string request_method = request->get_requestMethod();
-
 	try {
 		if (request_method == "GET" && _fileAccess.allowedMethod("GET"))
 			handleGetRequest(request);
@@ -107,11 +106,6 @@ void Response::handleRequest(const std::shared_ptr<Request> &request)
 	}
 }
 
-void Response::resumeCGI()
-{
-	
-}
-
 bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 	std::stringstream buffer;
 	bool isCGI = false;
@@ -122,7 +116,6 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 			contentTypes.find(_finalPath.extension());
 		if (it == contentTypes.end())
 		{
-			_responseString =
 				buildResponse(static_cast<int>(statusCode::UNSUPPORTED_MEDIA_TYPE),
 				  "Unsupported Media Type", false);
 			return false;
@@ -138,20 +131,19 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 		else
 		{
 			isCGI = true;
-			CGI cgi(_request, _finalPath, interpreters.at(_finalPath.extension()));
-			if (cgi.get_status()) {
-				_isComplete = true;
-				_body = cgi.get_result();
-				_contentLength = cgi.get_contentLength();
+			_cgi = std::make_unique<CGI>(_request, _finalPath, interpreters.at(_finalPath.extension()));
+			_complete = _cgi->isComplete();
+			if (_complete == true) {
+				_body = _cgi->get_result();
+				_contentLength = _cgi->get_contentLength();
+				buildResponse(static_cast<int>(statusCode::OK), "OK", isCGI); // when cgi double padded?
 			}
-			else {
-				_isComplete = false;
-			}
+			return true;
 		}
 	}
 	else
 		_body = list_dir(_finalPath, request->get_requestPath(), request->get_referer());
-	_responseString = buildResponse(static_cast<int>(statusCode::OK), "OK", isCGI); // when cgi double padded?
+	buildResponse(static_cast<int>(statusCode::OK), "OK", isCGI); // when cgi double padded?
 	return true;
 }
 
@@ -168,9 +160,14 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request)
 	if (_finalPath.has_extension()) {
 		if (interpreters.find(_finalPath.extension()) != interpreters.end()) {
 			isCGI = true;
-			CGI cgi(_request, _finalPath, interpreters.at(_finalPath.extension()));
-			_body = cgi.get_result();
-			_contentLength = cgi.get_contentLength();
+			_cgi = std::make_unique<CGI>(_request, _finalPath, interpreters.at(_finalPath.extension()));
+			_complete = _cgi->isComplete();
+			if (_complete == true) {
+				_body = _cgi->get_result();
+				_contentLength = _cgi->get_contentLength();
+				buildResponse(static_cast<int>(statusCode::OK), "OK", isCGI); // when cgi double padded?
+			}
+			return true;
 		}
 		else {
 			buildResponse(static_cast<int>(statusCode::NO_CONTENT), "No Content", "");
@@ -305,7 +302,21 @@ statusCode Response::write_file(const std::string &path, const std::string &cont
 		return statusCode::INTERNAL_SERVER_ERROR;
 }
 
-std::string Response::buildResponse(int status, const std::string &message, bool isCGI)
+void	Response::continue_cgi()
+{
+	if (_cgi->readCGIfd()) {
+		std::cerr << "resume reading error" << std::endl;
+		return;
+	}
+	if (_cgi->isComplete() == true) {
+		_body = _cgi->get_result();
+		_contentLength = _cgi->get_contentLength();
+		buildResponse(static_cast<int>(statusCode::OK), "OK", true); // when cgi double padded?
+		_complete = true;
+	}
+}
+
+void Response::buildResponse(int status, const std::string &message, bool isCGI)
 {
 	_responseString.append("HTTP/1.1 " + std::to_string(status) + " " + message +
 							CRLF);
@@ -316,7 +327,7 @@ std::string Response::buildResponse(int status, const std::string &message, bool
 	}
 	else {
 		if (_body.empty()) {
-			return _responseString;
+			return;
 		}
 		else {
 			// std::cout << "Response content length: " << std::to_string(_body.length()) << std::endl;
@@ -326,11 +337,11 @@ std::string Response::buildResponse(int status, const std::string &message, bool
 			_responseString.append(CRLF + _body);
 		}
 	}
-	return _responseString;
 }
 
-std::string Response::get_response() { return _responseString; }
-std::string Response::get_contentType() { return _contentType; }
+std::string	Response::get_response() { return _responseString; }
+std::string	Response::get_contentType() { return _contentType; }
+bool		Response::isComplete() { return _complete; }
 
 void Response::printResponse() {
 	std::cout << MSG_BORDER << "[Response]" << MSG_BORDER << std::endl;

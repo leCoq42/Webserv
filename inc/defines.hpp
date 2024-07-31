@@ -2,9 +2,9 @@
 
 #define MSG_BORDER "---------------------------"
 
-#define BUFFSIZE 4096
+#define BUFFSIZE 65535 // https://www.baeldung.com/cs/tcp-max-packet-size
 
-#define QUEUESIZE 128
+#define QUEUESIZE 20 //128
 
 #define CRLF "\r\n"
 
