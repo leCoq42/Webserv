@@ -30,7 +30,6 @@ struct clientInfo {
 };
 
 #define SENDING 0
-#define SENT 	1
 
 class ClientConnection : ServerConnection {
 	private:
