@@ -135,9 +135,7 @@ void ClientConnection::handlePollInEvent(int polledFdsIndex)
         _activeClients[activeClientsIndex].receiveStr.clear();
     }
     if (_activeClients[activeClientsIndex].request->get_requestStatus() == true) {
-        Response response(_activeClients[activeClientsIndex].request, serverStruct, _activeClients[activeClientsIndex].port); // serverStruct
-        sendData(polledFdsIndex, response);
-        removeClientSocket(_polledFds[polledFdsIndex].fd);
+		_polledFds[polledFdsIndex].events = POLLOUT;
     }
 }
 

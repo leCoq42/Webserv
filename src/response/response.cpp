@@ -15,7 +15,7 @@
 
 Response::Response(std::list<ServerStruct> *config) : _request(nullptr), _responseString(""), _config(config), _fileAccess(config) {}
 
-Response::Response(std::shared_ptr<Request> request, ServerStruct &config)
+Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, int port)
     : _request(request), _contentType(""), _body(""), _contentLength(0), _responseString(""),
 	_bufferFile(""), _config(config), _fileAccess(config), _complete(true)
 {
