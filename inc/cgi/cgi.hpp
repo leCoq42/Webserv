@@ -2,13 +2,12 @@
 
 #include "request.hpp"
 #include <memory>
-#include <iostream>
 #include <vector>
 #include "log.hpp"
 
 class CGI {
 	public:
-		// CGI();
+		CGI();
 		CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &scriptPath, const std::string &interpreter);
 		//CGI copy constructor
 		//CGI = overload
@@ -16,8 +15,8 @@ class CGI {
 
 		const size_t		&get_contentLength() const;
 		const std::string	&get_result() const;
-		const int		&get_cgiFD() const;
-		const bool		&isComplete() const;
+		const int			&get_cgiFD() const;
+		const bool			&isComplete() const;
 
 		int			readCGIfd();
 

@@ -230,24 +230,20 @@ void Response::handle_multipart()
 			continue;
 		}
 
-			filename = extract_filename(headers);
-			status = write_file(      _finalPath.string() + "/" + filename, content, append); //TODO:make customizable via config -> _finalPath.string()
-			if (status != statusCode::OK)
-				break;
-			append = true;
-			#ifdef DEBUG
-			std::cout << "File Upload success!" << std::endl;
-			std::cout << MSG_BORDER << MSG_BORDER << std::endl;
-			#endif // DEBUG
-		}
-		if (status == statusCode::OK)
-			_body = readFileToBody("html/upload_success.html");
-		else
-			_body = readFileToBody("html/standard_404.html");
+		filename = extract_filename(headers);
+		status = write_file(      _finalPath.string() + "/" + filename, content, append);
+		if (status != statusCode::OK)
+			break;
+		append = true;
+		#ifdef DEBUG
+		std::cout << "File Upload success!" << std::endl;
+		std::cout << MSG_BORDER << MSG_BORDER << std::endl;
+		#endif // DEBUG
 	}
-	else {//TODO should be able to run cgi as well
-		status = statusCode::OK;
-	}
+	if (status == statusCode::OK)
+		_body = readFileToBody("html/upload_success.html");
+	else
+		_body = readFileToBody("html/standard_404.html");
 	buildResponse(static_cast<int>(status), statusCodeMap.at(status), false);
 }
 
