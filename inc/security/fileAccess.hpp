@@ -39,4 +39,5 @@ class	FileAccess
 	ConfigContent			*find_location_config(std::string uri, ConfigContent *location_config);
 	std::string				swap_out_root(std::string uri, ConfigContent *location_config, std::string root);
 	std::filesystem::path 	uri_is_directory(std::string uri, ConfigContent *location_config, int &return_code);
+	bool					is_deleteable(std::filesystem::path to_delete);	
 };

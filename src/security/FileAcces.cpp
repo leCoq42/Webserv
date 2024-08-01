@@ -83,6 +83,25 @@ int	get_match_type(std::string first_content_part) //could be switch
 		return (MATCH_TYPE_UNSPECIFIED);
 }
 
+bool			FileAccess::is_deleteable(std::filesystem::path to_delete)
+{
+	std::filesystem::path root;
+	std::filesystem::path current_root;
+
+	root = _root;
+	current_root = _currentRoot;
+	root = std::filesystem::absolute(root);
+	current_root = std::filesystem::absolute(current_root);
+	to_delete = std::filesystem::absolute(to_delete);
+	if (to_delete.string().find(root.string()) == 0 && to_delete.string().find(root.string()) == 0)
+	{
+		std::cout << "delete" << std::endl;
+		return true;
+	}
+	std::cout << "nono" << std::endl;
+	return false;
+}
+
 ConfigContent	*FileAccess::find_location_config(std::string uri, ConfigContent *location_config)
 {
 	ConfigContent	*current;
@@ -159,7 +178,7 @@ std::filesystem::path FileAccess::uri_is_directory(std::string uri, ConfigConten
 	if (!((LocationStruct *)location_config->childs)->autoindex.content_list.back().compare("on"))
 		return (path);
 	return_code = 404;
-	return (path);	
+	return ("");	
 }
 
 std::string	FileAccess::redirect(int &return_code)
@@ -221,10 +240,12 @@ std::filesystem::path	FileAccess::getErrorPage(int return_code)
 //check if method is allowed for this specific location, this is fine
 bool	FileAccess::allowedMethod(std::string method)
 {
+	std::cout << "requested method " << method << std::endl;
 	for (std::string content : *_currentAllowedMethods)
 	{
 		if (!content.compare(method))
 			return true;
 	}
+	std::cout << "declined" << std::endl;
 	return false;
 }
