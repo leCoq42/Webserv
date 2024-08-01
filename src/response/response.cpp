@@ -25,7 +25,11 @@ Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *co
 		_finalPath = _finalPath.string().substr(1);
 
 	_finalPath = _fileAccess.isFilePermissioned( _finalPath, return_code, port);
-	if (return_code) {
+	if (return_code == 301)
+	{
+		buildResponse(static_cast<int>(return_code), redirect(_fileAccess.get_return()), false);
+	}
+	else if (return_code) {
 		std::cout << return_code << "Path error:" << _finalPath << std::endl;
 		_finalPath = _fileAccess.getErrorPage(return_code); // wrong place
 		buildResponse(static_cast<int>(return_code), "Not Found", "");
@@ -237,7 +241,7 @@ void Response::handle_multipart()
 			}
 
 			filename = extract_filename(headers);
-			status = write_file(      "html/uploads/" + filename, content, append); //TODO:make customizable via config -> _finalPath.string()
+			status = write_file(      _finalPath.string() + "/" + filename, content, append); //TODO:make customizable via config -> _finalPath.string()
 			if (status != statusCode::OK)
 				break;
 			append = true;

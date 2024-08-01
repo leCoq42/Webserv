@@ -13,6 +13,9 @@
 //DEFINE ACCEPTED METHODS implemented correctly
 
 
+//check for seg faults on random input
+//return / error bodies. 
+
 //ROOT rewrite, can be default or location specific, FIXED
 //HTTP METHOD permissed FIXED
 //redirect might have to do http to https, which is diffrent from the current implemented
@@ -146,7 +149,7 @@ ConfigContent	*FileAccess::find_location_config(std::string uri, ConfigContent *
 		}
 		current = current->next;
 	}
-	if (!((LocationStruct *)previous_match->childs)->allow_methods.content_list.empty())
+	if ((LocationStruct *)previous_match->childs && !((LocationStruct *)previous_match->childs)->allow_methods.content_list.empty())
 		_currentAllowedMethods = &((LocationStruct *)previous_match->childs)->allow_methods.content_list;
 	return (previous_match);
 }
@@ -248,4 +251,9 @@ bool	FileAccess::allowedMethod(std::string method)
 	}
 	std::cout << "declined" << std::endl;
 	return false;
+}
+
+std::string	FileAccess::get_return(void)
+{
+	return (_return);
 }
