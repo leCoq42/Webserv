@@ -30,7 +30,12 @@ Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *co
 		_finalPath = _finalPath.string().substr(1);
 
 	_finalPath = _fileAccess.isFilePermissioned( _finalPath, return_code, port);
-	if (return_code) {
+	if (return_code == 301)
+	{
+		buildResponse(static_cast<int>(return_code), redirect(_fileAccess.get_return()), false);
+	}
+	else if (return_code) {
+		std::cout << return_code << "Path error:" << _finalPath << std::endl;
 		_finalPath = _fileAccess.getErrorPage(return_code); // wrong place
 		buildResponse(static_cast<int>(return_code), "Not Found", "");
 	}
@@ -169,10 +174,18 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request)
 
 bool Response::handleDeleteRequest(const std::shared_ptr<Request> &request)
 {
-	std::filesystem::path Path = request->get_requestPath();
-
-	buildResponse(static_cast<int>(statusCode::OK), "OK", "");
-	return true;
+	std::cout << request->get_requestPath() << std::endl;
+	if (_fileAccess.is_deleteable(_finalPath))
+	{
+		std::cout << _finalPath << std::endl;
+		if (remove(_finalPath))
+		{
+			buildResponse(static_cast<int>(statusCode::OK), "OK", "");
+			return true;
+		}
+	}
+	buildResponse(static_cast<int>(204), "Failed", ""); //change this untill correct
+	return false;
 }
 
 const std::string	Response::readFileToBody(std::filesystem::path path)
@@ -217,17 +230,24 @@ void Response::handle_multipart()
 			continue;
 		}
 
-		filename = extract_filename(headers);
-		status = write_file(      "html/uploads/" + filename, content, append); //TODO:make customizable via config
-		if (status != statusCode::OK)
-			break;
-		append = true;
-		std::cout << MSG_BORDER << "File Upload success!" << MSG_BORDER << std::endl;
+			filename = extract_filename(headers);
+			status = write_file(      _finalPath.string() + "/" + filename, content, append); //TODO:make customizable via config -> _finalPath.string()
+			if (status != statusCode::OK)
+				break;
+			append = true;
+			#ifdef DEBUG
+			std::cout << "File Upload success!" << std::endl;
+			std::cout << MSG_BORDER << MSG_BORDER << std::endl;
+			#endif // DEBUG
+		}
+		if (status == statusCode::OK)
+			_body = readFileToBody("html/upload_success.html");
+		else
+			_body = readFileToBody("html/standard_404.html");
 	}
-	if (status == statusCode::OK)
-		_body = readFileToBody("html/upload_success.html");
-	else
-		_body = readFileToBody("html/standard_404.html");
+	else {//TODO should be able to run cgi as well
+		status = statusCode::OK;
+	}
 	buildResponse(static_cast<int>(status), statusCodeMap.at(status), false);
 }
 
