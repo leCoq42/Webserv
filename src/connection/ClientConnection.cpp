@@ -136,6 +136,7 @@ void ClientConnection::handlePollInEvent(int polledFdsIndex)
     }
     if (_activeClients[activeClientsIndex].request->get_requestStatus() == true)
         _polledFds[polledFdsIndex].events = POLLOUT;
+    }
 }
 
 clientInfo ClientConnection::initClientInfo(int clientFD, int serverIndex, sockaddr_in clientAddr)
@@ -220,8 +221,10 @@ void ClientConnection::handlePollOutEvent(int polledFdsIndex, std::list<ServerSt
 {
     int activeClientsIndex = findClientIndex(_polledFds[polledFdsIndex].fd);
 
-	if (!_activeClients[activeClientsIndex].response) {
-       _activeClients[activeClientsIndex].response = std::make_shared<Response>(_activeClients[activeClientsIndex].request, serverStruct->front(), _activeClients[activeClientsIndex].port); // serverStruct
+    if (!_activeClients[activeClientsIndex].response) {
+       _activeClients[activeClientsIndex].response = std::make_shared<Response> (_activeClients[activeClientsIndex].request, serverStruct, _activeClients[activeClientsIndex].port); // serverStruct
+        _activeClients[activeClientsIndex].responseStr = _activeClients[activeClientsIndex].response->get_response();
+        _activeClients[activeClientsIndex].bytesToSend = _activeClients[activeClientsIndex].response->get_response().length();
     }
 	else if (_activeClients[activeClientsIndex].response && _activeClients[activeClientsIndex].response->isComplete() == false) {
 		_activeClients[activeClientsIndex].response->continue_cgi();
