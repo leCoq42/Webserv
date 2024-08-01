@@ -225,7 +225,7 @@ void ClientConnection::handlePollOutEvent(int polledFdsIndex, std::list<ServerSt
     int activeClientsIndex = findClientIndex(_polledFds[polledFdsIndex].fd);
 
     if (!_activeClients[activeClientsIndex].response) {
-       _activeClients[activeClientsIndex].response = std::make_shared<Response> (_activeClients[activeClientsIndex].request, serverStruct->front()); // serverStruct
+       _activeClients[activeClientsIndex].response = std::make_shared<Response> (_activeClients[activeClientsIndex].request, serverStruct, _activeClients[activeClientsIndex].port); // serverStruct
         _activeClients[activeClientsIndex].responseStr = _activeClients[activeClientsIndex].response->get_response();
         _activeClients[activeClientsIndex].bytesToSend = _activeClients[activeClientsIndex].response->get_response().length();
     }
