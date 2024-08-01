@@ -13,11 +13,11 @@ CC          := c++ --std=c++20
 INCLUDES    := $(shell find inc -type d -exec echo -I {} \;)
 
 #Compiler Flags
-CFLAGS := -Wall -Wextra -Werror -Wunreachable-code
+CFLAGS := -Wall -Wextra -Werror -Wunreachable-code #-Ofast -march=native -flto
 
 #Debug Flags
 ifdef DEBUG
-	CFLAGS += -g -D DEBUG
+	CFLAGS += -g#-fsanitize=address,undefined #-D DEBUG
 endif
 
 #Source files
@@ -61,7 +61,6 @@ $(CGI_BIN_DIR)/%.cgi: $(CGI_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INCLUDES) $< -o $@
 	@echo "$(GREEN)CGI script $@ created$(RESET_COLOR)"
-
 	@echo "$(GREEN)./$(NAME) executable created$(RESET_COLOR)"
 
 # Cleaning Targets

@@ -41,8 +41,6 @@ int ClientConnection::findClientIndex(int clientFD)
     return (-1);
 }
 
-
-
 bool ClientConnection::initializeRequest(int activeClientsIndex) 
 {
     time_t currentTime;
@@ -86,11 +84,11 @@ void    ClientConnection::receiveData(int polledFdsIndex, int activeClientsIndex
     if (bytesReceived < 0 && (errno != EAGAIN && errno != EWOULDBLOCK)) {
         logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
                 _activeClients[activeClientsIndex].clientIP, _polledFds[polledFdsIndex].fd);
-        removeClientSocket(_polledFds[polledFdsIndex].fd);
+        removeClientSocket(_polledFds[polledFdsIndex].fd); // Moet client niet pas verwijderd worden als er ook een response is?
     }
     if (bytesReceived == 0) {
         logClientConnection("Client disconnected", _activeClients[activeClientsIndex].clientIP, _polledFds[polledFdsIndex].fd);
-        removeClientSocket(_polledFds[polledFdsIndex].fd);
+        removeClientSocket(_polledFds[polledFdsIndex].fd); // Moet client niet pas verwijderd worden als er ook een response is?
     }
 }
 
@@ -99,7 +97,7 @@ void ClientConnection::sendData(int polledFdsIndex, int activeClientsIndex)
     int remainingBytes = _activeClients[activeClientsIndex].bytesToSend - _activeClients[activeClientsIndex].totalBytesSent;
     int packageSize = std::min(BUFFSIZE, remainingBytes);
 
-    ssize_t bytesSent = send(_polledFds[polledFdsIndex].fd, 
+    ssize_t bytesSent = send(_polledFds[polledFdsIndex].fd,
                              _activeClients[activeClientsIndex].responseStr.c_str() + _activeClients[activeClientsIndex].totalBytesSent, packageSize, 0);  
     if (bytesSent > 0) {
         _activeClients[activeClientsIndex].totalBytesSent += bytesSent;
@@ -107,20 +105,18 @@ void ClientConnection::sendData(int polledFdsIndex, int activeClientsIndex)
             _activeClients[activeClientsIndex].sendStatus = SENDING;
             return;
         }
-        removeClientSocket(_polledFds[polledFdsIndex].fd);
+        // removeClientSocket(_polledFds[polledFdsIndex].fd); // Moet client socket niet pas verwijderd worden nadat send helemaal klaar is?
     }
     if (bytesSent < 0 && (errno != EAGAIN && errno != EWOULDBLOCK)) {
+		logClientError("Failed to send data to client: " + std::string(strerror(errno)),_activeClients[findClientIndex(_polledFds[polledFdsIndex].fd)].clientIP, _polledFds[polledFdsIndex].fd);
         removeClientSocket(_polledFds[polledFdsIndex].fd);
-        logClientError("Failed to send data to client: " + std::string(strerror(errno)),_activeClients[findClientIndex(_polledFds[polledFdsIndex].fd)].clientIP, _polledFds[polledFdsIndex].fd);
     }
     else {
+		logClientConnection("Client disconnected", _activeClients[findClientIndex(_polledFds[polledFdsIndex].fd)].clientIP, _polledFds[polledFdsIndex].fd);
         removeClientSocket(_polledFds[polledFdsIndex].fd);
-        logClientConnection("Client disconnected", _activeClients[findClientIndex(_polledFds[polledFdsIndex].fd)].clientIP, _polledFds[polledFdsIndex].fd);
     }
     return;
 }
-
-
 
 void ClientConnection::handlePollInEvent(int polledFdsIndex) 
 {
@@ -138,12 +134,12 @@ void ClientConnection::handlePollInEvent(int polledFdsIndex)
         _activeClients[activeClientsIndex].request->appendToBody(_activeClients[activeClientsIndex].receiveStr);
         _activeClients[activeClientsIndex].receiveStr.clear();
     }
-    if (_activeClients[activeClientsIndex].request->get_requestStatus() == true) {
+    if (_activeClients[activeClientsIndex].request->get_requestStatus() == true)
         _polledFds[polledFdsIndex].events = POLLOUT;
-    }
 }
 
-clientInfo ClientConnection::initClientInfo(int clientFD, int serverIndex, sockaddr_in clientAddr) {
+clientInfo ClientConnection::initClientInfo(int clientFD, int serverIndex, sockaddr_in clientAddr)
+{
     clientInfo info;
     time_t currentTime;
     time(&currentTime);
@@ -229,7 +225,14 @@ void ClientConnection::handlePollOutEvent(int polledFdsIndex, std::list<ServerSt
         _activeClients[activeClientsIndex].responseStr = _activeClients[activeClientsIndex].response->get_response();
         _activeClients[activeClientsIndex].bytesToSend = _activeClients[activeClientsIndex].response->get_response().length();
     }
-        sendData(polledFdsIndex, activeClientsIndex);
+	else if (_activeClients[activeClientsIndex].response && _activeClients[activeClientsIndex].response->isComplete() == false) {
+		_activeClients[activeClientsIndex].response->continue_cgi();
+	}
+	else {
+		_activeClients[activeClientsIndex].responseStr = _activeClients[activeClientsIndex].response->get_response();
+		_activeClients[activeClientsIndex].bytesToSend = _activeClients[activeClientsIndex].response->get_response().length();
+    	sendData(polledFdsIndex, activeClientsIndex);
+	}
 }
 
 void ClientConnection::checkConnectedClientsStatus() 

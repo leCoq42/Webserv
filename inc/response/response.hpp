@@ -2,11 +2,13 @@
 
 #include "request.hpp"
 #include "fileAccess.hpp"
+#include "cgi.hpp"
 #include <iostream>
 #include <memory>
 #include <unordered_map>
 #include <vector>
 #include <map>
+
 
 enum class statusCode {
 	OK = 200,
@@ -39,18 +41,19 @@ class Response {
 public:
   Response(std::list<ServerStruct> *config);
   Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, int port);
-  Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, std::string filename);
+  // Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, std::string filename);
   ~Response();
 
-  Response(const Response &src);
-  Response &operator=(const Response &rhs);
+	Response(const Response &src);
+	Response &operator=(const Response &rhs);
+	void		swap(Response &lhs);
 
-  void			swap(Response &lhs);
-  void			handleRequest(const std::shared_ptr<Request> &request);
-  std::string	get_response();
-  std::string	get_contentType();
+	void		continue_cgi();
+	std::string	get_response();
+	std::string	get_contentType();
+	bool		isComplete();
 
-  void printResponse();
+	void		printResponse();
 
 private:
 	std::shared_ptr<Request>	_request;
@@ -62,7 +65,10 @@ private:
 	std::list<ServerStruct>		*_config;
 	FileAccess					_fileAccess;
 	std::filesystem::path		_finalPath;
+	std::unique_ptr<CGI>		_cgi;
+	bool						_complete;
 
+	void	handleRequest(const std::shared_ptr<Request> &request);
 	bool	handleGetRequest(const std::shared_ptr<Request> &request);
 	bool	handlePostRequest(const std::shared_ptr<Request> &request);
 	bool	handleDeleteRequest(const std::shared_ptr<Request> &request);
@@ -71,12 +77,13 @@ private:
 	std::unordered_map<std::string, std::string>	get_args(std::string requestBody,
 															   std::string contentType);
 	std::vector<std::string>						split_multipart(std::string requestBody,
-																	std::string boundary);
+																std::string boundary);
 	std::string										extract_filename(const std::string &headers);
 	statusCode										write_file(const std::string &path,
 																const std::string &content, bool append);
 	const std::string								readFileToBody(std::filesystem::path path);
-	std::string										buildResponse(int status, const std::string &message, bool isCGI = false);
+	void											buildResponse(int status, const std::string &message,
+							  									bool isCGI = false);
 
 	static const inline std::unordered_map<std::string, std::string> contentTypes{
 		{".html", "text/html"},
