@@ -136,7 +136,6 @@ void ClientConnection::handlePollInEvent(int polledFdsIndex)
     }
     if (_activeClients[activeClientsIndex].request->get_requestStatus() == true)
         _polledFds[polledFdsIndex].events = POLLOUT;
-    }
 }
 
 clientInfo ClientConnection::initClientInfo(int clientFD, int serverIndex, sockaddr_in clientAddr)
