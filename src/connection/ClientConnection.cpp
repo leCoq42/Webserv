@@ -134,11 +134,12 @@ void ClientConnection::handlePollInEvent(int polledFdsIndex)
         _activeClients[activeClientsIndex].request->appendToBody(_activeClients[activeClientsIndex].receiveStr);
         _activeClients[activeClientsIndex].receiveStr.clear();
     }
-    if (_activeClients[activeClientsIndex].request->get_requestStatus() == true) {
+    if (_activeClients[activeClientsIndex].request->get_requestStatus() == true)
         _polledFds[polledFdsIndex].events = POLLOUT;
 }
 
-clientInfo ClientConnection::initClientInfo(int clientFD, int serverIndex, sockaddr_in clientAddr) {
+clientInfo ClientConnection::initClientInfo(int clientFD, int serverIndex, sockaddr_in clientAddr)
+{
     clientInfo info;
     time_t currentTime;
     time(&currentTime);
@@ -220,7 +221,7 @@ void ClientConnection::handlePollOutEvent(int polledFdsIndex, std::list<ServerSt
     int activeClientsIndex = findClientIndex(_polledFds[polledFdsIndex].fd);
 
 	if (!_activeClients[activeClientsIndex].response) {
-       _activeClients[activeClientsIndex].response = std::make_shared<Response> (_activeClients[activeClientsIndex].request, serverStruct->front()); // serverStruct
+       _activeClients[activeClientsIndex].response = std::make_shared<Response>(_activeClients[activeClientsIndex].request, serverStruct->front(), _activeClients[activeClientsIndex].port); // serverStruct
     }
 	else if (_activeClients[activeClientsIndex].response && _activeClients[activeClientsIndex].response->isComplete() == false) {
 		_activeClients[activeClientsIndex].response->continue_cgi();

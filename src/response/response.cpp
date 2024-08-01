@@ -39,7 +39,6 @@ Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *co
 	#ifdef DEBUG
 	printResponse();
 	#endif
-
 }
 
 // Response::Response(std::shared_ptr<Request> request, ServerStruct &config, std::string filename)

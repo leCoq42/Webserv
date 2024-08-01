@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 
+
 enum class statusCode {
 	OK = 200,
 	CREATED = 201,
@@ -40,7 +41,7 @@ class Response {
 public:
   Response(std::list<ServerStruct> *config);
   Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, int port);
-  Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, std::string filename);
+  // Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, std::string filename);
   ~Response();
 
 	Response(const Response &src);

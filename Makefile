@@ -13,7 +13,7 @@ CC          := c++ --std=c++20
 INCLUDES    := $(shell find inc -type d -exec echo -I {} \;)
 
 #Compiler Flags
-CFLAGS := -Wall -Wextra -Werror -Wunreachable-code -Ofast -march=native -flto
+CFLAGS := -Wall -Wextra -Werror -Wunreachable-code #-Ofast -march=native -flto
 
 #Debug Flags
 ifdef DEBUG
