@@ -21,7 +21,7 @@
 
 FileAccess::FileAccess(std::list<ServerStruct> *config): config(config)
 {
-	std::cout << MSG_BORDER << "[FILEACCESS SETUP]" << MSG_BORDER << std::endl;
+	// std::cout << MSG_BORDER << "[FILEACCESS SETUP]" << MSG_BORDER << std::endl;
 	_return = "";
 }
 
@@ -61,7 +61,7 @@ void	FileAccess::swap_to_right_server_config(std::string uri, int port)
 		}
 	}
 	server = prev_match;
-	std::cout << "SELECTED: " << server->_id << std::endl; 
+	// std::cout << "SELECTED: " << server->_id << std::endl; 
 	_root = server->_root.content_list.back();
 	_currentRoot = _root;
 	_allowedMethods = &server->_allowMethods.content_list;

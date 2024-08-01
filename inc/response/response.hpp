@@ -39,19 +39,16 @@ enum class statusCode {
 
 class Response {
 public:
-  Response(std::list<ServerStruct> *config);
-  Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, int port);
-  // Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, std::string filename);
-  ~Response();
-
+	Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, int port);
+	~Response();
 	Response(const Response &src);
 	Response &operator=(const Response &rhs);
 	void		swap(Response &lhs);
 
 	void		continue_cgi();
-	std::string	get_response();
-	std::string	get_contentType();
-	bool		isComplete();
+	const std::string	&get_response() const;
+	const std::string	&get_contentType() const;
+	bool		isComplete() const;
 
 	void		printResponse();
 
@@ -61,13 +58,12 @@ private:
 	std::string					_body;
 	size_t						_contentLength;
 	std::string					_responseString;
-	std::string					_bufferFile;
-	std::list<ServerStruct>		*_config;
 	FileAccess					_fileAccess;
 	std::filesystem::path		_finalPath;
-	std::unique_ptr<CGI>		_cgi;
+	std::shared_ptr<CGI>		_cgi;
 	bool						_complete;
 
+	Response();
 	void	handleRequest(const std::shared_ptr<Request> &request);
 	bool	handleGetRequest(const std::shared_ptr<Request> &request);
 	bool	handlePostRequest(const std::shared_ptr<Request> &request);

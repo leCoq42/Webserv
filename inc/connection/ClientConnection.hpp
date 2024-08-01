@@ -2,7 +2,6 @@
 
 #include "ServerConnection.hpp"
 #include "ServerStruct.hpp" //added
-#include "Chunked.hpp"
 #include <memory>
 #include <sys/poll.h>
 #include <sys/types.h>

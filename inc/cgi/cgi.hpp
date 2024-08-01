@@ -14,10 +14,10 @@ class CGI {
 		//CGI = overload
 		~CGI();
 
-		size_t		get_contentLength();
-		std::string	get_result();
-		int			get_cgiFD();
-		bool		isComplete();
+		const size_t		&get_contentLength() const;
+		const std::string	&get_result() const;
+		const int		&get_cgiFD() const;
+		const bool		&isComplete() const;
 
 		int			readCGIfd();
 

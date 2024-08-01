@@ -13,11 +13,14 @@
 #include <unordered_map>
 #include <vector>
 
-Response::Response(std::list<ServerStruct> *config) : _request(nullptr), _responseString(""), _config(config), _fileAccess(config) {}
+Response::Response():
+	_request(nullptr), _contentType(""), _body(""), _contentLength(0), _responseString(""),
+	_fileAccess(nullptr), _finalPath(""), _cgi(nullptr), _complete(true)
+{}
 
-Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, int port)
-    : _request(request), _contentType(""), _body(""), _contentLength(0), _responseString(""),
-	_bufferFile(""), _config(config), _fileAccess(config), _complete(true)
+Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, int port):
+	_request(request), _contentType(""), _body(""), _contentLength(0), _responseString(""),
+	_fileAccess(config), _finalPath(""), _cgi(nullptr), _complete(true)
 {
 	int return_code = 0;
 
@@ -28,12 +31,10 @@ Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *co
 
 	_finalPath = _fileAccess.isFilePermissioned( _finalPath, return_code, port);
 	if (return_code) {
-		std::cout << return_code << "Path error:" << _finalPath << std::endl;
 		_finalPath = _fileAccess.getErrorPage(return_code); // wrong place
 		buildResponse(static_cast<int>(return_code), "Not Found", "");
 	}
 	else {
-		// std::cout << "File Access Path -> " << _finalPath << std::endl;
 		handleRequest(request);
 	}
 	#ifdef DEBUG
@@ -41,33 +42,12 @@ Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *co
 	#endif
 }
 
-// Response::Response(std::shared_ptr<Request> request, ServerStruct &config, std::string filename)
-//     : _request(request), _responseString(""), _contentType(""), _bufferFile(filename), _config(config), _fileAccess(config) {
-// 	int return_code = 0;
-//
-// 	std::filesystem::path newPath = _fileAccess.isFilePermissioned(request->get_requestPath(), return_code);
-// 	if (return_code) {
-// 		std::cout << "Return code: " << return_code << std::endl;
-// 		std::cout << "New Path:" << _request->get_requestPath() << std::endl;
-// 		_request->set_requestPath (_fileAccess.getErrorPage(return_code)); // wrong place
-// 		buildResponse(static_cast<int>(return_code), "Not Found", "");
-// 	}
-// 	else {
-// 		_request->set_requestPath(newPath);
-// 		std::cout << "New Path:" << _request->get_requestPath() << std::endl;
-// 		handleRequest(request);
-// 	}
-// 	#ifdef DEBUG
-// 	printResponse();
-// 	#endif
-// }
-
 Response::~Response() {}
 
-Response::Response(const Response &src)
-    : _request(src._request), _contentType(src._contentType), _body(src._body), _contentLength(src._contentLength),
-	_responseString(src._responseString), _bufferFile(src._bufferFile), _config(src._config),
-	_fileAccess(src._config), _finalPath(src._finalPath), _complete(src._complete)
+Response::Response(const Response &src):
+	_request(src._request), _contentType(src._contentType), _body(src._body), _contentLength(src._contentLength),
+	_responseString(src._responseString), _fileAccess(src._fileAccess),
+	_finalPath(src._finalPath), _cgi(src._cgi), _complete(src._complete)
 {}
 
 Response &Response::operator=(const Response &rhs)
@@ -81,11 +61,21 @@ void Response::swap(Response &lhs)
 {
 	std::swap(_request, lhs._request);
 	std::swap(_contentType, lhs._contentType);
+	std::swap(_body, lhs._body);
+	std::swap(_contentLength, lhs._contentLength);
 	std::swap(_responseString, lhs._responseString);
+	std::swap(_fileAccess, lhs._fileAccess);
+	std::swap(_finalPath, lhs._finalPath);
+	std::swap(_cgi, lhs._cgi);
+	std::swap(_complete, lhs._complete);
 }
 
 void Response::handleRequest(const std::shared_ptr<Request> &request)
 {
+	if (_request && !_request->isValid()) {
+		buildResponse(static_cast<int>(statusCode::BAD_REQUEST), "Bad Request");
+		return;
+	}
 	std::string request_method = request->get_requestMethod();
 	try {
 		if (request_method == "GET" && _fileAccess.allowedMethod("GET"))
@@ -107,7 +97,6 @@ void Response::handleRequest(const std::shared_ptr<Request> &request)
 
 bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 	std::stringstream buffer;
-	bool isCGI = false;
 
 	if (!_finalPath.empty() && _finalPath.has_extension())
 	{
@@ -120,7 +109,6 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 			return false;
 		}
 		_contentType = it->second;
-
 		if (interpreters.find(_finalPath.extension()) == interpreters.end())
 		{
 			_body = readFileToBody(_finalPath);
@@ -129,20 +117,19 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 		}
 		else
 		{
-			isCGI = true;
-			_cgi = std::make_unique<CGI>(_request, _finalPath, interpreters.at(_finalPath.extension()));
+			_cgi = std::make_shared<CGI>(_request, _finalPath, interpreters.at(_finalPath.extension()));
 			_complete = _cgi->isComplete();
 			if (_complete == true) {
 				_body = _cgi->get_result();
 				_contentLength = _cgi->get_contentLength();
-				buildResponse(static_cast<int>(statusCode::OK), "OK", isCGI); // when cgi double padded?
+				buildResponse(static_cast<int>(statusCode::OK), "OK", true);
 			}
 			return true;
 		}
 	}
 	else
 		_body = list_dir(_finalPath, request->get_requestPath(), request->get_referer());
-	buildResponse(static_cast<int>(statusCode::OK), "OK", isCGI); // when cgi double padded?
+	buildResponse(static_cast<int>(statusCode::OK), "OK", false);
 	return true;
 }
 
@@ -155,16 +142,15 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request)
 	if (!_finalPath.empty() && _finalPath.string()[0] == '/')
 		_finalPath = _finalPath.string().substr(1);
 
-	std::cout << "_finalPath:" << _finalPath << std::endl;
 	if (_finalPath.has_extension()) {
 		if (interpreters.find(_finalPath.extension()) != interpreters.end()) {
 			isCGI = true;
-			_cgi = std::make_unique<CGI>(_request, _finalPath, interpreters.at(_finalPath.extension()));
+			_cgi = std::make_shared<CGI>(_request, _finalPath, interpreters.at(_finalPath.extension()));
 			_complete = _cgi->isComplete();
 			if (_complete == true) {
 				_body = _cgi->get_result();
 				_contentLength = _cgi->get_contentLength();
-				buildResponse(static_cast<int>(statusCode::OK), "OK", isCGI); // when cgi double padded?
+				buildResponse(static_cast<int>(statusCode::OK), "OK", isCGI);
 			}
 			return true;
 		}
@@ -212,49 +198,36 @@ void Response::handle_multipart()
 	std::string	filename = "";
 	bool		append = false;
 
-	if (_bufferFile.empty())
-	{
-		std::vector<std::string> parts = split_multipart(requestBody, boundary);
-		#ifdef DEBUG
-		std::cout << MSG_BORDER << "[MULTIPART REQUEST]" << MSG_BORDER << std::endl;
-		std::cout << "Number of Parts: " << parts.size() << std::endl;
-		#endif
-		for (const std::string &part: parts) {
-			if (part.empty())
-				continue;
+	std::vector<std::string> parts = split_multipart(requestBody, boundary);
+	for (const std::string &part: parts) {
+		if (part.empty())
+			continue;
 
-			size_t header_end = part.find(CRLFCRLF);
-            if (header_end == std::string::npos)
-				continue;
+		size_t header_end = part.find(CRLFCRLF);
+		if (header_end == std::string::npos)
+			continue;
 
-			std::string headers = part.substr(0, header_end);
-			std::string content = part.substr(header_end + 4);
-			
-			std::transform(headers.begin(), headers.end(), headers.begin(), [](unsigned char c){ return std::tolower(c);} );
+		std::string headers = part.substr(0, header_end);
+		std::string content = part.substr(header_end + 4);
+		
+		std::transform(headers.begin(), headers.end(), headers.begin(), [](unsigned char c){ return std::tolower(c);} );
 
-			size_t contentType = headers.find("content-type:");
-			if (contentType == std::string::npos) {
-				continue;
-			}
-
-			filename = extract_filename(headers);
-			status = write_file(      "html/uploads/" + filename, content, append); //TODO:make customizable via config
-			if (status != statusCode::OK)
-				break;
-			append = true;
-			#ifdef DEBUG
-			std::cout << "File Upload success!" << std::endl;
-			std::cout << MSG_BORDER << MSG_BORDER << std::endl;
-			#endif // DEBUG
+		size_t contentType = headers.find("content-type:");
+		if (contentType == std::string::npos) {
+			continue;
 		}
-		if (status == statusCode::OK)
-			_body = readFileToBody("html/upload_success.html");
-		else
-			_body = readFileToBody("html/standard_404.html");
+
+		filename = extract_filename(headers);
+		status = write_file(      "html/uploads/" + filename, content, append); //TODO:make customizable via config
+		if (status != statusCode::OK)
+			break;
+		append = true;
+		std::cout << MSG_BORDER << "File Upload success!" << MSG_BORDER << std::endl;
 	}
-	else {//TODO should be able to run cgi as well
-		status = statusCode::OK;
-	}
+	if (status == statusCode::OK)
+		_body = readFileToBody("html/upload_success.html");
+	else
+		_body = readFileToBody("html/standard_404.html");
 	buildResponse(static_cast<int>(status), statusCodeMap.at(status), false);
 }
 
@@ -277,7 +250,8 @@ std::vector<std::string> Response::split_multipart(std::string requestBody, std:
 	return parts;
 }
 
-std::string Response::extract_filename(const std::string &headers) {
+std::string Response::extract_filename(const std::string &headers)
+{
 	size_t filename_pos = headers.find("filename=\""); //this is tricky might not necessarily called like this
 				//
 	if (filename_pos == std::string::npos)
@@ -286,7 +260,8 @@ std::string Response::extract_filename(const std::string &headers) {
 	return headers.substr(filename_pos + 10, filename_end - filename_pos - 10);
 }
 
-statusCode Response::write_file(const std::string &path, const std::string &content, bool append) {
+statusCode Response::write_file(const std::string &path, const std::string &content, bool append)
+{
 	std::ofstream file;
 	if (append)
 		file.open(path, std::ios::binary | std::ios::app);
@@ -304,7 +279,9 @@ statusCode Response::write_file(const std::string &path, const std::string &cont
 void	Response::continue_cgi()
 {
 	if (_cgi->readCGIfd()) {
-		std::cerr << "resume reading error" << std::endl;
+		std::cerr << "cgi reading error" << std::endl;
+		buildResponse(static_cast<int>(statusCode::INTERNAL_SERVER_ERROR), "Internal Server Error", false); // when cgi double padded?
+		_complete = true;
 		return;
 	}
 	if (_cgi->isComplete() == true) {
@@ -338,69 +315,11 @@ void Response::buildResponse(int status, const std::string &message, bool isCGI)
 	}
 }
 
-std::string	Response::get_response() { return _responseString; }
-std::string	Response::get_contentType() { return _contentType; }
-bool		Response::isComplete() { return _complete; }
+const std::string	&Response::get_response() const { return _responseString; }
+const std::string	&Response::get_contentType() const { return _contentType; }
+bool		Response::isComplete() const { return _complete; }
 
 void Response::printResponse() {
 	std::cout << MSG_BORDER << "[Response]" << MSG_BORDER << std::endl;
 	std::cout << _responseString << std::endl;
 }
-
-// std::unordered_map<std::string, std::string>
-// Response::get_args(std::string requestBody, std::string contentType) {
-// 	std::unordered_map<std::string, std::string> args;
-//
-// 	if (contentType == "application/x-www-form-urlencoded")
-// 	{
-// 		std::string token;
-// 		std::istringstream tokenStream(requestBody);
-// 		while (std::getline(tokenStream, token, '&'))
-// 		{
-// 			size_t pos = token.find('=');
-// 			if (pos != std::string::npos) {
-// 				std::string key = token.substr(0, pos);
-// 				std::string value = token.substr(pos + 1);
-// 				args[key] = value;
-// 			}
-// 		}
-// 	}
-// 	else if (contentType == "multipart/form-data")
-// 	{
-// 		size_t boundaryPos = contentType.find("boundary=");
-// 		if (boundaryPos == std::string::npos)
-// 			return args;
-// 		std::string boundary = contentType.substr(boundaryPos + 9);
-//
-// 		std::vector<std::string> parts = split_multipart(requestBody, boundary);
-// 		if (parts.empty())
-// 			return args;
-//
-// 		for (const std::string &part : parts)
-// 		{
-// 			size_t cdPos;
-// 			if ((cdPos = part.find("content-disposition: for-data;")) ==
-// 				std::string::npos)
-// 				return args; // error ?
-//
-// 			size_t namePos = part.find("name=\"");
-// 			if (namePos == std::string::npos)
-// 				return args; // error ?
-// 			size_t nameEnd = part.find("\"", namePos);
-// 			if (nameEnd == std::string::npos)
-// 				return args; // error ?
-// 			std::string name = part.substr(namePos + 6, nameEnd - namePos - 6);
-//
-// 			std::string filename;
-// 			size_t filenamePos = part.find("filename=\"", cdPos + 31);
-// 			if (filenamePos != std::string::npos)
-// 			{
-// 				size_t filenameEnd = part.find("\"", filenamePos + 10);
-// 				if (filenameEnd != std::string::npos)
-// 					filename = part.substr(filenamePos + 10,
-// 										filenameEnd - filenamePos - 10);
-// 			}
-// 		}
-// 	}
-// 	return args;
-// }  

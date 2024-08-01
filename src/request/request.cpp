@@ -10,18 +10,15 @@
 #include <filesystem>
 
 
-// auto print_key_value = [](const auto &key, const auto &value)
-// {
-// 	std::cout << "Key:[" << key << "] Value:[" << value << "]\n";
-// };
+Request::Request() :
+	_rawRequest(""), _requestMethod(""), _requestPath(""),
+	_htmlVersion(""), _valid(0), _body(""), _contentLength(0), _requestStatus(false)
+{}
 
-Request::Request() : _rawRequest(""), _requestMethod(""), _requestPath(""),
-	_htmlVersion(""), _isValid(0), _body(""), _bufferFile(""),
-	_contentLength(0), _chunked(false), _requestStatus(false) {}
-
-Request::Request(const std::string rawStr) : _rawRequest(rawStr), _requestMethod(""), _requestPath(""),
-	_htmlVersion(""), _isValid(0), _body(""), _bufferFile(""),
-	_contentLength(0), _chunked(false), _requestStatus(false)  {
+Request::Request(const std::string rawStr) :
+	_rawRequest(rawStr), _requestMethod(""), _requestPath(""),
+	_htmlVersion(""), _valid(0), _body(""), _contentLength(0), _requestStatus(false)
+{
 	parseRequest();
 
 	if (_body.length() != _contentLength) {// TODO: not sure which length to compare with
@@ -45,10 +42,10 @@ Request::~Request() {}
 Request::Request(const Request &src) :
 	_rawRequest(src._rawRequest), _requestMethod(src._requestMethod),
 	_requestPath(src._requestPath), _htmlVersion(src._htmlVersion),
-	 _keepAlive(src._keepAlive), _isValid(src._isValid), _body(src._body),
-	_bufferFile(src._bufferFile), _contentLength(src._contentLength), _chunked(src._chunked),
+	_valid(src._valid), _body(src._body), _contentLength(src._contentLength),
 	_requestStatus(src._requestStatus), _headers(src._headers),
-	_requestArgs(src._requestArgs) {}
+	_requestArgs(src._requestArgs)
+{}
 
 Request &Request::operator=(const Request &rhs) {
 	Request temp(rhs);
@@ -60,14 +57,12 @@ void Request::swap(Request &lhs) {
 	std::swap(_requestMethod, lhs._requestMethod);
 	std::swap(_requestPath, lhs._requestPath);
 	std::swap(_htmlVersion, lhs._htmlVersion);
-	std::swap(_requestArgs, lhs._requestArgs);
-	std::swap(_headers, lhs._headers);
-	std::swap(_isValid, lhs._isValid);
+	std::swap(_valid, lhs._valid);
 	std::swap(_body, lhs._body);
-	std::swap(_bufferFile, lhs._bufferFile);
 	std::swap(_contentLength, lhs._contentLength);
-	std::swap(_chunked, lhs._chunked);
 	std::swap(_requestStatus, lhs._requestStatus);
+	std::swap(_headers, lhs._headers);
+	std::swap(_requestArgs, lhs._requestArgs);
 }
 
 void Request::parseRequest()
@@ -77,7 +72,7 @@ void Request::parseRequest()
 	std::string headerValue;
 
 	if (_rawRequest.empty()) {
-		_isValid = false;
+		_valid = false;
 		return;
 	}
 
@@ -86,7 +81,7 @@ void Request::parseRequest()
 	requestStream.get();
 
 	if (!parseRequestLine(line)) {
-		_isValid = false;
+		_valid = false;
 		return;
 	}
 
@@ -94,18 +89,18 @@ void Request::parseRequest()
 	if (_requestMethod == "GET")
 		parseUrlArgs(_requestPath);
 	if (!parseRequestHeaders(requestStream)) {
-		_isValid = false;
+		_valid = false;
 		return;
 	}
 
 	_contentLength = parse_contentLen();
 	_body = parseRequestBody(_rawRequest);
-	if (_headers.find("transfer-encoding") != _headers.end()) {
-		if (_headers["transfer-encoding"].find("chunked") != std::string::npos)  {
-			_chunked = true;
-		}
-	}
-	_isValid = checkRequestValidity();
+	// if (_headers.find("transfer-encoding") != _headers.end()) {
+	// 	if (_headers["transfer-encoding"].find("chunked") != std::string::npos)  {
+	// 		_chunked = true;
+	// 	}
+	// }
+	_valid = checkRequestValidity();
 	return;
 }
 
@@ -191,18 +186,6 @@ std::string Request::parseRequestBody(const std::string &_rawRequest)
 	return body;
 }
 
-// std::string Request::parseRequestBody(const std::string &_rawRequest)
-// {
-// 	size_t body_start;
-//
-// 	body_start = _rawRequest.find(CRLFCRLF);
-// 	if (body_start == std::string::npos) {
-// 		return "";
-// 	}
-// 	std::string body = _rawRequest.substr(body_start + 4, _contentLength);
-// 	return body;
-// }
-
 void Request::appendToBody(std::string part)
 {
 	_body.append(part);
@@ -284,13 +267,9 @@ const std::string Request::get_boundary() const {
 	return ret;
 }
 
-const bool &Request::get_chunked() const { return _chunked; }
-
 const std::string &Request::get_body() const { return _body; }
 
 const std::filesystem::path &Request::get_requestPath() const { return _requestPath; }
-
-const std::string &Request::get_bufferFile() const { return _bufferFile; }//added
 
 const size_t &Request::get_contentLength() const { return (_contentLength); }//added
 
@@ -304,15 +283,9 @@ const std::unordered_map<std::string, std::string> &Request::get_headers() const
 	return _headers;
 }
 
-const bool &Request::get_validity() const { return _isValid; }
+const bool &Request::isValid() const { return _valid; }
 
 const bool	&Request::get_requestStatus() const { return _requestStatus; }
-
-void	Request::set_bufferFile(std::string buffer_file) { _bufferFile = buffer_file; }
-
-void	Request::set_contentLength(size_t contentLength) {
-	_contentLength = contentLength;
-} // added
 
 void	Request::set_requestStatus(bool status) { _requestStatus = status; }
 
@@ -344,12 +317,6 @@ void Request::printRequest() const {
 		std::cout << "Boundary: " << get_boundary() << std::endl;
 		std::cout << "ContentLen: " << get_contentLength() << std::endl;
 	}
-
-	std::cout << "<chunked>" << std::endl;
-	std::cout << "chunked: " << _chunked << std::endl;
-	(_chunked ? std::cout << "chunked: true" << std::endl
-				: std::cout << "chunked: false" << std::endl);
-
 
 	std::cout << "<Body>" << std::endl;
 	std::string body = get_body();
