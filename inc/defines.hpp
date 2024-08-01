@@ -2,7 +2,7 @@
 
 #define MSG_BORDER "---------------------------"
 
-#define BUFFSIZE 1024
+#define BUFFSIZE 4096
 
 #define QUEUESIZE 128
 
