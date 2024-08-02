@@ -45,10 +45,10 @@ public:
 	Response &operator=(const Response &rhs);
 	void		swap(Response &lhs);
 
-	void		continue_cgi();
+	void				continue_cgi();
 	const std::string	&get_response() const;
 	const std::string	&get_contentType() const;
-	bool		isComplete() const;
+	bool				isComplete() const;
 
 	void		printResponse();
 

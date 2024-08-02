@@ -264,7 +264,6 @@ std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &retur
 	new_uri = swap_out_root(uri, location_config, _root);
 	// check if request is a directory and perfect match. if so swap to index_file, if not perfect or no index_file match auto index, 404 of auto index is turned off.
 	path = uri_is_directory(new_uri, location_config, return_code);
-	std::cout << "final path:" << path << std::endl;
 	return (path);
 }
 
@@ -288,7 +287,6 @@ std::filesystem::path	FileAccess::getErrorPage(int return_code)
 //check if method is allowed for this specific location, this is fine
 bool	FileAccess::allowedMethod(std::string method)
 {
-	std::cout << "requested method " << method << std::endl;
 	for (std::string content : *_currentAllowedMethods)
 	{
 		if (!content.compare(method))

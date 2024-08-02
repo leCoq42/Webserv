@@ -22,7 +22,7 @@ server A {
 		}
 		location /cgi-bin {
 			autoindex			on;
-			root				;
+			root				html/cgi-bin;
 		}
 }
 

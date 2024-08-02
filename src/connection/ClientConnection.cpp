@@ -26,7 +26,14 @@ void ClientConnection::handlePollOutEvent(int clientFD, std::list<ServerStruct> 
         client.responseStr = client.response->get_response();
         client.bytesToSend = client.response->get_response().length();
     }
-    sendData(clientFD);
+	else if (client.response && client.response->isComplete() == false) {
+		client.response->continue_cgi();
+	}
+	else {
+		client.responseStr = client.response->get_response();
+		client.bytesToSend = client.response->get_response().length();
+		sendData(clientFD);
+	}
 }
 
 bool ClientConnection::initializeRequest(int clientFD) 

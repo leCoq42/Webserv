@@ -291,7 +291,7 @@ std::vector<std::string> Response::split_multipart(std::string requestBody, std:
 
 std::string Response::extract_filename(const std::string &headers)
 {
-	size_t filename_pos = headers.find("filename=\""); //this is tricky might not necessarily called like this
+	size_t filename_pos = headers.find("filename=\"");
 				//
 	if (filename_pos == std::string::npos)
 				return "temp.txt";
@@ -345,7 +345,6 @@ void Response::buildResponse(int status, const std::string &message, bool isCGI)
 			return;
 		}
 		else {
-			// std::cout << "Response content length: " << std::to_string(_body.length()) << std::endl;
 			_responseString.append("Content-Length: " + std::to_string(_body.length()) +
 						  CRLF);
 			_responseString.append("Content-Type: " + get_contentType() + CRLF);
