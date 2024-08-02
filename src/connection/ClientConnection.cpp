@@ -5,13 +5,7 @@ ClientConnection::ClientConnection() {}
 ClientConnection::ClientConnection(std::shared_ptr<ServerConnection> ServerConnection)
     : _ptrServerConnection(ServerConnection) {}
 
-ClientConnection::~ClientConnection()
-{
-    for (auto& client : _connectionInfo) {
-        _log.logClientConnection("connection closed", client.second.clientIP, client.first);
-        close(client.first);
-    }
-}
+ClientConnection::~ClientConnection() {}
 
 void ClientConnection::handlePollErrorEvent(int clientFD) {
     removeClientSocket(clientFD);
@@ -82,10 +76,6 @@ void ClientConnection::receiveData(int clientFD)
                 client.clientIP, clientFD);
         removeClientSocket(clientFD);
     }
-    if (bytesReceived == 0) {
-        _log.logClientConnection("Client disconnected", client.clientIP, clientFD);
-        removeClientSocket(clientFD);
-    }
 }
 
 void ClientConnection::sendData(int clientFD)
@@ -102,11 +92,10 @@ void ClientConnection::sendData(int clientFD)
             client.sendStatus = SENDING;
             return;
         }
-        removeClientSocket(clientFD);
     }
     if (bytesSent < 0 && (errno != EAGAIN && errno != EWOULDBLOCK)) {
-        _log.logClientError("Failed to send data to client: " + std::string(strerror(errno)), client.clientIP, clientFD);
-        removeClientSocket(clientFD);
+		_log.logClientError("Failed to send data to client: " + std::string(strerror(errno)), client.clientIP, clientFD);
+		removeClientSocket(clientFD);
     }
     else {
         _log.logClientConnection("Client disconnected", client.clientIP, clientFD);

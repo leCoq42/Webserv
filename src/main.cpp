@@ -13,7 +13,7 @@ void error_exit(int error_code) {
 	else if (error_code == 2)
 		std::cerr << "file loading error" << std::endl;
 	else if (error_code == 3)
-		std::cerr << "parsing went wrong" << std::endl;
+		std::cerr << "invalid config file" << std::endl;
 	else if (error_code == 4)
 		std::cerr << "loading server struct went wrong" << std::endl;
 	exit(1);
