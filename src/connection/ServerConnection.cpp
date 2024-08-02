@@ -1,6 +1,4 @@
 #include "ServerConnection.hpp"
-#include "log.hpp"
-#include "defines.hpp"
 
 ServerConnection::ServerConnection() {}
 
@@ -16,7 +14,6 @@ void ServerConnection::initServerInfo(ServerStruct &serverStruct, ServerInfo &in
 {
 	struct sockaddr_in server_addr;
 	memset(&server_addr, 0, sizeof(server_addr));
-	// info._config = &serverStruct; 
 	info.serverPort = atoi(it->c_str());
 	info.serverID = serverStruct._id;
 	server_addr.sin_family = AF_INET;
@@ -42,8 +39,8 @@ void ServerConnection::bindServerSocket(ServerInfo &info)
   }
   if (bind(info.serverFD, (struct sockaddr *)&info.server_addr,
            sizeof(info.server_addr)) == -1) {
-    close(info.serverFD);
     _log.logServerError("Failed to bind server", info.serverID, info.serverPort);
+    close(info.serverFD);
   }
 }
 
@@ -56,8 +53,7 @@ void ServerConnection::listenIncomingConnections(ServerInfo &info) {
 
 bool	already_in_servers(int port_number, std::vector<ServerInfo>	_connectedServers)
 {
-	for (ServerInfo connected : _connectedServers)
-	{
+	for (ServerInfo connected : _connectedServers){
 		if (connected.serverPort == port_number)
 			return (true);
 	}
@@ -71,16 +67,16 @@ void ServerConnection::setUpServerConnection(ServerStruct &serverStruct)
 	if (!already_in_servers(atoi(it->c_str()), _connectedServers))
 	{
 		if (atoi(it->c_str()) > 0 && atoi(it->c_str()) < 65536) {
-		ServerInfo info;
-		initServerInfo(serverStruct, info, it);
-		createServerSocket(info);
-		bindServerSocket(info);
-		listenIncomingConnections(info);
-		_connectedServers.push_back(info);
-		_log.logServerConnection("Server created", info.serverID, info.serverFD, info.serverPort);
+			ServerInfo info;
+			initServerInfo(serverStruct, info, it);
+			createServerSocket(info);
+			bindServerSocket(info);
+			listenIncomingConnections(info);
+			_connectedServers.push_back(info);
+			_log.logServerConnection("Server created", info.serverID, info.serverFD, info.serverPort);
 		} 
 		else {
-		_log.logServerError("Invalid port number", serverStruct._id, atoi(it->c_str()));
+			_log.logServerError("Invalid port number", serverStruct._id, atoi(it->c_str()));
 		}
 	}
   }
