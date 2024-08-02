@@ -98,12 +98,12 @@ void ClientConnection::sendData(int clientFD)
         removeClientSocket(clientFD);
     }
     if (bytesSent < 0 && (errno != EAGAIN && errno != EWOULDBLOCK)) {
-        removeClientSocket(clientFD);
         _log.logClientError("Failed to send data to client: " + std::string(strerror(errno)), client.clientIP, clientFD);
+        removeClientSocket(clientFD);
     }
     else {
-        removeClientSocket(clientFD);
         _log.logClientConnection("Client disconnected", client.clientIP, clientFD);
+        removeClientSocket(clientFD);
     }
 }
 
