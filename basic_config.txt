@@ -16,7 +16,7 @@ server A {
 		location /uploads {
 			allow_methods		GET POST DELETE;
 			autoindex			on;
-			root				html/uploads
+			root				html/uploads;
 		}
 		location /hoi {
 			autoindex			on;
