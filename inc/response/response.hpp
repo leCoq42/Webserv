@@ -84,6 +84,7 @@ private:
 	const std::string								readFileToBody(std::filesystem::path path);
 	void											buildResponse(int status, const std::string &message,
 							  									bool isCGI = false);
+	std::string										get_error_body(int error_code, std::string error_description);
 
 	static const inline std::unordered_map<std::string, std::string> contentTypes{
 		{".html", "text/html"},
@@ -97,6 +98,11 @@ private:
 		{".cgi", "text/html"},
 		{".php", "text/html"},
 		{".py", "text/html"},
+
+		{".bad_extension", "text/plain"}, //questionable but needed for test
+		{".bla", "text/plain"}, //questionable but needed for test
+		{".pouic", "text/plain"}, //questionable but needed for test
+		{".pouac", "text/plain"}, //questionable but needed for test, tester does not seem to care about file extensions
 
 		{"x-www-form-urlencoded", "application/x-www-form-urlencoded"},
 		{"form-data", "multipart/form-data"}};

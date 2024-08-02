@@ -26,15 +26,16 @@ Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *co
 	if (!_finalPath.empty() && _finalPath.string()[0] == '/')
 		_finalPath = _finalPath.string().substr(1);
 
-	_finalPath = _fileAccess.isFilePermissioned( _finalPath, return_code, port);
+	_finalPath = _fileAccess.isFilePermissioned( _finalPath, return_code, port, _request->get_requestMethod());
 	if (return_code == 301)
 	{
 		buildResponse(static_cast<int>(return_code), redirect(_fileAccess.get_return()), false);
 	}
 	else if (return_code) {
 		std::cout << return_code << "Path error:" << _finalPath << std::endl;
-		_finalPath = _fileAccess.getErrorPage(return_code); // wrong place
-		buildResponse(static_cast<int>(return_code), "Not Found", "");
+		// _finalPath = _fileAccess.getErrorPage(return_code); // wrong place
+		_body = get_error_body(return_code, "Not Found.");
+		buildResponse(static_cast<int>(return_code), "Not Found", false);
 	}
 	else {
 		// std::cout << "File Access Path -> " << _finalPath << std::endl;
@@ -88,6 +89,19 @@ void Response::swap(Response &lhs)
 	std::swap(_responseString, lhs._responseString);
 }
 
+std::string	Response::get_error_body(int error_code, std::string error_description)
+{
+	std::string				error_body;
+	std::filesystem::path	error_page;
+
+	error_page = _fileAccess.getErrorPage(error_code);
+	if (error_page != "")
+		error_body = readFileToBody(error_page);
+	else
+		error_body = standard_error(error_code, error_description);
+	return (error_body);
+}
+
 void Response::handleRequest(const std::shared_ptr<Request> &request)
 {
 	std::string request_method = request->get_requestMethod();
@@ -99,8 +113,11 @@ void Response::handleRequest(const std::shared_ptr<Request> &request)
 		else if (request_method == "DELETE" && _fileAccess.allowedMethod("DELETE"))
 			handleDeleteRequest(request);
 		else
+		{
+			_body = get_error_body(static_cast<int>(statusCode::METHOD_NOT_ALLOWED), "Method not allowed.");
 			buildResponse(static_cast<int>(statusCode::METHOD_NOT_ALLOWED),
 						"Method Not Allowed", false);
+		}
 	}
 	catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
@@ -119,7 +136,8 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 			contentTypes.find(_finalPath.extension());
 		if (it == contentTypes.end())
 		{
-				buildResponse(static_cast<int>(statusCode::UNSUPPORTED_MEDIA_TYPE),
+			_body = get_error_body(static_cast<int>(statusCode::OK), "Unsupported Media Type");
+			buildResponse(static_cast<int>(statusCode::UNSUPPORTED_MEDIA_TYPE),
 				  "Unsupported Media Type", false);
 			return false;
 		}
@@ -129,7 +147,12 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 		{
 			_body = readFileToBody(_finalPath);
 			if (_body.empty())
-				return false;
+			{
+				std::cout << "empty body" << std::endl;
+				_body = get_error_body(404, "File not found.");
+				buildResponse(static_cast<int>(statusCode::NOT_FOUND), "Not Found", false);
+				return true;
+			}
 		}
 		else
 		{
@@ -260,9 +283,9 @@ void Response::handle_multipart()
 			#endif // DEBUG
 		}
 		if (status == statusCode::OK)
-			_body = readFileToBody("html/upload_success.html");
+			_body = list_dir(_finalPath, _request->get_requestPath(), _request->get_referer());//readFileToBody("html/upload_success.html");
 		else
-			_body = readFileToBody("html/standard_404.html");
+			_body = get_error_body(static_cast<int>(status), "File not found.");//readFileToBody("html/standard_404.html");
 	}
 	else {//TODO should be able to run cgi as well
 		status = statusCode::OK;

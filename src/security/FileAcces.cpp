@@ -105,7 +105,23 @@ bool			FileAccess::is_deleteable(std::filesystem::path to_delete)
 	return false;
 }
 
-ConfigContent	*FileAccess::find_location_config(std::string uri, ConfigContent *location_config)
+bool	method_in_location(ConfigContent *current, ConfigContent *parent, std::string method)
+{
+	std::list<std::string>	*allowedMethods;
+
+	if ((LocationStruct *)current->childs && !((LocationStruct *)current->childs)->allow_methods.content_list.empty())
+		allowedMethods = &((LocationStruct *)current->childs)->allow_methods.content_list;
+	else
+		allowedMethods = &((LocationStruct *)parent->childs)->allow_methods.content_list;// return false;
+	for (std::string content : *allowedMethods)
+	{
+		if (!content.compare(method))
+			return true;
+	}
+	return false;
+}
+
+ConfigContent	*FileAccess::find_location_config(std::string uri, ConfigContent *location_config, std::string method)
 {
 	ConfigContent	*current;
 	ConfigContent	*previous_match;
@@ -133,7 +149,8 @@ ConfigContent	*FileAccess::find_location_config(std::string uri, ConfigContent *
 			}
 			else
 			{
-				if (!previous_match || previous_match->content_list.back().length() < loc_conf->length())
+				if (!previous_match || (previous_match->content_list.back().length() < loc_conf->length()
+					&& method_in_location(current, &server->_location, method)))
 					previous_match = current;
 			}
 		}
@@ -141,7 +158,8 @@ ConfigContent	*FileAccess::find_location_config(std::string uri, ConfigContent *
 		{
 			std::cout << "post+fix" << std::endl;
 			std::cout << *loc_conf << "==" << uri << "_" << uri.find(*loc_conf, (uri.length() - loc_conf->length())) << "=" << uri.length() - loc_conf->length() << std::endl;
-			if (uri.find(*loc_conf, (uri.length() - loc_conf->length())) == uri.length() - loc_conf->length())
+			if (uri.find(*loc_conf, (uri.length() - loc_conf->length())) == uri.length() - loc_conf->length()
+				&& method_in_location(current, &server->_location, method))
 			{
 				previous_match = current;
 				break;
@@ -149,7 +167,7 @@ ConfigContent	*FileAccess::find_location_config(std::string uri, ConfigContent *
 		}
 		current = current->next;
 	}
-	if ((LocationStruct *)previous_match->childs && !((LocationStruct *)previous_match->childs)->allow_methods.content_list.empty())
+	if (previous_match && (LocationStruct *)previous_match->childs && !((LocationStruct *)previous_match->childs)->allow_methods.content_list.empty())
 		_currentAllowedMethods = &((LocationStruct *)previous_match->childs)->allow_methods.content_list;
 	return (previous_match);
 }
@@ -157,12 +175,30 @@ ConfigContent	*FileAccess::find_location_config(std::string uri, ConfigContent *
 std::string	FileAccess::swap_out_root(std::string uri, ConfigContent *location_config, std::string root)
 {
 	std::filesystem::path	root_swapped_path;
+	std::filesystem::path	path;
 
 	if (location_config->childs && !((LocationStruct *)location_config->childs)->root.content_list.empty())
 		root = ((LocationStruct *)location_config->childs)->root.content_list.back();
 	root_swapped_path = root;
 	if (!uri.empty())
-		root_swapped_path.append(uri);
+	{
+		path = uri;
+		// std::cout << location_config->content_list.back().length() << "_" << path.parent_path().string().length() + 1 << "_" << uri.length() << std::endl;
+		if (location_config->content_list.back() != "/" && get_match_type(location_config->content_list.front()) != MATCH_TYPE_POSTFIX
+			&& (location_config->content_list.back().length() <= path.parent_path().string().length() + 1 || path.extension() == ""))
+		{
+			// std::cout << path << std::endl;
+			// std::cout << location_config->content_list.back().length() << "_" << uri.length() << std::endl;
+			if (location_config->content_list.back().length() <= uri.length())
+			{
+				// std::cout << "appending part:" << uri.substr(location_config->content_list.back().length()) << std::endl;
+				root_swapped_path.append(uri.substr(location_config->content_list.back().length()));
+			}
+		}
+		else
+			root_swapped_path.append(uri);
+	}
+	// std::cout << "ROOT SWAPPING DONE:" << root_swapped_path << std::endl;
 	return (root_swapped_path);
 }
 
@@ -173,13 +209,16 @@ std::filesystem::path FileAccess::uri_is_directory(std::string uri, ConfigConten
 	path = uri;
 	if (!path.extension().empty())
 		return (path);
-	if (!((LocationStruct *)location_config->childs)->index.content_list.empty())
+	if (location_config && location_config->childs)
 	{
-		path.append(((LocationStruct *)location_config->childs)->index.content_list.back());
-		return (path);
+		if (!((LocationStruct *)location_config->childs)->index.content_list.empty())
+		{
+			path.append(((LocationStruct *)location_config->childs)->index.content_list.back());
+			return (path);
+		}
+		if (!((LocationStruct *)location_config->childs)->autoindex.content_list.back().compare("on"))
+			return (path);
 	}
-	if (!((LocationStruct *)location_config->childs)->autoindex.content_list.back().compare("on"))
-		return (path);
 	return_code = 404;
 	return ("");	
 }
@@ -196,7 +235,7 @@ std::string	FileAccess::redirect(int &return_code)
 }
 
 //NEW FUNCTION:
-std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &return_code, int port)
+std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &return_code, int port, std::string method)
 {
 	std::string		new_uri;
 	ConfigContent	*location_config;
@@ -211,15 +250,21 @@ std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &retur
 		return ("/"); //reset uri to new_uri
 	// //find location config. check allowedMethod and if not allowed return
 	location_config = &server->_location;
-	location_config = find_location_config(uri, location_config);
-	if (location_config && !((LocationStruct *)location_config->childs)->allow_methods.content_list.empty())
+	location_config = find_location_config(uri, location_config, method);
+	if (location_config && location_config->childs && !((LocationStruct *)location_config->childs)->allow_methods.content_list.empty())
 		_currentAllowedMethods = &((LocationStruct *)location_config->childs)->allow_methods.content_list;
+	else if (!location_config)
+	{
+		return_code = 404;
+		return ("");
+	}
 	else
 		_currentAllowedMethods = _allowedMethods;
 	// //swap out root.
 	new_uri = swap_out_root(uri, location_config, _root);
 	// check if request is a directory and perfect match. if so swap to index_file, if not perfect or no index_file match auto index, 404 of auto index is turned off.
 	path = uri_is_directory(new_uri, location_config, return_code);
+	std::cout << "final path:" << path << std::endl;
 	return (path);
 }
 
@@ -237,7 +282,7 @@ std::filesystem::path	FileAccess::getErrorPage(int return_code)
 			return (current->content_list.back());
 		current = current->next;
 	}
-	return ("/");
+	return ("");
 }
 
 //check if method is allowed for this specific location, this is fine
