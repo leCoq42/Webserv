@@ -10,28 +10,28 @@
 #include <unistd.h>
 #include <vector>
 
-#define BACKLOG 10
+#define BACKLOG 512
 
 struct ServerInfo {
   std::string serverID;
   int serverFD;
   int serverPort;
   struct sockaddr_in server_addr;
-  ServerStruct			*_config; //added server config
 };
 
-class ServerConnection : public Log {
+class ServerConnection {
 private:
+  Log _log;
+
 public:
   std::vector<ServerInfo> _connectedServers;
-  // ServerStruct			_config;
   ServerConnection();
   ~ServerConnection();
 
-  void initServerInfo(ServerStruct &serverStruct, ServerInfo &info,
-                      std::list<std::string>::iterator it);
-  void createServerSocket(ServerInfo &info);
-  void bindServerSocket(ServerInfo &info);
-  void listenIncomingConnections(ServerInfo &info);
-  void setUpServerConnection(ServerStruct &serverStruct);
+  void  initServerInfo(ServerStruct &serverStruct, ServerInfo &info,
+                       std::list<std::string>::iterator it);
+  void  createServerSocket(ServerInfo &info);
+  void  bindServerSocket(ServerInfo &info);
+  void  listenIncomingConnections(ServerInfo &info);
+  void  setUpServerConnection(ServerStruct &serverStruct);
 };

@@ -30,12 +30,8 @@ void Log::createPath(const std::string &path_Logfile)
 void Log::createLogFile() 
 {
     _logFile.open(PATH_LOGFILE, std::ios_base::app);
-    if (!_logFile) {
+    if (!_logFile) 
         std::cerr << "Error creating or opening logfile: " << PATH_LOGFILE << std::endl;
-        return;
-    }
-    else
-        std::cout << "Logfile created" << std::endl;
 }
 
 void Log::swapLogs() 
