@@ -69,14 +69,17 @@ std::string	redirect(std::string redirect_string)
 	return response_str;
 }
 
-std::string	standard_error(int error_code)
+std::string	standard_error(int error_code, std::string error_description)
 {
 	std::string	response_str;
 
 	response_str = "<!DOCTYPE html><html lang=\"en\"><head><title>";
 	response_str += std::to_string(error_code);
-	response_str += " Page Not Found</title></head><body><div class=\"error-container\"><h1> ";
+	response_str += error_description;
+	response_str += "</title></head><body><div class=\"error-container\"><h1> ";
 	response_str += std::to_string(error_code);
-	response_str += " </h1><p>Standard error page.</p><a href=\"root\">Go Back to Home</a></div></body></html>";
+	response_str += " </h1><p>";
+	response_str += error_description;
+	response_str += "</p><a href=\"/\">Go Back to Home</a></div></body></html>";
 	return (response_str);
 }
