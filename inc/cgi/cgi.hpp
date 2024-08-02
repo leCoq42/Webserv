@@ -9,10 +9,11 @@ class CGI {
 	public:
 		CGI();
 		CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &scriptPath, const std::string &interpreter);
-		//CGI copy constructor
-		//CGI = overload
+		CGI(const CGI &src);
+		CGI &operator=(const CGI &rhs);
 		~CGI();
 
+		void				swap(CGI &lhs);
 		const size_t		&get_contentLength() const;
 		const std::string	&get_result() const;
 		const int			&get_cgiFD() const;
@@ -29,7 +30,7 @@ class CGI {
 		bool		validate_key(std::string key);
 		void		calculateContentLength();
 
-		const std::shared_ptr<Request>	_request;
+		std::shared_ptr<Request>		_request;
 		std::filesystem::path			_scriptPath;
 		std::string						_interpreter;
 		std::vector<char *>				_cgiArgv;

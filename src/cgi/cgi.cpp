@@ -8,8 +8,8 @@
 #include <vector>
 #include <cerrno>
 #include <cstring>
-#include <algorithm>
 #include <unistd.h>
+#include <algorithm>
 
 CGI::CGI() :
 	_request(nullptr), _scriptPath(""), _interpreter(""), _result(""),
@@ -25,6 +25,36 @@ CGI::CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &s
 	executeScript();
 	if (_complete)
 		calculateContentLength();
+}
+
+
+CGI::CGI(const CGI &src) :
+	_request(src._request), _scriptPath(src._scriptPath), _interpreter(src._interpreter),
+	_cgiArgv(src._cgiArgv), _cgiEnvp(src._cgiEnvp), _result(src._result),
+	_contentLength(src._contentLength), _cgiFD(src._cgiFD), _complete(src._complete)
+{
+
+}
+
+CGI &CGI::operator=(const CGI &rhs)
+{
+	CGI tmp(rhs);
+	tmp.swap(*this);
+	return *this;
+}
+
+void CGI::swap(CGI &lhs)
+{
+	std::swap(_request, lhs._request);
+	std::swap(_scriptPath, lhs._scriptPath);
+	std::swap(_interpreter, lhs._interpreter);
+	std::swap(_cgiArgv, lhs._cgiArgv);
+	std::swap(_cgiEnvp, lhs._cgiEnvp);
+	std::swap(_result, lhs._result);
+	std::swap(_contentLength, lhs._contentLength);
+	std::swap(_cgiFD, lhs._cgiFD);
+	std::swap(_complete, lhs._complete);
+
 }
  
 CGI::~CGI() {}
