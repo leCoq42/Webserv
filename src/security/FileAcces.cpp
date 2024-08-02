@@ -167,7 +167,7 @@ ConfigContent	*FileAccess::find_location_config(std::string uri, ConfigContent *
 		}
 		current = current->next;
 	}
-	if ((LocationStruct *)previous_match->childs && !((LocationStruct *)previous_match->childs)->allow_methods.content_list.empty())
+	if (previous_match && (LocationStruct *)previous_match->childs && !((LocationStruct *)previous_match->childs)->allow_methods.content_list.empty())
 		_currentAllowedMethods = &((LocationStruct *)previous_match->childs)->allow_methods.content_list;
 	return (previous_match);
 }
@@ -209,13 +209,16 @@ std::filesystem::path FileAccess::uri_is_directory(std::string uri, ConfigConten
 	path = uri;
 	if (!path.extension().empty())
 		return (path);
-	if (!((LocationStruct *)location_config->childs)->index.content_list.empty())
+	if (location_config && location_config->childs)
 	{
-		path.append(((LocationStruct *)location_config->childs)->index.content_list.back());
-		return (path);
+		if (!((LocationStruct *)location_config->childs)->index.content_list.empty())
+		{
+			path.append(((LocationStruct *)location_config->childs)->index.content_list.back());
+			return (path);
+		}
+		if (!((LocationStruct *)location_config->childs)->autoindex.content_list.back().compare("on"))
+			return (path);
 	}
-	if (!((LocationStruct *)location_config->childs)->autoindex.content_list.back().compare("on"))
-		return (path);
 	return_code = 404;
 	return ("");	
 }
@@ -248,14 +251,20 @@ std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &retur
 	// //find location config. check allowedMethod and if not allowed return
 	location_config = &server->_location;
 	location_config = find_location_config(uri, location_config, method);
-	if (location_config && !((LocationStruct *)location_config->childs)->allow_methods.content_list.empty())
+	if (location_config && location_config->childs && !((LocationStruct *)location_config->childs)->allow_methods.content_list.empty())
 		_currentAllowedMethods = &((LocationStruct *)location_config->childs)->allow_methods.content_list;
+	else if (!location_config)
+	{
+		return_code = 404;
+		return ("");
+	}
 	else
 		_currentAllowedMethods = _allowedMethods;
 	// //swap out root.
 	new_uri = swap_out_root(uri, location_config, _root);
 	// check if request is a directory and perfect match. if so swap to index_file, if not perfect or no index_file match auto index, 404 of auto index is turned off.
 	path = uri_is_directory(new_uri, location_config, return_code);
+	std::cout << "final path:" << path << std::endl;
 	return (path);
 }
 
