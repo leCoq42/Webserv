@@ -16,13 +16,14 @@ server A {
 		location /uploads {
 			allow_methods		GET POST DELETE;
 			autoindex			on;
+			root				html/uploads
 		}
 		location /hoi {
 			autoindex			on;
 		}
 		location /cgi-bin {
 			autoindex			on;
-			root				;
+			root				html/cgi-bin;
 		}
 }
 

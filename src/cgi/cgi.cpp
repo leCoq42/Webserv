@@ -3,19 +3,19 @@
 #include "log.hpp"
 #include <cstddef>
 #include <cstring>
-#include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <vector>
 #include <cerrno>
-#include <clocale>
-#include <cmath>
 #include <cstring>
-#include <algorithm>
 #include <unistd.h>
+#include <algorithm>
 
-// REFERENCE :( chapter 4:
-// http://www.faqs.org/rfcs/rfc3875.html
+CGI::CGI() :
+	_request(nullptr), _scriptPath(""), _interpreter(""), _result(""),
+	_contentLength(0), _cgiFD(0), _complete(false)
+{}
+
 
 CGI::CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &scriptPath, const std::string &interpreter) :
 	_request(request), _scriptPath(scriptPath), _interpreter(interpreter), _result(""),
@@ -25,6 +25,36 @@ CGI::CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &s
 	executeScript();
 	if (_complete)
 		calculateContentLength();
+}
+
+
+CGI::CGI(const CGI &src) :
+	_request(src._request), _scriptPath(src._scriptPath), _interpreter(src._interpreter),
+	_cgiArgv(src._cgiArgv), _cgiEnvp(src._cgiEnvp), _result(src._result),
+	_contentLength(src._contentLength), _cgiFD(src._cgiFD), _complete(src._complete)
+{
+
+}
+
+CGI &CGI::operator=(const CGI &rhs)
+{
+	CGI tmp(rhs);
+	tmp.swap(*this);
+	return *this;
+}
+
+void CGI::swap(CGI &lhs)
+{
+	std::swap(_request, lhs._request);
+	std::swap(_scriptPath, lhs._scriptPath);
+	std::swap(_interpreter, lhs._interpreter);
+	std::swap(_cgiArgv, lhs._cgiArgv);
+	std::swap(_cgiEnvp, lhs._cgiEnvp);
+	std::swap(_result, lhs._result);
+	std::swap(_contentLength, lhs._contentLength);
+	std::swap(_cgiFD, lhs._cgiFD);
+	std::swap(_complete, lhs._complete);
+
 }
  
 CGI::~CGI() {}
@@ -50,7 +80,6 @@ void CGI::init_envp()
 	add_to_envp("SCRIPT_FILENAME", _scriptPath, "");
 }
 
-// adds variable to envpp if permissed. additive is a specified prefix
 bool CGI::add_to_envp(std::string key, std::string value, std::string prefix)
 {
 	std::string tmp;
@@ -93,8 +122,7 @@ void CGI::executeScript()
 	for (const auto& var : _cgiEnvp) {
 		envp.push_back(const_cast<char*>(var.c_str()));
 	}
-
-envp.push_back(nullptr);
+	envp.push_back(nullptr);
 
     if (pipe(pipeServertoCGI) == -1 || pipe(pipeCGItoServer) == -1)
 		_log.logError("Failed to create pipe");
@@ -119,16 +147,14 @@ envp.push_back(nullptr);
         dup2(pipeCGItoServer[WRITE], STDOUT_FILENO);
 		close(pipeCGItoServer[WRITE]);
 
-        // Execute the script
         execve(_cgiArgv.data()[0], _cgiArgv.data(), envp.data());
 		_log.logError("Execve error.");
 		_exit(1);
     }
 	else {  // Parent process
-    	// close(pipeOut[READ]);  // Close write end of pipe
 		close(pipeServertoCGI[READ]);
-		close(pipeServertoCGI[WRITE]);  // Close write end of input pipe
-        close(pipeCGItoServer[WRITE]);  // Close write end of output pipe
+		close(pipeServertoCGI[WRITE]);
+        close(pipeCGItoServer[WRITE]);
 
 		_cgiFD = pipeCGItoServer[READ];
 		readCGIfd();
@@ -146,20 +172,20 @@ int	CGI::readCGIfd()
 	std::vector<char> buffer(BUFFSIZE);
 
 	bytesRead = read(_cgiFD, &buffer[0], BUFFSIZE);
-	if (bytesRead == 0) {
+	if (bytesRead < 0) {
+		_complete = true;
+		return 1;
+	}
+	else if (bytesRead == 0) {
 		close(_cgiFD);
 		_complete = true;
 		calculateContentLength();
 		return 0;
 	}
-	else if (bytesRead > 0) {
+	else {
 		_complete = false;
 		_result.append(buffer.data(), bytesRead);
 		return 0;
-	}
-	else {
-		_complete = true;
-		return 1;
 	}
 }
 
@@ -176,7 +202,7 @@ void	CGI::calculateContentLength()
 		_contentLength = 0;
 }
 
-size_t		CGI::get_contentLength() { return _contentLength; }
-std::string	CGI::get_result() { return _result; }
-int			CGI::get_cgiFD() { return _cgiFD; }
-bool		CGI::isComplete() { return _complete; }
+const size_t		&CGI::get_contentLength() const { return _contentLength; }
+const std::string	&CGI::get_result() const { return _result; }
+const int			&CGI::get_cgiFD() const { return _cgiFD; }
+const bool			&CGI::isComplete() const { return _complete; }

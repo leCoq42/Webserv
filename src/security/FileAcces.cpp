@@ -24,7 +24,7 @@
 
 FileAccess::FileAccess(std::list<ServerStruct> *config): config(config)
 {
-	std::cout << MSG_BORDER << "[FILEACCESS SETUP]" << MSG_BORDER << std::endl;
+	// std::cout << MSG_BORDER << "[FILEACCESS SETUP]" << MSG_BORDER << std::endl;
 	_return = "";
 }
 
@@ -64,7 +64,7 @@ void	FileAccess::swap_to_right_server_config(std::string uri, int port)
 		}
 	}
 	server = prev_match;
-	std::cout << "SELECTED: " << server->_id << std::endl; 
+	// std::cout << "SELECTED: " << server->_id << std::endl; 
 	_root = server->_root.content_list.back();
 	_currentRoot = _root;
 	_allowedMethods = &server->_allowMethods.content_list;
@@ -264,7 +264,6 @@ std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &retur
 	new_uri = swap_out_root(uri, location_config, _root);
 	// check if request is a directory and perfect match. if so swap to index_file, if not perfect or no index_file match auto index, 404 of auto index is turned off.
 	path = uri_is_directory(new_uri, location_config, return_code);
-	std::cout << "final path:" << path << std::endl;
 	return (path);
 }
 
@@ -288,7 +287,6 @@ std::filesystem::path	FileAccess::getErrorPage(int return_code)
 //check if method is allowed for this specific location, this is fine
 bool	FileAccess::allowedMethod(std::string method)
 {
-	std::cout << "requested method " << method << std::endl;
 	for (std::string content : *_currentAllowedMethods)
 	{
 		if (!content.compare(method))
