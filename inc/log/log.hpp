@@ -10,8 +10,16 @@
 #include <fstream>
 #include <deque>
 
+#define MAX_LOG_SIZE 100000
+#define AMOUNT_LINES_APPEND 100
+#define PATH_LOGFILE "./logDir/logfile.log"
 
 class Log {
+private:
+	std::string		getTimeStamp();
+	std::ofstream	_logFile;
+	size_t			_logCount;
+
 public:
 	Log();
 	~Log();
@@ -29,8 +37,4 @@ public:
 	void	logResponse(int status, const std::string &message);
 	void	logAdd(const std::string &message);
 	void	manageLogSize();
-
-	std::string		getTimeStamp();
-	std::ofstream	_logFile;
-	size_t			_logCount;
 };
