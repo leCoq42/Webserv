@@ -185,30 +185,12 @@ bool ClientConnection::isServerSocket(int fd)
 
 void ClientConnection::removeClientSocket(int clientFD)
 {
-<<<<<<< HEAD
-    int activeClientsIndex = findClientIndex(_polledFds[polledFdsIndex].fd);
-
-	if (!_activeClients[activeClientsIndex].response) {
-	_activeClients[activeClientsIndex].response = std::make_shared<Response> (_activeClients[activeClientsIndex].request, serverStruct, _activeClients[activeClientsIndex].port); // serverStruct
-		_activeClients[activeClientsIndex].responseStr = _activeClients[activeClientsIndex].response->get_response();
-		_activeClients[activeClientsIndex].bytesToSend = _activeClients[activeClientsIndex].response->get_response().length();
-	}
-	else if (_activeClients[activeClientsIndex].response && _activeClients[activeClientsIndex].response->isComplete() == false) {
-		_activeClients[activeClientsIndex].response->continue_cgi();
-	}
-	else {
-		_activeClients[activeClientsIndex].responseStr = _activeClients[activeClientsIndex].response->get_response();
-		_activeClients[activeClientsIndex].bytesToSend = _activeClients[activeClientsIndex].response->get_response().length();
-		sendData(polledFdsIndex, activeClientsIndex);
-	}
-=======
     if (_connectionInfo.find(clientFD) == _connectionInfo.end())
         return;
     
     close(clientFD);
     _log.logClientConnection("closed connection", _connectionInfo[clientFD].clientIP, clientFD);
     _connectionInfo.erase(clientFD);
->>>>>>> 7a7ade1fc9ad20d14c5ff2a3c04f950a752e1ef0
 }
 
 void ClientConnection::checkConnectedClientsStatus() 

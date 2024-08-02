@@ -1,15 +1,11 @@
 #pragma once
 
 #include "ServerConnection.hpp"
-<<<<<<< HEAD
-#include "ServerStruct.hpp" //added
-=======
 #include "ServerStruct.hpp"
 #include "request.hpp"
 #include "response.hpp"
 #include "log.hpp"
 #include "signals.hpp"
->>>>>>> 7a7ade1fc9ad20d14c5ff2a3c04f950a752e1ef0
 #include <memory>
 #include <sys/poll.h>
 #include <sys/types.h>
