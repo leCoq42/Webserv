@@ -67,7 +67,9 @@ int	empty_locations(ServerStruct	&add_server)
 {
 	ConfigContent	*current;
 
-	if (add_server._root.content_list.empty())
+	if (!add_server._return.content_list.empty())
+		return (0);
+	if (add_server._root.content_list.empty() || add_server._root.content_list.size() > 1)
 		return (1);
 	if (add_server._root.content_list.back() == "")
 		return (1);
@@ -92,8 +94,6 @@ int	load_in_servers(ParserStruct *PS, std::list<ServerStruct> &server_structs)
 		if (empty_locations(add_server))
 			return (0);
 		server_structs.push_back(add_server);
-		if (add_server._root.content_list.empty() || add_server._root.content_list.size() > 1)
-			return (0);
 	}
 	return (1);
 }
