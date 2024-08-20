@@ -63,6 +63,20 @@ void	ServerStruct::show_self(void)
 	this->_allowMethods.show_part("allow_methods:");
 }
 
+int	empty_locations(ServerStruct	&add_server)
+{
+	ConfigContent	*current;
+
+	current = &add_server._location;
+	while (current)
+	{
+		if (current->content_list.empty())
+			return (1);
+		current = current->next;
+	}
+	return (0);
+}
+
 int	load_in_servers(ParserStruct *PS, std::list<ServerStruct> &server_structs)
 {
 	size_t	n;
@@ -71,6 +85,8 @@ int	load_in_servers(ParserStruct *PS, std::list<ServerStruct> &server_structs)
 	while (n++ < (*PS).get_nServers())
 	{
 		ServerStruct	add_server = ServerStruct(PS, n);
+		if (empty_locations(add_server))
+			return (0);
 		server_structs.push_back(add_server);
 		if (add_server._root.content_list.empty() || add_server._root.content_list.size() > 1)
 			return (0);
