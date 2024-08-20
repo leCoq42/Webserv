@@ -37,7 +37,6 @@ LocationStruct	&LocationStruct::operator=(const LocationStruct &to_copy)
 
 LocationStruct::~LocationStruct(void)
 {
-	//std::cout << "Deleting location struct." << std::endl;
 }
 
 void	LocationStruct::show_self(void)

@@ -1,27 +1,6 @@
 #include "fileAccess.hpp"
 #include "defines.hpp"
 
-//ROOT removes location and replaces it with the given path
-//INDEX swaps location with the given index file
-//AUTO_INDEX runs on request of a directory
-//REDIRECT, return 301 and defined link when server is requested
-//SERVER_NAME compares to first part of requested path and switches config accordingly
-//CGI define cgi path accoriding to extension
-//UPLOAD_LOCATION configure where the uploads should be saved
-//DEFAULT_ERROR_PAGES link error_code to error_page *implemented correctly
-//LIMIT CLIENT BODY SIZE has to be loaded into the buffering size
-//DEFINE ACCEPTED METHODS implemented correctly
-
-
-//check for seg faults on random input
-//return / error bodies. 
-
-//ROOT rewrite, can be default or location specific, FIXED
-//HTTP METHOD permissed FIXED
-//redirect might have to do http to https, which is diffrent from the current implemented
-// multiple server check
-// move security struct up stream
-
 FileAccess::FileAccess(std::list<ServerStruct> *config): config(config)
 {
 	// std::cout << MSG_BORDER << "[FILEACCESS SETUP]" << MSG_BORDER << std::endl;
@@ -30,7 +9,6 @@ FileAccess::FileAccess(std::list<ServerStruct> *config): config(config)
 
 FileAccess::~FileAccess() {}
 
-//with asterix wildcards
 bool	find_server_name_in_uri(std::string uri, std::string server_name)
 {
 	if (server_name.at(0) == '*' && uri.find(server_name.substr(1), (uri.length() - server_name.length())) == uri.length() - server_name.length() + 1)
@@ -47,9 +25,9 @@ std::string	remove_server_name(std::string uri, std::string server_name)
 	std::string	new_uri;
 
 	if (server_name.at(0) == '*' && uri.find(server_name.substr(1), (uri.length() - server_name.length())) == uri.length() - server_name.length() + 1)
-		new_uri = uri.substr(0, uri.length() - server_name.length());// return (true);
+		new_uri = uri.substr(0, uri.length() - server_name.length());
 	else if (server_name.at(server_name.length() - 1) == '*' && !uri.find(server_name.substr(0, server_name.length() - 1)))
-		new_uri = uri.substr(server_name.length() - 1);// return (true);
+		new_uri = uri.substr(server_name.length() - 1);
 	else if (!uri.find(server_name))
 		new_uri = uri.substr(server_name.length());
 	else
@@ -59,7 +37,7 @@ std::string	remove_server_name(std::string uri, std::string server_name)
 	return (new_uri);
 }
 
-std::string	FileAccess::swap_to_right_server_config(std::string uri, int port) // void	FileAccess::swap_to_right_server_config(std::string uri, int port)
+std::string	FileAccess::swap_to_right_server_config(std::string uri, int port)
 {
 	std::string		port_str;
 	ServerStruct	*prev_match;
@@ -74,14 +52,13 @@ std::string	FileAccess::swap_to_right_server_config(std::string uri, int port) /
 			{
 				if (!prev_match)
 					prev_match = &server_config;
-				else if (server_config._names.content_list.front().length() < prev_match->_names.content_list.front().length()
+				else if (server_config._names.content_list.front().length() > prev_match->_names.content_list.front().length()
 					&& find_server_name_in_uri(uri, server_config._names.content_list.front()))
 					prev_match = &server_config;
 			}
 		}
 	}
 	server = prev_match;
-	// std::cout << "SELECTED: " << server->_id << std::endl; 
 	_root = server->_root.content_list.back();
 	_currentRoot = _root;
 	_allowedMethods = &server->_allowMethods.content_list;
@@ -91,16 +68,15 @@ std::string	FileAccess::swap_to_right_server_config(std::string uri, int port) /
 	return (uri);
 }
 
-//source: https://www.digitalocean.com/community/tutorials/nginx-location-directive
 #define MATCH_TYPE_UNSPECIFIED 0
 #define MATCH_TYPE_EXACT 1
 #define MATCH_TYPE_POSTFIX 2
 
-int	get_match_type(std::string first_content_part) //could be switch
+int	get_match_type(std::string first_content_part)
 {
 	if (!first_content_part.compare("="))
 		return (MATCH_TYPE_EXACT);
-	else if (!first_content_part.compare("*=")) //self specified, regex like to get extension specific behaviour
+	else if (!first_content_part.compare("*="))
 		return (MATCH_TYPE_POSTFIX);
 	else
 		return (MATCH_TYPE_UNSPECIFIED);
@@ -116,19 +92,15 @@ bool			FileAccess::is_deleteable(std::filesystem::path to_delete)
 	root = std::filesystem::absolute(root);
 	current_root = std::filesystem::absolute(current_root);
 	to_delete = std::filesystem::absolute(to_delete);
-	// if (to_delete.string().find(root.string()) == 0 && to_delete.string().find(root.string()) == 0)
 	if (!std::filesystem::exists(to_delete))
 		return false;
 	to_delete = std::filesystem::canonical(to_delete);
 	if (!std::filesystem::exists(current_root))
 	{
-		// std::cout << "delete" << std::endl;
-		// return true;
 		current_root = std::filesystem::canonical(current_root);
 		if (to_delete.string().find(current_root.string()) == 0 && to_delete.string().find(current_root.string()) == 0)
 			return true;
 	}
-	// std::cout << "nono" << std::endl;
 	root = std::filesystem::canonical(root);
 	if (to_delete.string().find(root.string()) == 0 && to_delete.string().find(root.string()) == 0)
 		return true;
@@ -142,7 +114,7 @@ bool	method_in_location(ConfigContent *current, ConfigContent *parent, std::stri
 	if ((LocationStruct *)current->childs && !((LocationStruct *)current->childs)->allow_methods.content_list.empty())
 		allowedMethods = &((LocationStruct *)current->childs)->allow_methods.content_list;
 	else
-		allowedMethods = &((LocationStruct *)parent->childs)->allow_methods.content_list;// return false;
+		allowedMethods = &((LocationStruct *)parent->childs)->allow_methods.content_list;
 	for (std::string content : *allowedMethods)
 	{
 		if (!content.compare(method))
@@ -186,8 +158,6 @@ ConfigContent	*FileAccess::find_location_config(std::string uri, ConfigContent *
 		}
 		else if (match_type_requested == MATCH_TYPE_POSTFIX)
 		{
-			std::cout << "post+fix" << std::endl;
-			std::cout << *loc_conf << "==" << uri << "_" << uri.find(*loc_conf, (uri.length() - loc_conf->length())) << "=" << uri.length() - loc_conf->length() << std::endl;
 			if (uri.find(*loc_conf, (uri.length() - loc_conf->length())) == uri.length() - loc_conf->length()
 				&& method_in_location(current, &server->_location, method))
 			{
@@ -213,22 +183,15 @@ std::string	FileAccess::swap_out_root(std::string uri, ConfigContent *location_c
 	if (!uri.empty())
 	{
 		path = uri;
-		// std::cout << location_config->content_list.back().length() << "_" << path.parent_path().string().length() + 1 << "_" << uri.length() << std::endl;
 		if (location_config->content_list.back() != "/" && get_match_type(location_config->content_list.front()) != MATCH_TYPE_POSTFIX
 			&& (location_config->content_list.back().length() <= path.parent_path().string().length() + 1 || path.extension() == ""))
 		{
-			// std::cout << path << std::endl;
-			// std::cout << location_config->content_list.back().length() << "_" << uri.length() << std::endl;
-			if (location_config->content_list.back().length() <= uri.length())// if (location_config->content_list.back().length() <= uri.length())
-			{
-				// std::cout << "appending part:" << uri.substr(location_config->content_list.back().length()) << std::endl;
+			if (location_config->content_list.back().length() <= uri.length())
 				root_swapped_path.append(uri.substr(location_config->content_list.back().length()));
-			}
 		}
 		else
 			root_swapped_path.append(uri);
 	}
-	// std::cout << "ROOT SWAPPING DONE:" << root_swapped_path << std::endl;
 	return (root_swapped_path);
 }
 
@@ -264,21 +227,16 @@ std::string	FileAccess::redirect(int &return_code)
 	return ("");
 }
 
-//NEW FUNCTION:
 std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &return_code, int port, std::string method)
 {
 	std::string		new_uri;
 	ConfigContent	*location_config;
 	std::filesystem::path	path;
 
-	//find server_name in config and swap to that config.
 	uri = swap_to_right_server_config(uri, port);
-
-	//check if redirect, if so return redirect.
 	new_uri = redirect(return_code);
 	if (return_code == 301)
-		return ("/"); //reset uri to new_uri
-	// //find location config. check allowedMethod and if not allowed return
+		return ("/");
 	location_config = &server->_location;
 	location_config = find_location_config(uri, location_config, method);
 	if (location_config && location_config->childs && !((LocationStruct *)location_config->childs)->allow_methods.content_list.empty())
@@ -290,18 +248,14 @@ std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &retur
 	}
 	else
 		_currentAllowedMethods = _allowedMethods;
-	// //swap out root.
 	new_uri = swap_out_root(uri, location_config, _root);
-	// check if request is a directory and perfect match. if so swap to index_file, if not perfect or no index_file match auto index, 404 of auto index is turned off.
 	path = uri_is_directory(new_uri, location_config, return_code);
 	if (is_deleteable(path))
 		return (path);
 	else
 		return ("");
-	// return (path);
 }
 
-//Get configured error_page path by inputting error number, this is fine
 std::filesystem::path	FileAccess::getErrorPage(int return_code)
 {
 	ConfigContent	*current;
@@ -318,7 +272,6 @@ std::filesystem::path	FileAccess::getErrorPage(int return_code)
 	return ("");
 }
 
-//check if method is allowed for this specific location, this is fine
 bool	FileAccess::allowedMethod(std::string method)
 {
 	for (std::string content : *_currentAllowedMethods)
@@ -326,7 +279,6 @@ bool	FileAccess::allowedMethod(std::string method)
 		if (!content.compare(method))
 			return true;
 	}
-	std::cout << "declined" << std::endl;
 	return false;
 }
 
