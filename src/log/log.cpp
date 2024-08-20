@@ -1,12 +1,8 @@
 #include "log.hpp"
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <vector>
 
 Log::Log() : _logCount(0) 
 {
-    createPath(PATH_LOGFILE);
+    createPath();
     createLogFile();
 }
 
@@ -16,9 +12,12 @@ Log::~Log()
         _logFile.close();
 }
 
-void Log::createPath(const std::string &path_Logfile) 
+void Log::createPath() 
 {
-    std::filesystem::path logFilePath(path_Logfile);
+    std::filesystem::path logFilePath(PATH_LOGFILE);
+	if (std::filesystem::exists(logFilePath))
+		std::remove(PATH_LOGFILE);
+
     if (!std::filesystem::exists(logFilePath)) {
         std::filesystem::path folderPath(logFilePath.parent_path());
         if (!std::filesystem::exists(folderPath)) {
@@ -90,7 +89,6 @@ std::string Log::getTimeStamp()
 }
 
 
-// General log functions
 void Log::logAdd(const std::string &message) 
 {
 	manageLogSize();
@@ -114,8 +112,6 @@ void Log::logError(const std::string &message)
 		std::cerr << getTimeStamp() << " [error] Unable to write to error log file" << std::endl;
 }
 
-
-// Client connection log functions
 void Log::logClientError(const std::string &message, char *clientIP, int clientFD) 
 {
 	manageLogSize();
@@ -141,8 +137,6 @@ void Log::logClientConnection(const std::string &message, std::string clientIP, 
 		std::cerr << getTimeStamp() << " [error] Unable to write to access log file" << std::endl;
 }
 
-
-// Server connection log functions
 void Log::logServerError(const std::string &message,
 												 const std::string &serverName, int port) 
 {
@@ -168,8 +162,6 @@ void Log::logServerConnection(const std::string &message, const std::string &ser
 		std::cerr << getTimeStamp() << " [error] Unable to write to access log file" << std::endl;
 }
 
-
-// Response log functions
 void Log::logResponse(int status, const std::string &message) 
 {
 	manageLogSize();

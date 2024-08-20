@@ -9,6 +9,8 @@
 #include <defines.hpp>
 #include <fstream>
 #include <deque>
+#include <filesystem>
+#include <vector>
 
 #define MAX_LOG_SIZE 100000
 #define AMOUNT_LINES_APPEND 100
@@ -24,7 +26,7 @@ public:
 	Log();
 	~Log();
 
-	void	createPath(const std::string &fileName);
+	void	createPath();
 	void	createLogFile();
 	void    swapLogs();
 	void	logError(const std::string &message);

@@ -1,4 +1,5 @@
 #include "ClientConnection.hpp"
+#include "log.hpp"
 #include "Parser.hpp"
 #include "ServerConnection.hpp"
 #include "ServerStruct.hpp"
@@ -47,15 +48,20 @@ int main(int argc, char **argv) {
 	ClientConnection CC(SS);
 	std::list<ServerStruct> server_structs;
 	Parser parser("#", "\n", "{", "}", " 	\n", "'", " 	\n", ";");
+	Log _log;
 
 	if (argc != 2)
 		error_exit(1);
 
 	initSignals();
 	parse(&parser, &server_structs, &buffer, argv);
+	std::cout << "\033[32mWebserv started ...\033[0m" << std::endl;
+	_log.logAdd("Webserv started ...");
 	for (auto &server : server_structs)
 		SS->setUpServerConnection(server);
 	CC.setupClientConnection(&server_structs);
 	delete[] buffer;
+	std::cout << "\033[33mWebserv closed.\033[0m" << std::endl;
+	_log.logAdd("Webserv closed.");
 	return 0;
 }
