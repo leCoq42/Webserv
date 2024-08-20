@@ -28,14 +28,14 @@ public:
 	void	createLogFile();
 	void	swapLogs();
 
-	static void	logError(const std::string &message);
-	static void	logClientError(const std::string &message, char *clientIP, int clientFD);
-	static void	logServerError(const std::string &message, const std::string &serverName,
+	void	logError(const std::string &message);
+	void	logClientError(const std::string &message, char *clientIP, int clientFD);
+	void	logServerError(const std::string &message, const std::string &serverName,
 							 int port);
-	static void	logClientConnection(const std::string &message, std::string clientIP, int clientFD);
-	static void	logServerConnection(const std::string &message,
+	void	logClientConnection(const std::string &message, std::string clientIP, int clientFD);
+	void	logServerConnection(const std::string &message,
 								 const std::string &serverName, int socket, int port);
-	static void	logResponse(int status, const std::string &message);
+	void	logResponse(int status, const std::string &message);
 	void	logAdd(const std::string &message);
 	void	manageLogSize();
 };
