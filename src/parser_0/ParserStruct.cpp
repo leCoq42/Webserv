@@ -5,7 +5,6 @@ ParserStruct::ParserStruct(void) : _head(0), _current(0), _addAsChild(0), _nServ
 
 ParserStruct::~ParserStruct()
 {
-	//std::cout << "delete parser struct" << std::endl;
 	delete _head;
 	_head = 0;
 }

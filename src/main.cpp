@@ -17,32 +17,36 @@ void error_exit(int error_code) {
 		std::cerr << "invalid config file" << std::endl;
 	else if (error_code == 4)
 		std::cerr << "loading server struct went wrong" << std::endl;
-	exit(1);
 }
 
-void parse(Parser *parser, std::list<ServerStruct> *server_structs,
+int parse(Parser *parser, std::list<ServerStruct> *server_structs,
            char **buffer, char **argv) {
 	int file_len;
 
 	if (load_file_to_buff(*(argv + 1), buffer, &file_len))
-		error_exit(2);
-	if (!parser->parse_content_to_struct(*buffer, file_len))
-		error_exit(3);
-	if (!load_in_servers(&parser->PS, *server_structs))
-		error_exit(4);
-	#ifdef DEBUG
-	std::cout << parser->PS.get_nServers() << std::endl;
-	if (!server_structs->empty()) {
-			for (ServerStruct server : *server_structs) {
-				std::cout << "-------------------------------------" << std::endl;
-				server.show_self();
-				std::cout << "-------------------------------------" << std::endl;
+		return (2);
+	else if (!parser->parse_content_to_struct(*buffer, file_len))
+		return (3);
+	else if (!load_in_servers(&parser->PS, *server_structs))
+		return (4);
+	else
+	{
+		#ifdef DEBUG
+		std::cout << parser->PS.get_nServers() << std::endl;
+		if (!server_structs->empty()) {
+				for (ServerStruct server : *server_structs) {
+					std::cout << "-------------------------------------" << std::endl;
+					server.show_self();
+					std::cout << "-------------------------------------" << std::endl;
+			}
 		}
+		#endif
 	}
-	#endif
+	return (0);
 }
 
 int main(int argc, char **argv) {
+<<<<<<< HEAD
 	std::filesystem::path logFilePath(PATH_LOGFILE);
 	if (std::filesystem::exists(logFilePath))
 		std::remove(PATH_LOGFILE);
@@ -51,6 +55,13 @@ int main(int argc, char **argv) {
 	char *buffer;
 	std::shared_ptr<ServerConnection> ptr_ServerConnection = std::make_shared<ServerConnection>(log);
 	ClientConnection clientConnection(ptr_ServerConnection, log);
+=======
+	char	*buffer = NULL;
+	int		parse_code = 0;
+
+	std::shared_ptr<ServerConnection> SS = std::make_shared<ServerConnection>();
+	ClientConnection CC(SS);
+>>>>>>> e1cc9d851c3fb2bf362e94a7649924a7a220362f
 	std::list<ServerStruct> server_structs;
 	Parser parser("#", "\n", "{", "}", " 	\n", "'", " 	\n", ";");
 
@@ -62,8 +73,20 @@ int main(int argc, char **argv) {
 	log->logAdd("Webserv started.");
 
 	initSignals();
+<<<<<<< HEAD
 	parse(&parser, &server_structs, &buffer, argv);
 
+=======
+	parse_code = parse(&parser, &server_structs, &buffer, argv);
+	if (parse_code)
+	{
+		if (buffer)
+			delete[] buffer;
+		error_exit(parse_code);
+		return (1);
+
+	}
+>>>>>>> e1cc9d851c3fb2bf362e94a7649924a7a220362f
 	for (auto &server : server_structs)
 		ptr_ServerConnection->setUpServerConnection(server);
 	clientConnection.setupClientConnection(&server_structs);
