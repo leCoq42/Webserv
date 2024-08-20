@@ -15,8 +15,8 @@ Request::Request() :
 	_htmlVersion(""), _valid(0), _body(""), _contentLength(0), _requestStatus(false)
 {}
 
-Request::Request(const std::string rawStr) :
-	_rawRequest(rawStr), _requestMethod(""), _requestPath(""),
+Request::Request(const std::string rawStr, std::shared_ptr<Log> log) : 
+	_log(log), _rawRequest(rawStr), _requestMethod(""), _requestPath(""),
 	_htmlVersion(""), _valid(0), _body(""), _contentLength(0), _requestStatus(false)
 {
 	parseRequest();
@@ -40,7 +40,7 @@ Request::Request(const std::string rawStr) :
 Request::~Request() {}
 
 Request::Request(const Request &src) :
-	_rawRequest(src._rawRequest), _requestMethod(src._requestMethod),
+	_log(src._log), _rawRequest(src._rawRequest), _requestMethod(src._requestMethod),
 	_requestPath(src._requestPath), _htmlVersion(src._htmlVersion),
 	_valid(src._valid), _body(src._body), _contentLength(src._contentLength),
 	_requestStatus(src._requestStatus), _headers(src._headers),
@@ -54,6 +54,7 @@ Request &Request::operator=(const Request &rhs) {
 }
 
 void Request::swap(Request &lhs) {
+	std::swap(_log, lhs._log);
 	std::swap(_requestMethod, lhs._requestMethod);
 	std::swap(_requestPath, lhs._requestPath);
 	std::swap(_htmlVersion, lhs._htmlVersion);
