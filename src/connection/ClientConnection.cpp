@@ -1,9 +1,8 @@
 #include "ClientConnection.hpp"
 
-ClientConnection::ClientConnection() {}
-
-ClientConnection::ClientConnection(std::shared_ptr<ServerConnection> ServerConnection)
-	: _ptrServerConnection(ServerConnection) {}
+ClientConnection::ClientConnection(std::shared_ptr<ServerConnection> ServerConnection, std::shared_ptr<Log> log)
+	: _ptrServerConnection(ServerConnection), _log(log) {
+	}
 
 ClientConnection::~ClientConnection() {}
 
@@ -20,7 +19,7 @@ void ClientConnection::handlePollOutEvent(int clientFD, std::list<ServerStruct> 
 	auto& client = _connectionInfo[clientFD];
 
 	if (!client.response) {
-	   client.response = std::make_shared<Response>(client.request, serverStruct, client.port);
+	   client.response = std::make_shared<Response>(client.request, serverStruct, client.port, _log);
 		client.responseStr = client.response->get_response();
 		client.bytesToSend = client.response->get_response().length();
 	}
@@ -43,7 +42,7 @@ bool ClientConnection::initializeRequest(int clientFD)
 	size_t  sizeCRLFCRLF = strlen(CRLFCRLF);
 
 	if (headerEnd != std::string::npos) {
-		client.request = std::make_shared<Request>(client.receiveStr.substr(0, headerEnd + sizeCRLFCRLF));
+		client.request = std::make_shared<Request>(client.receiveStr.substr(0, headerEnd + sizeCRLFCRLF), _log);
 		if (headerEnd + sizeCRLFCRLF < client.receiveStr.length()) {
 			client.request->appendToBody(client.receiveStr.substr(headerEnd + sizeCRLFCRLF));
 		}
@@ -61,7 +60,7 @@ bool ClientConnection::clientHasTimedOut(int clientFD)
 	time(&currentTime);
 
 	if (currentTime - client.lastRequestTime > client.timeOut) {
-		_log.logClientConnection("Client timed out", client.clientIP, clientFD);
+		_log->logClientConnection("Client timed out", client.clientIP, clientFD);
 		removeClientSocket(clientFD);
 		return true;
 	}
@@ -77,7 +76,7 @@ void ClientConnection::receiveData(int clientFD)
 	if (bytesReceived > 0)
 		client.receiveStr.append(std::string(buffer.begin(), buffer.begin() + bytesReceived));
 	if (bytesReceived < 0 && (errno != EAGAIN && errno != EWOULDBLOCK)) {
-		_log.logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
+		_log->logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
 				client.clientIP, clientFD);
 		removeClientSocket(clientFD);
 	}
@@ -99,12 +98,12 @@ void ClientConnection::sendData(int clientFD)
 		}
 	}
 	if (bytesSent < 0 && (errno != EAGAIN && errno != EWOULDBLOCK)) {
-		_log.logClientError("Failed to send data to client: " + std::string(strerror(errno)), clientInfo.clientIP, clientFD);
+		_log->logClientError("Failed to send data to client: " + std::string(strerror(errno)), clientInfo.clientIP, clientFD);
 		removeClientSocket(clientFD);
 	}
 	else {
 		#ifdef DEBUG
-		_log.logClientConnection("Client disconnected", clientInfo.clientIP, clientFD);
+		_log->logClientConnection("Client disconnected", clientInfo.clientIP, clientFD);
 		#endif
 		removeClientSocket(clientFD);
 	}
@@ -160,7 +159,7 @@ void ClientConnection::acceptClients(int serverFD)
 	socklen_t clientAddrLen = sizeof(clientAddr);
 	int clientFD = accept(serverFD, (struct sockaddr *)&clientAddr, &clientAddrLen);
 	if (clientFD == -1) {
-		_log.logError("Failed to connect client: " + std::string(strerror(errno)));
+		_log->logError("Failed to connect client: " + std::string(strerror(errno)));
 		return;
 	}
 	
@@ -168,13 +167,13 @@ void ClientConnection::acceptClients(int serverFD)
 	fcntl(clientFD, F_SETFL, flags | O_NONBLOCK);
 	
 	if (getpeername(clientFD, (struct sockaddr *)&clientAddr, &clientAddrLen) != 0) {
-		_log.logError("Failed to read client IP: " + std::string(strerror(errno)));
+		_log->logError("Failed to read client IP: " + std::string(strerror(errno)));
 		close(clientFD);
 		return;
 	}
 	initClientInfo(clientFD, clientAddr);
 	#ifdef DEBUG
-	_log.logClientConnection("accepted connection", _connectionInfo[clientFD].clientIP, clientFD);
+	_log->logClientConnection("accepted connection", _connectionInfo[clientFD].clientIP, clientFD);
 	#endif
 }
 
@@ -194,7 +193,7 @@ void ClientConnection::removeClientSocket(int clientFD)
 	
 	close(clientFD);
 	#ifdef DEBUG
-	_log.logClientConnection("closed connection", _connectionInfo[clientFD].clientIP, clientFD);
+	_log->logClientConnection("closed connection", _connectionInfo[clientFD].clientIP, clientFD);
 	#endif
 	_connectionInfo.erase(clientFD);
 }
@@ -264,10 +263,10 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 			}
 		}
 		if (globalSignalReceived == 1) {
-			_log.logAdd("Interrupt signal received.");
+			_log->logAdd("Interrupt signal received.");
 			break;
 		}
 		else if (poll_count < 0)
-			_log.logError("Failed to poll.");
+			_log->logError("Failed to poll.");
 	}
 }

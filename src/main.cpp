@@ -46,10 +46,11 @@ int main(int argc, char **argv) {
 	std::filesystem::path logFilePath(PATH_LOGFILE);
 	if (std::filesystem::exists(logFilePath))
 		std::remove(PATH_LOGFILE);
-	Log _log;
+
+	std::shared_ptr<Log> log = std::make_shared<Log>();
 	char *buffer;
-	std::shared_ptr<ServerConnection> SS = std::make_shared<ServerConnection>();
-	ClientConnection CC(SS);
+	std::shared_ptr<ServerConnection> ptr_ServerConnection = std::make_shared<ServerConnection>(log);
+	ClientConnection clientConnection(ptr_ServerConnection, log);
 	std::list<ServerStruct> server_structs;
 	Parser parser("#", "\n", "{", "}", " 	\n", "'", " 	\n", ";");
 
@@ -58,16 +59,14 @@ int main(int argc, char **argv) {
 		error_exit(1);
 	}
 	std::cout << "\033[32mWebserv started ...\033[0m" << std::endl;
-	_log.logAdd("Webserv started.");
-
+	log->logAdd("Webserv started.");
 
 	initSignals();
 	parse(&parser, &server_structs, &buffer, argv);
 
-
 	for (auto &server : server_structs)
-		SS->setUpServerConnection(server);
-	CC.setupClientConnection(&server_structs);
+		ptr_ServerConnection->setUpServerConnection(server);
+	clientConnection.setupClientConnection(&server_structs);
 	delete[] buffer;
 
 	std::cout << "\033[33mWebserv closed.\033[0m" << std::endl;
