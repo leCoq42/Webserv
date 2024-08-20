@@ -42,7 +42,24 @@ bool	find_server_name_in_uri(std::string uri, std::string server_name)
 	return (false);
 }
 
-void	FileAccess::swap_to_right_server_config(std::string uri, int port)
+std::string	remove_server_name(std::string uri, std::string server_name)
+{
+	std::string	new_uri;
+
+	if (server_name.at(0) == '*' && uri.find(server_name.substr(1), (uri.length() - server_name.length())) == uri.length() - server_name.length() + 1)
+		new_uri = uri.substr(0, uri.length() - server_name.length());// return (true);
+	else if (server_name.at(server_name.length() - 1) == '*' && !uri.find(server_name.substr(0, server_name.length() - 1)))
+		new_uri = uri.substr(server_name.length() - 1);// return (true);
+	else if (!uri.find(server_name))
+		new_uri = uri.substr(server_name.length());
+	else
+		new_uri = uri;
+	if (new_uri.length() > 1 && new_uri.at(0) == '/')
+		new_uri = new_uri.substr(1);
+	return (new_uri);
+}
+
+std::string	FileAccess::swap_to_right_server_config(std::string uri, int port) // void	FileAccess::swap_to_right_server_config(std::string uri, int port)
 {
 	std::string		port_str;
 	ServerStruct	*prev_match;
@@ -69,6 +86,9 @@ void	FileAccess::swap_to_right_server_config(std::string uri, int port)
 	_currentRoot = _root;
 	_allowedMethods = &server->_allowMethods.content_list;
 	_currentAllowedMethods = _allowedMethods;
+	if (!server->_names.content_list.empty())
+		return remove_server_name(uri, server->_names.content_list.front());
+	return (uri);
 }
 
 //source: https://www.digitalocean.com/community/tutorials/nginx-location-directive
@@ -96,12 +116,22 @@ bool			FileAccess::is_deleteable(std::filesystem::path to_delete)
 	root = std::filesystem::absolute(root);
 	current_root = std::filesystem::absolute(current_root);
 	to_delete = std::filesystem::absolute(to_delete);
-	if (to_delete.string().find(root.string()) == 0 && to_delete.string().find(root.string()) == 0)
+	// if (to_delete.string().find(root.string()) == 0 && to_delete.string().find(root.string()) == 0)
+	if (!std::filesystem::exists(to_delete))
+		return false;
+	to_delete = std::filesystem::canonical(to_delete);
+	if (!std::filesystem::exists(current_root))
 	{
-		std::cout << "delete" << std::endl;
-		return true;
+		// std::cout << "delete" << std::endl;
+		// return true;
+		current_root = std::filesystem::canonical(current_root);
+		if (to_delete.string().find(current_root.string()) == 0 && to_delete.string().find(current_root.string()) == 0)
+			return true;
 	}
-	std::cout << "nono" << std::endl;
+	// std::cout << "nono" << std::endl;
+	root = std::filesystem::canonical(root);
+	if (to_delete.string().find(root.string()) == 0 && to_delete.string().find(root.string()) == 0)
+		return true;
 	return false;
 }
 
@@ -189,7 +219,7 @@ std::string	FileAccess::swap_out_root(std::string uri, ConfigContent *location_c
 		{
 			// std::cout << path << std::endl;
 			// std::cout << location_config->content_list.back().length() << "_" << uri.length() << std::endl;
-			if (location_config->content_list.back().length() <= uri.length())
+			if (location_config->content_list.back().length() <= uri.length())// if (location_config->content_list.back().length() <= uri.length())
 			{
 				// std::cout << "appending part:" << uri.substr(location_config->content_list.back().length()) << std::endl;
 				root_swapped_path.append(uri.substr(location_config->content_list.back().length()));
@@ -242,7 +272,7 @@ std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &retur
 	std::filesystem::path	path;
 
 	//find server_name in config and swap to that config.
-	swap_to_right_server_config(uri, port);
+	uri = swap_to_right_server_config(uri, port);
 
 	//check if redirect, if so return redirect.
 	new_uri = redirect(return_code);
@@ -264,7 +294,11 @@ std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &retur
 	new_uri = swap_out_root(uri, location_config, _root);
 	// check if request is a directory and perfect match. if so swap to index_file, if not perfect or no index_file match auto index, 404 of auto index is turned off.
 	path = uri_is_directory(new_uri, location_config, return_code);
-	return (path);
+	if (is_deleteable(path))
+		return (path);
+	else
+		return ("");
+	// return (path);
 }
 
 //Get configured error_page path by inputting error number, this is fine
