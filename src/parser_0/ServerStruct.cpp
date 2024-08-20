@@ -22,7 +22,6 @@ ServerStruct::ServerStruct(ParserStruct *parser_struct, int nth_server)
 	this->getContent("error_page", this->_errorPage);
 	this->getContent("return", this->_return);
 	this->getContent("allow_methods", this->_allowMethods);
-	//std::cout << std::endl;
 }
 
 ServerStruct::ServerStruct(const ServerStruct &to_copy)
@@ -48,9 +47,6 @@ ServerStruct	&ServerStruct::operator=(const ServerStruct &to_copy)
 
 ServerStruct::~ServerStruct(void)
 {
-	//std::cout << "Deleting server struct." << std::endl;
-	// if (this->location.childs)
-	// 	delete (LocationStruct *)this->location.childs;
 	this->_serverNum = -1;
 }
 
@@ -74,12 +70,10 @@ int	load_in_servers(ParserStruct *PS, std::list<ServerStruct> &server_structs)
 	n = 0;
 	while (n++ < (*PS).get_nServers())
 	{
-		//std::cout << "[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[ Loading in... ]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]" << std::endl;
 		ServerStruct	add_server = ServerStruct(PS, n);
 		server_structs.push_back(add_server);
-		// server_structs.back().show_self();
-		//std::cout << std::endl;
+		if (add_server._root.content_list.empty() || add_server._root.content_list.size() > 1)
+			return (0);
 	}
-	//std::cout << "]]]]]]]]]]]]]]]]]]]]]]]]]]]]]] Loaded all [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[" << std::endl;
 	return (1);
 }

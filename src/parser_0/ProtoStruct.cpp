@@ -42,7 +42,7 @@ int	ProtoStruct::getNextContent(ParserItem *current, std::string name, ConfigCon
 			variable->content_list = split_content(current->getContent());
 			if (current->child && !name.compare("location"))
 				variable->childs = new LocationStruct(current);
-			return (getNextContent(current->next, name, variable->next));//found = true;// return (1); //problematic
+			return (getNextContent(current->next, name, variable->next));
 		}
 		current = current->next;
 	}
@@ -61,7 +61,7 @@ int	ProtoStruct::getContent(std::string name, ConfigContent &variable)
 			variable.content_list = split_content(current->getContent());
 			if (current->child && !name.compare("location"))
 				variable.childs = new LocationStruct(current);
-			return (getNextContent(current->next, name, variable.next));//found = true;// return (1); //problematic
+			return (getNextContent(current->next, name, variable.next));
 		}
 		current = current->next;
 	}
