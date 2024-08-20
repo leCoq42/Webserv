@@ -23,7 +23,6 @@ Parser::Parser(std::string comment, std::string comment_end, std::string to_chil
 
 Parser::~Parser()
 {
-	//std::cout << "bye bye parser" << std::endl;
 }
 
 int		Parser::encapsulator_skip(char *buffer, unsigned long &i)
@@ -129,7 +128,6 @@ int	Parser::parse_content_to_struct(char *buffer, unsigned long buffer_len)
 
 	file_content = buffer;
 	this->remove_comments(buffer, i, buffer_len);
-	//std::cout << "+++++++++++" << buffer_len << std::endl << buffer << std::endl << "+++++++++++comments removed" << std::endl;
 	i = 0;
 	while (i < buffer_len - 1 && !end)
 	{
@@ -138,15 +136,11 @@ int	Parser::parse_content_to_struct(char *buffer, unsigned long buffer_len)
 			if (!add_obj())
 				return (0);
 	}
-	//std::cout << "+++++++++++" << this->level << this->old_level << std::endl;
 	#ifdef DEBUG
 	this->PS.display(true);
 	#endif // DEBUG
 	if (this->old_level)
-	{
-		//std::cout << "LEVEL ISSUE: " << this->old_level << std::endl;
 		return (0);
-	}
 	this->PS.count_servers();
 	return (1);
 }
