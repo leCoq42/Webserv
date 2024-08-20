@@ -8,6 +8,8 @@ ServerConnection::~ServerConnection()
     _log.logServerConnection("Closing server", _connectedServers[i].serverID, _connectedServers[i].serverFD, _connectedServers[i].serverPort);
     close(_connectedServers[i].serverFD);
   }
+  _log.logAdd("All servers closed.");
+  _log.logAdd("Webserv is closed correctly.");
 }
 
 void ServerConnection::initServerInfo(ServerStruct &serverStruct, ServerInfo &info, std::list<std::string>::iterator it) 

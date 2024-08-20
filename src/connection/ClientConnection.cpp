@@ -264,7 +264,7 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 			}
 		}
 		if (globalSignalReceived == 1) {
-			_log.logAdd("Interrupt signal received, closing server connection");
+			_log.logAdd("Interrupt signal received.");
 			break;
 		}
 		else if (poll_count < 0)

@@ -43,25 +43,33 @@ void parse(Parser *parser, std::list<ServerStruct> *server_structs,
 }
 
 int main(int argc, char **argv) {
+	std::filesystem::path logFilePath(PATH_LOGFILE);
+	if (std::filesystem::exists(logFilePath))
+		std::remove(PATH_LOGFILE);
+	Log _log;
 	char *buffer;
 	std::shared_ptr<ServerConnection> SS = std::make_shared<ServerConnection>();
 	ClientConnection CC(SS);
 	std::list<ServerStruct> server_structs;
 	Parser parser("#", "\n", "{", "}", " 	\n", "'", " 	\n", ";");
-	Log _log;
 
-	if (argc != 2)
+	if (argc != 2) {
+		std::cerr << "Config file is missing." << std::endl;
 		error_exit(1);
+	}
+	std::cout << "\033[32mWebserv started ...\033[0m" << std::endl;
+	_log.logAdd("Webserv started.");
+
 
 	initSignals();
 	parse(&parser, &server_structs, &buffer, argv);
-	std::cout << "\033[32mWebserv started ...\033[0m" << std::endl;
-	_log.logAdd("Webserv started ...");
+
+
 	for (auto &server : server_structs)
 		SS->setUpServerConnection(server);
 	CC.setupClientConnection(&server_structs);
 	delete[] buffer;
+
 	std::cout << "\033[33mWebserv closed.\033[0m" << std::endl;
-	_log.logAdd("Webserv closed.");
 	return 0;
 }

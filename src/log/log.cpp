@@ -13,11 +13,8 @@ Log::~Log()
 }
 
 void Log::createPath() 
-{
-    std::filesystem::path logFilePath(PATH_LOGFILE);
-	if (std::filesystem::exists(logFilePath))
-		std::remove(PATH_LOGFILE);
-
+{	
+	std::filesystem::path logFilePath(PATH_LOGFILE);
     if (!std::filesystem::exists(logFilePath)) {
         std::filesystem::path folderPath(logFilePath.parent_path());
         if (!std::filesystem::exists(folderPath)) {
