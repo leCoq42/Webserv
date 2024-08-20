@@ -19,11 +19,11 @@ void ClientConnection::handlePollOutEvent(int clientFD, std::list<ServerStruct> 
         return;
     auto& client = _connectionInfo[clientFD];
 
-    if (!client.response) {
-       client.response = std::make_shared<Response>(client.request, serverStruct, client.port);
-        client.responseStr = client.response->get_response();
-        client.bytesToSend = client.response->get_response().length();
-    }
+	if (!client.response) {
+		client.response = std::make_shared<Response>(client.request, serverStruct, client.port);
+		client.responseStr = client.response->get_response();
+		client.bytesToSend = client.response->get_response().length();
+	}
 	else if (client.response && client.response->isComplete() == false) {
 		client.response->continue_cgi();
 	}

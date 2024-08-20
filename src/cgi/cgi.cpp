@@ -1,14 +1,10 @@
 #include "cgi.hpp"
 #include "defines.hpp"
 #include "log.hpp"
-#include <cstddef>
-#include <cstring>
-#include <sys/types.h>
 #include <sys/wait.h>
 #include <vector>
 #include <cerrno>
 #include <cstring>
-#include <unistd.h>
 #include <algorithm>
 
 CGI::CGI() :
@@ -32,9 +28,7 @@ CGI::CGI(const CGI &src) :
 	_request(src._request), _scriptPath(src._scriptPath), _interpreter(src._interpreter),
 	_cgiArgv(src._cgiArgv), _cgiEnvp(src._cgiEnvp), _result(src._result),
 	_contentLength(src._contentLength), _cgiFD(src._cgiFD), _complete(src._complete)
-{
-
-}
+{}
 
 CGI &CGI::operator=(const CGI &rhs)
 {
@@ -54,7 +48,6 @@ void CGI::swap(CGI &lhs)
 	std::swap(_contentLength, lhs._contentLength);
 	std::swap(_cgiFD, lhs._cgiFD);
 	std::swap(_complete, lhs._complete);
-
 }
  
 CGI::~CGI() {}
@@ -151,7 +144,7 @@ void CGI::executeScript()
 		_log.logError("Execve error.");
 		_exit(1);
     }
-	else {  // Parent process
+	else {
 		close(pipeServertoCGI[READ]);
 		close(pipeServertoCGI[WRITE]);
         close(pipeCGItoServer[WRITE]);

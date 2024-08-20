@@ -21,7 +21,7 @@ Request::Request(const std::string rawStr) :
 {
 	parseRequest();
 
-	if (_body.length() != _contentLength) {// TODO: not sure which length to compare with
+	if (_body.length() != _contentLength) {
 		_requestStatus = false;
 		#ifdef DEBUG
 		std::cout << "Incomplete Request >>>>>>>>>>>" << std::endl;
@@ -47,13 +47,13 @@ Request::Request(const Request &src) :
 	_requestArgs(src._requestArgs)
 {}
 
-Request &Request::operator=(const Request &rhs) {
+Request	&Request::operator=(const Request &rhs) {
 	Request temp(rhs);
 	temp.swap(*this);
 	return *this;
 }
 
-void Request::swap(Request &lhs) {
+void	Request::swap(Request &lhs) {
 	std::swap(_requestMethod, lhs._requestMethod);
 	std::swap(_requestPath, lhs._requestPath);
 	std::swap(_htmlVersion, lhs._htmlVersion);
@@ -65,7 +65,7 @@ void Request::swap(Request &lhs) {
 	std::swap(_requestArgs, lhs._requestArgs);
 }
 
-void Request::parseRequest()
+void	Request::parseRequest()
 {
 	std::string line;
 	std::string headerKey;
@@ -95,16 +95,11 @@ void Request::parseRequest()
 
 	_contentLength = parse_contentLen();
 	_body = parseRequestBody(_rawRequest);
-	// if (_headers.find("transfer-encoding") != _headers.end()) {
-	// 	if (_headers["transfer-encoding"].find("chunked") != std::string::npos)  {
-	// 		_chunked = true;
-	// 	}
-	// }
 	_valid = checkRequestValidity();
 	return;
 }
 
-void Request::parseUrlArgs(const std::string uri)
+void	Request::parseUrlArgs(const std::string uri)
 {
 	size_t pos;
 	std::unordered_map<std::string, std::string> args;
@@ -121,7 +116,7 @@ void Request::parseUrlArgs(const std::string uri)
 	}
 }
 
-void Request::splitUrlArgs(std::string argStr)
+void	Request::splitUrlArgs(std::string argStr)
 {
 	std::string arg;
 	std::istringstream argStream(argStr);
@@ -139,7 +134,7 @@ void Request::splitUrlArgs(std::string argStr)
 }
 
 
-bool Request::parseRequestLine(const std::string &line)
+bool	Request::parseRequestLine(const std::string &line)
 {
 	std::istringstream lineStream(line);
 	if (!(lineStream >> _requestMethod >> _requestPath >> _htmlVersion))
@@ -147,7 +142,7 @@ bool Request::parseRequestLine(const std::string &line)
 	return true;
 }
 
-bool Request::parseRequestHeaders(std::istringstream &requestStream)
+bool	Request::parseRequestHeaders(std::istringstream &requestStream)
 {
 	std::string line;
 	size_t pos;
@@ -174,7 +169,7 @@ bool Request::parseRequestHeaders(std::istringstream &requestStream)
 	return true;
 }
 
-std::string Request::parseRequestBody(const std::string &_rawRequest)
+std::string	Request::parseRequestBody(const std::string &_rawRequest)
 {
 	size_t body_start;
 	std::string body;
@@ -186,20 +181,15 @@ std::string Request::parseRequestBody(const std::string &_rawRequest)
 	return body;
 }
 
-void Request::appendToBody(std::string part)
+void	Request::appendToBody(std::string part)
 {
 	_body.append(part);
-	#ifdef DEBUG
-	std::cout << "_body: " << _body.length() << std::endl;
-	std::cout << "_contentLength: " << _contentLength << std::endl;
-	#endif
 	if (_body.length() == _contentLength) {
 		_requestStatus = true;
 	}
 }
 
-// TODO: max length of GET request 2048 bytes?
-bool Request::checkRequestValidity() const
+bool	Request::checkRequestValidity() const
 {
 	if (_requestMethod.empty() || _htmlVersion.empty())
 		return false;
@@ -214,9 +204,9 @@ bool Request::checkRequestValidity() const
 	return true;
 }
 
-const std::string &Request::get_rawRequest() const { return _rawRequest; }
+const std::string	&Request::get_rawRequest() const { return _rawRequest; }
 
-const std::string &Request::get_requestMethod() const { return _requestMethod; }
+const std::string	&Request::get_requestMethod() const { return _requestMethod; }
 
 const std::string Request::get_referer() const
 {
@@ -226,7 +216,7 @@ const std::string Request::get_referer() const
 	return referer->second;
 }
 
-const std::string Request::get_contentType() const
+const std::string	Request::get_contentType() const
 {
 	auto res = _headers.find("content-type");
 	if (res == _headers.end())
@@ -239,7 +229,7 @@ const std::string Request::get_contentType() const
 	return contentType;
 }
 
-size_t Request::parse_contentLen() const
+size_t	Request::parse_contentLen() const
 {
 	auto contentLenStr = _headers.find("content-length");
 	if (contentLenStr == _headers.end())
@@ -255,7 +245,7 @@ size_t Request::parse_contentLen() const
 	}
 }
 
-const std::string Request::get_boundary() const {
+const std::string	Request::get_boundary() const {
 	std::string ret;
 
 	auto boundary = _headers.find("content-type");
@@ -267,29 +257,29 @@ const std::string Request::get_boundary() const {
 	return ret;
 }
 
-const std::string &Request::get_body() const { return _body; }
+const std::string	&Request::get_body() const { return _body; }
 
-const std::filesystem::path &Request::get_requestPath() const { return _requestPath; }
+const std::filesystem::path	&Request::get_requestPath() const { return _requestPath; }
 
-const size_t &Request::get_contentLength() const { return (_contentLength); }//added
+const size_t	&Request::get_contentLength() const { return (_contentLength); }//added
 
-const std::string &Request::get_htmlVersion() const { return _htmlVersion; }
+const std::string	&Request::get_htmlVersion() const { return _htmlVersion; }
 
-const std::unordered_map<std::string, std::string> &Request::get_requestArgs() const {
+const std::unordered_map<std::string, std::string>	&Request::get_requestArgs() const {
   return _requestArgs;
 }
 
-const std::unordered_map<std::string, std::string> &Request::get_headers() const {
+const std::unordered_map<std::string, std::string>	&Request::get_headers() const {
 	return _headers;
 }
 
-const bool &Request::isValid() const { return _valid; }
+const bool	&Request::isValid() const { return _valid; }
 
 const bool	&Request::get_requestStatus() const { return _requestStatus; }
 
 void	Request::set_requestStatus(bool status) { _requestStatus = status; }
 
-void Request::printRequest() const {
+void	Request::printRequest() const {
 	std::cout << MSG_BORDER << "[Complete Request:]" << MSG_BORDER << std::endl;
 	std::cout << get_rawRequest() << std::endl;
 
