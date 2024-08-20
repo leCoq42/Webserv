@@ -120,6 +120,9 @@ void Response::handleRequest(const std::shared_ptr<Request> &request)
 bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 	std::stringstream buffer;
 
+	int status_code;
+
+	status_code = 0;
 	if (!_finalPath.empty() && _finalPath.has_extension())
 	{
 		std::unordered_map<std::string, std::string>::const_iterator it =
@@ -156,8 +159,14 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 		}
 	}
 	else
-		_body = list_dir(_finalPath, request->get_requestPath(), request->get_referer());
-	buildResponse(static_cast<int>(statusCode::OK), "OK", false);
+		_body = list_dir(_finalPath, request->get_requestPath(), request->get_referer(), status_code);
+	if (!status_code)
+		buildResponse(static_cast<int>(statusCode::OK), "OK", false);
+	else
+	{
+		_body = get_error_body(404, "File not found.");
+		buildResponse(status_code, "Not Found", false);
+	}
 	return true;
 }
 
@@ -233,6 +242,7 @@ void Response::handle_multipart()
 	std::string	boundary = _request->get_boundary();
 	std::string	filename = "";
 	bool		append = false;
+	int			status_code = 0;
 
 	std::vector<std::string> parts = split_multipart(requestBody, boundary);
 	for (const std::string &part: parts) {
@@ -263,7 +273,7 @@ void Response::handle_multipart()
 		std::cout << MSG_BORDER << MSG_BORDER << std::endl;
 		#endif // DEBUG
 		if (status == statusCode::OK)
-			_body = list_dir(_finalPath, _request->get_requestPath(), _request->get_referer());//readFileToBody("html/upload_success.html");
+			_body = list_dir(_finalPath, _request->get_requestPath(), _request->get_referer(), status_code);//readFileToBody("html/upload_success.html");
 		else
 			_body = get_error_body(static_cast<int>(status), "File not found.");//readFileToBody("html/standard_404.html");
 	}

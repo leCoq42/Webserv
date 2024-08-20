@@ -14,7 +14,7 @@ std::string &add_dir_to_listing(std::string &return_html, char *directory, const
 	if (return_html.back() != '/')
 		return_html += '/';
 	return_html += path;
-	if (return_html.back() != '/') return_html += '/';
+	if (return_html.back() != '/' && return_html.back() != '.') return_html += '/';//if (return_html.back() != '/') return_html += '/';
 	return_html += directory;
 	return_html += "';\">";
 	return_html += directory;
@@ -22,7 +22,7 @@ std::string &add_dir_to_listing(std::string &return_html, char *directory, const
 	return (return_html);
 }
 
-std::string list_dir(std::filesystem::path &path, const std::string &uri, const std::string &referer)
+std::string list_dir(std::filesystem::path &path, const std::string &uri, const std::string &referer, int &status_code)
 {
 	DIR			*dir;
 	std::string	return_html;
@@ -53,6 +53,7 @@ std::string list_dir(std::filesystem::path &path, const std::string &uri, const 
 	}
 	else
 	{
+		status_code = 404;
 		return_html += "<h2>Directory not found.</h2>";
 	}
 	return_html += "</body></html>";

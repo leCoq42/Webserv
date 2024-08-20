@@ -33,7 +33,7 @@ class	FileAccess
 	std::filesystem::path	getErrorPage(int return_code);
 	bool					allowedMethod(std::string method);
 	void					addFile(std::filesystem::path file);
-	void					swap_to_right_server_config(std::string uri, int port);
+	std::string				swap_to_right_server_config(std::string uri, int port);// void					swap_to_right_server_config(std::string uri, int port);
 	void					show_all_allowed(void);
 	std::string				redirect(int &return_code);
 	ConfigContent			*find_location_config(std::string uri, ConfigContent *location_config, std::string method);
