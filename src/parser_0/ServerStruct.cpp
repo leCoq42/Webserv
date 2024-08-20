@@ -67,6 +67,10 @@ int	empty_locations(ServerStruct	&add_server)
 {
 	ConfigContent	*current;
 
+	if (add_server._root.content_list.empty())
+		return (1);
+	if (add_server._root.content_list.back() == "")
+		return (1);
 	current = &add_server._location;
 	while (current)
 	{
