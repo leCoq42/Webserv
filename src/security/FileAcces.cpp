@@ -250,6 +250,8 @@ std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &retur
 		_currentAllowedMethods = _allowedMethods;
 	new_uri = swap_out_root(uri, location_config, _root);
 	path = uri_is_directory(new_uri, location_config, return_code);
+	if (return_code)
+		return (path);
 	if (is_deleteable(path))
 		return (path);
 	else
