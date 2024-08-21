@@ -25,7 +25,6 @@ CGI::CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &s
 		calculateContentLength();
 }
 
-
 CGI::CGI(const CGI &src) :
 	_log(src._log), _request(src._request), _scriptPath(src._scriptPath), _interpreter(src._interpreter),
 	_cgiArgv(src._cgiArgv), _cgiEnvp(src._cgiEnvp), _result(src._result),
@@ -54,7 +53,6 @@ void CGI::swap(CGI &lhs)
 }
  
 CGI::~CGI() {
-	std::cout << "CGI destructor called!" << std::endl;
 	if (fcntl(_cgiFD, F_GETFD) >= 0)
 		close(_cgiFD);
 }
@@ -138,7 +136,7 @@ void CGI::executeScript()
 		return;
     }
 
-	if (_pid == 0) {  // Child process
+	if (_pid == 0) {// Child process
 		close(pipeServertoCGI[WRITE]);
 		close(pipeCGItoServer[READ]);
 

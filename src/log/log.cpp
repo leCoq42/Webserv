@@ -1,6 +1,10 @@
 #include "log.hpp"
+#include <cstddef>
 
-Log::Log() : _logCount(0) 
+
+static size_t logCount = 0;
+
+Log::Log()
 {
     createPath();
     createLogFile();
@@ -70,10 +74,10 @@ void Log::swapLogs()
 
 void Log::manageLogSize()
 {
-	_logCount += 1;
-	if (_logCount > MAX_LOG_SIZE) {
+	logCount += 1;
+	if (logCount > MAX_LOG_SIZE) {
 		swapLogs();
-		_logCount = 0;
+		logCount = 0;
 	}
 }
 
@@ -100,7 +104,7 @@ void Log::logAdd(const std::string &message)
 
 void Log::logError(const std::string &message)
 {
-	// manageLogSize();
+	manageLogSize();
 	if (_logFile.is_open()) {
 		_logFile << getTimeStamp() << " [error] " << message << std::endl;
 		_logFile.flush();
@@ -111,7 +115,7 @@ void Log::logError(const std::string &message)
 
 void Log::logClientError(const std::string &message, char *clientIP, int clientFD) 
 {
-	// manageLogSize();
+	manageLogSize();
 	if (_logFile.is_open()) {
 		_logFile << getTimeStamp() << " [error] " << "Client IP " << clientIP << " "
 						 << message << " on socket " << clientFD << std::endl;
@@ -124,7 +128,7 @@ void Log::logClientError(const std::string &message, char *clientIP, int clientF
 
 void Log::logClientConnection(const std::string &message, std::string clientIP, int clientFD)
 {
-	// manageLogSize();
+	manageLogSize();
 	if (_logFile.is_open()) {
 		_logFile << getTimeStamp() << " [info]  " << "Client IP " << clientIP << " "
 						 << message << " on socket " << clientFD << std::endl;
@@ -137,7 +141,7 @@ void Log::logClientConnection(const std::string &message, std::string clientIP, 
 void Log::logServerError(const std::string &message,
 												 const std::string &serverName, int port)
 {
-	// manageLogSize();
+	manageLogSize();
 	if (_logFile.is_open()) {
 		_logFile << getTimeStamp() << " [error] " << message << " on server "
 						 << serverName << "on port " << port << std::endl;
@@ -149,7 +153,7 @@ void Log::logServerError(const std::string &message,
 
 void Log::logServerConnection(const std::string &message, const std::string &serverName, int socket, int port)
 {
-	// manageLogSize();
+	manageLogSize();
 	if (_logFile.is_open()) {
 		_logFile << getTimeStamp() << " [info]  " << message << " " << serverName
 						 << "on socket " << socket << " listening on port " << port << std::endl;
@@ -161,7 +165,7 @@ void Log::logServerConnection(const std::string &message, const std::string &ser
 
 void Log::logResponse(int status, const std::string &message) 
 {
-	// manageLogSize();
+	manageLogSize();
 	if (_logFile.is_open()) {
 		_logFile << getTimeStamp() << " [response] " << " Statuscode " << status
 						 << "  " << message << " has been send to client" << std::endl;

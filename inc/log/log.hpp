@@ -20,7 +20,6 @@ class Log {
 private:
 	static std::string	getTimeStamp();
 	std::ofstream		_logFile;
-	size_t				_logCount;
 
 public:
 	Log();

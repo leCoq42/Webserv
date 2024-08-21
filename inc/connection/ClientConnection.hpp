@@ -19,6 +19,7 @@
 #include <algorithm>
 
 #define SENDING 0
+#define TIMEOUT 30
 
 struct ConnectionInfo {
 	int                         clientFD;
@@ -46,7 +47,7 @@ public:
 	ClientConnection(std::shared_ptr<ServerConnection> serverConnection, std::shared_ptr<Log> log);
 	~ClientConnection();
 
-	void	handlePollInEvent(int clientFD);
+	void	handlePollInEvent(int clientFD, std::list<ServerStruct> *serverStruct);
 	void	acceptClients(int serverFD);
 	void	initServerSockets();
 	void	setupClientConnection(std::list<ServerStruct> *serverStruct);
@@ -55,9 +56,8 @@ public:
 	void	handlePollOutEvent(int clientFD, std::list<ServerStruct> *serverStruct);
 	void	handlePollErrorEvent(int clientFD);
 	void	initClientInfo(int clientFD, sockaddr_in clientAddr);
-	void	checkConnectedClientsStatus();
 	void	receiveData(int clientFD);
 	bool	initializeRequest(int clientFD);
-	bool	clientHasTimedOut(int clientFD);
+	bool	clientHasTimedOut(int clientFD, std::list<ServerStruct> *serverStruct);
 	void	sendData(int clientFD);
 };

@@ -13,11 +13,6 @@
 #include <unordered_map>
 #include <vector>
 
-Response::Response():
-	_request(nullptr), _contentType(""), _body(""), _contentLength(0), _responseString(""),
-	_fileAccess(nullptr), _finalPath(""), _cgi(nullptr), _complete(true)
-{}
-
 Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, int port, std::shared_ptr<Log> log):
 	_log(log), _request(request), _contentType(""), _body(""), _contentLength(0), _responseString(""),
 	_fileAccess(config), _finalPath(""), _cgi(nullptr), _complete(true), _port(port)
@@ -40,6 +35,15 @@ Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *co
 	#ifdef DEBUG
 	printResponse();
 	#endif
+}
+
+Response::Response(int error_code, std::string error_description, std::list<ServerStruct> *config, int port, std::shared_ptr<Log> log) :
+	_log(log), _request(nullptr), _contentType("text/html"), _body(""), _contentLength(0), _responseString(""),
+	_fileAccess(config), _finalPath(""), _cgi(nullptr), _complete(true), _port(port)
+{
+	_finalPath = _fileAccess.isFilePermissioned( _finalPath, error_code, _port, "GET");
+	_body = get_error_body(error_code, error_description);
+	buildResponse(error_code, error_description, false);
 }
 
 Response::~Response() {}
@@ -77,7 +81,7 @@ std::string	Response::get_error_body(int error_code, std::string error_descripti
 	std::filesystem::path	error_page;
 
 	error_page = _fileAccess.getErrorPage(error_code);
-	if (error_page != "")
+	if (!error_page.empty())
 		error_body = readFileToBody(error_page);
 	else
 		error_body = standard_error(error_code, error_description);
