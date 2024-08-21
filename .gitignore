@@ -1,7 +1,9 @@
+
 webserv
+./webserv
 
 .vscode/
-*/uploads/*
+uploads/*
 
 obj/
 logDir/

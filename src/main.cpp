@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
 	std::shared_ptr<ServerConnection> ptr_ServerConnection = std::make_shared<ServerConnection>(log);
 	ClientConnection clientConnection(ptr_ServerConnection, log);
 	std::list<ServerStruct> server_structs;
-	Parser parser;//("#", "\n", "{", "}", " 	\n", "'", " 	\n", ";");
+	Parser parser;
 
 	if (argc != 2) {
 		std::cerr << "Config file is missing." << std::endl;

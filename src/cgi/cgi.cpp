@@ -55,7 +55,6 @@ void CGI::swap(CGI &lhs)
 	std::swap(_contentLength, lhs._contentLength);
 	std::swap(_cgiFD, lhs._cgiFD);
 	std::swap(_complete, lhs._complete);
-
 }
  
 CGI::~CGI() {}

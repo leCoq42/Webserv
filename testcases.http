@@ -1,2 +1,0 @@
-POST http://localhost:8080/cgi-bin/datetime.cgi HTTP/1.1
-accept: text/html
