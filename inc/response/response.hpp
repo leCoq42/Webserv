@@ -63,6 +63,7 @@ private:
 	std::filesystem::path		_finalPath;
 	std::shared_ptr<CGI>		_cgi;
 	bool						_complete;
+	int							_port;
 
 	Response();
 	void	handleRequest(const std::shared_ptr<Request> &request);

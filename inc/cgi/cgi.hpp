@@ -19,7 +19,7 @@ public:
 	const int			&get_cgiFD() const;
 	const bool			&isComplete() const;
 
-	int			readCGIfd();
+	int					readCGIfd();
 
 private:
 	void					parseCGI();
@@ -40,6 +40,7 @@ private:
 	size_t						_contentLength;
 	int							_cgiFD;
 	bool						_complete;
+	pid_t						_pid;
 
 	static const inline std::vector<std::string> metaVarNames = {
 		"AUTH_TYPE",      "CONTENT_LENGTH",  "CONTENT_TYPE", "GATEWAY_INTERFACE",

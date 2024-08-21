@@ -9,13 +9,7 @@
 #include <sstream>
 #include <filesystem>
 
-
-Request::Request() :
-	_rawRequest(""), _requestMethod(""), _requestPath(""),
-	_htmlVersion(""), _valid(0), _body(""), _contentLength(0), _requestStatus(false)
-{}
-
-Request::Request(const std::string rawStr, std::shared_ptr<Log> log) : 
+Request::Request(const std::string rawStr, std::shared_ptr<Log> log) :
 	_log(log), _rawRequest(rawStr), _requestMethod(""), _requestPath(""),
 	_htmlVersion(""), _valid(0), _body(""), _contentLength(0), _requestStatus(false)
 {
@@ -133,7 +127,6 @@ void	Request::splitUrlArgs(std::string argStr)
 		}
 	}
 }
-
 
 bool	Request::parseRequestLine(const std::string &line)
 {

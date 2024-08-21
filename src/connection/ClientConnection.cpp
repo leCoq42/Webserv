@@ -89,7 +89,7 @@ void ClientConnection::sendData(int clientFD)
 	int packageSize = std::min(BUFFSIZE, remainingBytes);
 
 	ssize_t bytesSent = send(clientFD, 
-							 clientInfo.responseStr.c_str() + clientInfo.totalBytesSent, packageSize, 0);  
+							 clientInfo.responseStr.c_str() + clientInfo.totalBytesSent, packageSize, 0);
 	if (bytesSent > 0) {
 		clientInfo.totalBytesSent += bytesSent;
 		if (clientInfo.totalBytesSent < clientInfo.bytesToSend) {

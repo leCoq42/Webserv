@@ -20,10 +20,9 @@ Response::Response():
 
 Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, int port, std::shared_ptr<Log> log):
 	_log(log), _request(request), _contentType(""), _body(""), _contentLength(0), _responseString(""),
-	_fileAccess(config), _finalPath(""), _cgi(nullptr), _complete(true)
+	_fileAccess(config), _finalPath(""), _cgi(nullptr), _complete(true), _port(port)
 {
 	int return_code = 0;
-
 	_finalPath = _request->get_requestPath();
 
 	if (!_finalPath.empty() && _finalPath.string()[0] == '/')
@@ -31,17 +30,13 @@ Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *co
 
 	_finalPath = _fileAccess.isFilePermissioned( _finalPath, return_code, port, _request->get_requestMethod());
 	if (return_code == 301)
-	{
 		buildResponse(static_cast<int>(return_code), redirect(_fileAccess.get_return()), false);
-	}
 	else if (return_code) {
-		std::cerr << return_code << "Path error:" << _finalPath << std::endl;
 		_body = get_error_body(return_code, "Not Found.");
 		buildResponse(static_cast<int>(return_code), "Not Found", false);
 	}
-	else {
+	else
 		handleRequest(request);
-	}
 	#ifdef DEBUG
 	printResponse();
 	#endif
@@ -111,7 +106,6 @@ void	Response::handleRequest(const std::shared_ptr<Request> &request)
 		}
 	}
 	catch (const std::exception &e) {
-		std::cerr << e.what() << std::endl;
 		buildResponse(static_cast<int>(statusCode::INTERNAL_SERVER_ERROR),
 					"Internal Server Error", false);
 	}
@@ -208,7 +202,6 @@ bool	Response::handleDeleteRequest(const std::shared_ptr<Request> &request)
 	std::cout << request->get_requestPath() << std::endl;
 	if (_fileAccess.is_deleteable(_finalPath))
 	{
-		std::cout << _finalPath << std::endl;
 		if (remove(_finalPath))
 		{
 			buildResponse(static_cast<int>(statusCode::OK), "OK", "");
@@ -226,6 +219,7 @@ const std::string	Response::readFileToBody(std::filesystem::path path)
 	std::ifstream file( path, std::ios::binary);
 
 	if (!file) {
+		// _log->logServerError(string("Error, invalid path: " + path), _serverName, _port);
 		std::cerr << "Error, invalid path: " << path << std::endl;
 		return "";
 	}
@@ -258,9 +252,8 @@ void	Response::handle_multipart()
 		std::transform(headers.begin(), headers.end(), headers.begin(), [](unsigned char c){ return std::tolower(c);} );
 
 		size_t contentType = headers.find("content-type:");
-		if (contentType == std::string::npos) {
+		if (contentType == std::string::npos)
 			continue;
-		}
 
 		filename = extract_filename(headers);
 		status = write_file(      _finalPath.string() + "/" + filename, content, append);
@@ -270,9 +263,9 @@ void	Response::handle_multipart()
 		#ifdef DEBUG
 		std::cout << "File Upload success!" << std::endl;
 		std::cout << MSG_BORDER << MSG_BORDER << std::endl;
-		#endif // DEBUG
+		#endif
 		if (status == statusCode::OK)
-			_body = list_dir(_finalPath, _request->get_requestPath(), _request->get_referer(), status_code);//readFileToBody("html/upload_success.html");
+			_body = list_dir(_finalPath, _request->get_requestPath(), _request->get_referer(), status_code);
 		else
 			_body = get_error_body(static_cast<int>(status), "File not found.");
 	}
@@ -301,7 +294,7 @@ std::vector<std::string>	Response::split_multipart(std::string requestBody, std:
 std::string	Response::extract_filename(const std::string &headers)
 {
 	size_t filename_pos = headers.find("filename=\"");
-				//
+
 	if (filename_pos == std::string::npos)
 				return "temp.txt";
 	size_t filename_end = headers.find("\"", filename_pos + 10);
@@ -350,9 +343,8 @@ void	Response::buildResponse(int status, const std::string &message, bool isCGI)
 		_responseString.append(_body);
 	}
 	else {
-		if (_body.empty()) {
+		if (_body.empty())
 			return;
-		}
 		else {
 			_responseString.append("Content-Length: " + std::to_string(_body.length()) +
 						  CRLF);
