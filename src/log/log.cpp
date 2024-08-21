@@ -1,6 +1,4 @@
 #include "log.hpp"
-#include <cstddef>
-
 
 static size_t logCount = 0;
 
@@ -10,14 +8,14 @@ Log::Log()
     createLogFile();
 }
 
-Log::~Log() 
+Log::~Log()
 {
     if (_logFile.is_open())
         _logFile.close();
 }
 
-void Log::createPath() 
-{	
+void Log::createPath()
+{
 	std::filesystem::path logFilePath(PATH_LOGFILE);
     if (!std::filesystem::exists(logFilePath)) {
         std::filesystem::path folderPath(logFilePath.parent_path());
@@ -27,14 +25,14 @@ void Log::createPath()
     }
 }
 
-void Log::createLogFile() 
+void Log::createLogFile()
 {
     _logFile.open(PATH_LOGFILE, std::ios_base::app);
-    if (!_logFile) 
+    if (!_logFile)
         std::cerr << "Error creating or opening logfile: " << PATH_LOGFILE << std::endl;
 }
 
-void Log::swapLogs() 
+void Log::swapLogs()
 {
 	const char* pathNewLogFile = "./logDir/newLogFile.log";
 	std::ifstream oldLogFile(PATH_LOGFILE);
@@ -90,7 +88,7 @@ std::string Log::getTimeStamp()
 }
 
 
-void Log::logAdd(const std::string &message) 
+void Log::logAdd(const std::string &message)
 {
 	manageLogSize();
 	if (_logFile.is_open()) {
@@ -113,7 +111,7 @@ void Log::logError(const std::string &message)
 		std::cerr << getTimeStamp() << " [error] Unable to write to error log file" << std::endl;
 }
 
-void Log::logClientError(const std::string &message, char *clientIP, int clientFD) 
+void Log::logClientError(const std::string &message, char *clientIP, int clientFD)
 {
 	manageLogSize();
 	if (_logFile.is_open()) {
@@ -163,7 +161,7 @@ void Log::logServerConnection(const std::string &message, const std::string &ser
 		std::cerr << getTimeStamp() << " [error] Unable to write to access log file" << std::endl;
 }
 
-void Log::logResponse(int status, const std::string &message) 
+void Log::logResponse(int status, const std::string &message)
 {
 	manageLogSize();
 	if (_logFile.is_open()) {

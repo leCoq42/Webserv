@@ -118,7 +118,6 @@ void ClientConnection::sendData(int clientFD)
 	}
 	else {
 		#ifdef DEBUG
-		std::cout << "test" << std::endl;
 		_log->logClientConnection("Client disconnected", clientInfo.clientIP, clientFD);
 		#endif
 		removeClientSocket(clientFD);
