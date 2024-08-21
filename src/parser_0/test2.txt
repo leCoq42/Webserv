@@ -1,6 +1,0 @@
-server	hoi {
-
-}
-server doei {
-
-}
