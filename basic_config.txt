@@ -37,7 +37,7 @@ server B {
 		error_page			402 /error/402.html;
 		return				301 https://$host$request_url;
 		allow_methods		GET POST DELETE;
-		root				htmlT;
+		root				html;
 		location / {
 			allow_methods		GET;
 			autoindex			on;
