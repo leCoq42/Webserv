@@ -2,6 +2,7 @@
 #include "defines.hpp"
 #include "log.hpp"
 #include <cstdlib>
+#include <fcntl.h>
 #include <sys/wait.h>
 #include <vector>
 #include <cerrno>
@@ -54,7 +55,7 @@ void CGI::swap(CGI &lhs)
  
 CGI::~CGI() {
 	std::cout << "CGI destructor called!" << std::endl;
-	if (_cgiFD != 0)
+	if (fcntl(_cgiFD, F_GETFD) >= 0)
 		close(_cgiFD);
 }
 
@@ -180,7 +181,6 @@ int	CGI::readCGIfd()
 	}
 	else if (bytesRead == 0) {
 		close(_cgiFD);
-		_cgiFD = 0;
 		_complete = true;
 		calculateContentLength();
 		return 0;

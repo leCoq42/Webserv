@@ -1,10 +1,18 @@
 #include "ClientConnection.hpp"
+#include <fcntl.h>
 
 ClientConnection::ClientConnection(std::shared_ptr<ServerConnection> ServerConnection, std::shared_ptr<Log> log)
 	: _ptrServerConnection(ServerConnection), _log(log) {
 	}
 
-ClientConnection::~ClientConnection() {}
+ClientConnection::~ClientConnection() {
+	for (auto it: _connectionInfo) {
+		if (!isServerSocket(it.first)) {
+			if (fcntl(it.first, F_GETFD) >= 0)
+				close(it.first);
+		}
+	}
+}
 
 void ClientConnection::handlePollErrorEvent(int clientFD) {
 	removeClientSocket(clientFD);
