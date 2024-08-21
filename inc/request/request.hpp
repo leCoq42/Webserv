@@ -48,7 +48,6 @@ private:
 	std::unordered_map<std::string, std::string>	_headers;
 	std::unordered_map<std::string, std::string>	_requestArgs;
 	
-	Request();
 	void		parseRequest();
 	bool		parseRequestLine(const std::string &line);
 	bool		parseRequestHeaders(std::istringstream &requestStream);

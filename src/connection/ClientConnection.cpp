@@ -1,10 +1,21 @@
 #include "ClientConnection.hpp"
+#include "ServerStruct.hpp"
+#include "response.hpp"
+#include <fcntl.h>
+#include <memory>
 
 ClientConnection::ClientConnection(std::shared_ptr<ServerConnection> ServerConnection, std::shared_ptr<Log> log)
 	: _ptrServerConnection(ServerConnection), _log(log) {
 	}
 
-ClientConnection::~ClientConnection() {}
+ClientConnection::~ClientConnection() {
+	for (auto it: _connectionInfo) {
+		if (!isServerSocket(it.first)) {
+			if (fcntl(it.first, F_GETFD) >= 0)
+				close(it.first);
+		}
+	}
+}
 
 void ClientConnection::handlePollErrorEvent(int clientFD) {
 	removeClientSocket(clientFD);
@@ -14,12 +25,12 @@ void ClientConnection::handlePollOutEvent(int clientFD, std::list<ServerStruct> 
 {
 	if (_connectionInfo.find(clientFD) == _connectionInfo.end())
 		return;
-	if (clientHasTimedOut(clientFD))
+	if (clientHasTimedOut(clientFD, serverStruct))
 		return;
 	auto& client = _connectionInfo[clientFD];
 
 	if (!client.response) {
-	   client.response = std::make_shared<Response>(client.request, serverStruct, client.port, _log);
+		client.response = std::make_shared<Response>(client.request, serverStruct, client.port, _log);
 		client.responseStr = client.response->get_response();
 		client.bytesToSend = client.response->get_response().length();
 	}
@@ -33,7 +44,7 @@ void ClientConnection::handlePollOutEvent(int clientFD, std::list<ServerStruct> 
 	}
 }
 
-bool ClientConnection::initializeRequest(int clientFD) 
+bool ClientConnection::initializeRequest(int clientFD)
 {
 	auto& client = _connectionInfo[clientFD];
 	time_t  currentTime;
@@ -49,11 +60,11 @@ bool ClientConnection::initializeRequest(int clientFD)
 		client.receiveStr.clear();
 		client.lastRequestTime = currentTime;
 		return true;
-	} 
+	}
 	return false;
 }
 
-bool ClientConnection::clientHasTimedOut(int clientFD) 
+bool ClientConnection::clientHasTimedOut(int clientFD, std::list<ServerStruct> *serverStruct)
 {
 	auto& client = _connectionInfo[clientFD];
 	time_t currentTime;
@@ -61,6 +72,10 @@ bool ClientConnection::clientHasTimedOut(int clientFD)
 
 	if (currentTime - client.lastRequestTime > client.timeOut) {
 		_log->logClientConnection("Client timed out", client.clientIP, clientFD);
+		client.response = std::make_shared<Response>(504, "Gateway Timeout", serverStruct, client.port, _log);
+		client.responseStr = client.response->get_response();
+		client.bytesToSend = client.response->get_response().length();
+		sendData(clientFD);
 		removeClientSocket(clientFD);
 		return true;
 	}
@@ -88,8 +103,8 @@ void ClientConnection::sendData(int clientFD)
 	int remainingBytes = clientInfo.bytesToSend - clientInfo.totalBytesSent;
 	int packageSize = std::min(BUFFSIZE, remainingBytes);
 
-	ssize_t bytesSent = send(clientFD, 
-							 clientInfo.responseStr.c_str() + clientInfo.totalBytesSent, packageSize, 0);  
+	ssize_t bytesSent = send(clientFD,
+							 clientInfo.responseStr.c_str() + clientInfo.totalBytesSent, packageSize, 0);
 	if (bytesSent > 0) {
 		clientInfo.totalBytesSent += bytesSent;
 		if (clientInfo.totalBytesSent < clientInfo.bytesToSend) {
@@ -109,18 +124,18 @@ void ClientConnection::sendData(int clientFD)
 	}
 }
 
-void ClientConnection::handlePollInEvent(int clientFD) 
+void ClientConnection::handlePollInEvent(int clientFD, std::list<ServerStruct> *serverStruct)
 {
 	if (_connectionInfo.find(clientFD) == _connectionInfo.end())
 		return;
-	if (clientHasTimedOut(clientFD))
+	if (clientHasTimedOut(clientFD, serverStruct))
 		return;
 	receiveData(clientFD);
 	auto& client = _connectionInfo[clientFD];
 	if (!client.request) {
 		if (!initializeRequest(clientFD))
 			return;
-	} 
+	}
 	else {
 		client.request->appendToBody(client.receiveStr);
 		client.receiveStr.clear();
@@ -134,13 +149,13 @@ void ClientConnection::initClientInfo(int clientFD, sockaddr_in clientAddr) {
 	ConnectionInfo clientInfo;
 	time_t currentTime;
 	time(&currentTime);
-	
+
 	clientInfo.clientFD = clientFD;
 	inet_ntop(AF_INET, &clientAddr.sin_addr, clientInfo.clientIP, sizeof(clientInfo.clientIP));
 	clientInfo.port = _ptrServerConnection->_connectedServers[0].serverPort;
 	clientInfo.request = nullptr;
 	clientInfo.response = nullptr;
-	clientInfo.timeOut = 10;
+	clientInfo.timeOut = TIMEOUT;
 	clientInfo.lastRequestTime = currentTime;
 	clientInfo.receiveStr = "";
 	clientInfo.responseStr = "";
@@ -153,7 +168,7 @@ void ClientConnection::initClientInfo(int clientFD, sockaddr_in clientAddr) {
 	_connectionInfo[clientFD] = clientInfo;
 }
 
-void ClientConnection::acceptClients(int serverFD) 
+void ClientConnection::acceptClients(int serverFD)
 {
 	struct sockaddr_in clientAddr;
 	socklen_t clientAddrLen = sizeof(clientAddr);
@@ -162,10 +177,10 @@ void ClientConnection::acceptClients(int serverFD)
 		_log->logError("Failed to connect client: " + std::string(strerror(errno)));
 		return;
 	}
-	
+
 	int flags = fcntl(clientFD, F_GETFL, 0);
 	fcntl(clientFD, F_SETFL, flags | O_NONBLOCK);
-	
+
 	if (getpeername(clientFD, (struct sockaddr *)&clientAddr, &clientAddrLen) != 0) {
 		_log->logError("Failed to read client IP: " + std::string(strerror(errno)));
 		close(clientFD);
@@ -190,30 +205,12 @@ void ClientConnection::removeClientSocket(int clientFD)
 {
 	if (_connectionInfo.find(clientFD) == _connectionInfo.end())
 		return;
-	
+
 	close(clientFD);
 	#ifdef DEBUG
 	_log->logClientConnection("closed connection", _connectionInfo[clientFD].clientIP, clientFD);
 	#endif
 	_connectionInfo.erase(clientFD);
-}
-
-void ClientConnection::checkConnectedClientsStatus() 
-{
-	time_t currentTime;
-	time(&currentTime);
-
-	for (auto it = _connectionInfo.begin(); it != _connectionInfo.end();) {
-		if (currentTime - it->second.lastRequestTime > it->second.timeOut) {
-			int FD = it->first;
-			++it;
-			if(!isServerSocket(FD))
-				removeClientSocket(FD);
-		}
-		else {
-			++it;
-		}
-	}
 }
 
 void ClientConnection::initServerSockets() {
@@ -247,14 +244,13 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 		}
 
 		int poll_count = poll(pollfds.data(), pollfds.size(), 10);
-		checkConnectedClientsStatus();
 		if (poll_count > 0) {
 			for (const auto& pfd : pollfds) {
 				if (pfd.revents & POLLIN) {
-					if (isServerSocket(pfd.fd)) 
+					if (isServerSocket(pfd.fd))
 						acceptClients(pfd.fd);
 					else
-						handlePollInEvent(pfd.fd);
+						handlePollInEvent(pfd.fd, serverStruct);
 				}
 				if (pfd.revents & POLLOUT)
 					handlePollOutEvent(pfd.fd, serverStruct);

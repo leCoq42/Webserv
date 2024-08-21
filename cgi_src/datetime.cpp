@@ -1,4 +1,3 @@
-#include "cgi.hpp"
 #include <ctime>
 #include <iostream>
 

@@ -9,7 +9,6 @@
 #include <vector>
 #include <map>
 
-
 enum class statusCode {
 	OK = 200,
 	CREATED = 201,
@@ -40,6 +39,7 @@ enum class statusCode {
 class Response {
 public:
 	Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, int port, std::shared_ptr<Log> log);
+	Response(int error_code, std::string error_description, std::list<ServerStruct> *config, int port, std::shared_ptr<Log> log);
 	~Response();
 	Response(const Response &src);
 	Response &operator=(const Response &rhs);
@@ -63,6 +63,7 @@ private:
 	std::filesystem::path		_finalPath;
 	std::shared_ptr<CGI>		_cgi;
 	bool						_complete;
+	int							_port;
 
 	Response();
 	void	handleRequest(const std::shared_ptr<Request> &request);

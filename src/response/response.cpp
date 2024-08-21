@@ -13,17 +13,11 @@
 #include <unordered_map>
 #include <vector>
 
-Response::Response():
-	_request(nullptr), _contentType(""), _body(""), _contentLength(0), _responseString(""),
-	_fileAccess(nullptr), _finalPath(""), _cgi(nullptr), _complete(true)
-{}
-
 Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, int port, std::shared_ptr<Log> log):
 	_log(log), _request(request), _contentType(""), _body(""), _contentLength(0), _responseString(""),
-	_fileAccess(config), _finalPath(""), _cgi(nullptr), _complete(true)
+	_fileAccess(config), _finalPath(""), _cgi(nullptr), _complete(true), _port(port)
 {
 	int return_code = 0;
-
 	_finalPath = _request->get_requestPath();
 
 	if (!_finalPath.empty() && _finalPath.string()[0] == '/')
@@ -31,21 +25,25 @@ Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *co
 
 	_finalPath = _fileAccess.isFilePermissioned( _finalPath, return_code, port, _request->get_requestMethod());
 	if (return_code == 301)
-	{
 		buildResponse(static_cast<int>(return_code), redirect(_fileAccess.get_return()), false);
-	}
 	else if (return_code) {
-		std::cout << return_code << "Path error:" << _finalPath << std::endl;
-		// _finalPath = _fileAccess.getErrorPage(return_code); // wrong place
 		_body = get_error_body(return_code, "Not Found.");
 		buildResponse(static_cast<int>(return_code), "Not Found", false);
 	}
-	else {
+	else
 		handleRequest(request);
-	}
 	#ifdef DEBUG
 	printResponse();
 	#endif
+}
+
+Response::Response(int error_code, std::string error_description, std::list<ServerStruct> *config, int port, std::shared_ptr<Log> log) :
+	_log(log), _request(nullptr), _contentType("text/html"), _body(""), _contentLength(0), _responseString(""),
+	_fileAccess(config), _finalPath(""), _cgi(nullptr), _complete(true), _port(port)
+{
+	_finalPath = _fileAccess.isFilePermissioned( _finalPath, error_code, _port, "GET");
+	_body = get_error_body(error_code, error_description);
+	buildResponse(error_code, error_description, false);
 }
 
 Response::~Response() {}
@@ -56,14 +54,14 @@ Response::Response(const Response &src):
 	_finalPath(src._finalPath), _cgi(src._cgi), _complete(src._complete)
 {}
 
-Response &Response::operator=(const Response &rhs)
+Response	&Response::operator=(const Response &rhs)
 {
 	Response temp(rhs);
 	temp.swap(*this);
 	return *this;
 }
 
-void Response::swap(Response &lhs)
+void	Response::swap(Response &lhs)
 {
 	std::swap(_log, lhs._log);
 	std::swap(_request, lhs._request);
@@ -83,14 +81,14 @@ std::string	Response::get_error_body(int error_code, std::string error_descripti
 	std::filesystem::path	error_page;
 
 	error_page = _fileAccess.getErrorPage(error_code);
-	if (error_page != "")
+	if (!error_page.empty())
 		error_body = readFileToBody(error_page);
 	else
 		error_body = standard_error(error_code, error_description);
 	return (error_body);
 }
 
-void Response::handleRequest(const std::shared_ptr<Request> &request)
+void	Response::handleRequest(const std::shared_ptr<Request> &request)
 {
 	if (_request && !_request->isValid()) {
 		buildResponse(static_cast<int>(statusCode::BAD_REQUEST), "Bad Request");
@@ -112,13 +110,12 @@ void Response::handleRequest(const std::shared_ptr<Request> &request)
 		}
 	}
 	catch (const std::exception &e) {
-		std::cerr << e.what() << std::endl;
 		buildResponse(static_cast<int>(statusCode::INTERNAL_SERVER_ERROR),
 					"Internal Server Error", false);
 	}
 }
 
-bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
+bool	Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 	std::stringstream buffer;
 
 	int status_code;
@@ -141,7 +138,6 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 			_body = readFileToBody(_finalPath);
 			if (_body.empty())
 			{
-				std::cout << "empty body" << std::endl;
 				_body = get_error_body(404, "File not found.");
 				buildResponse(static_cast<int>(statusCode::NOT_FOUND), "Not Found", false);
 				return true;
@@ -171,7 +167,7 @@ bool Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 	return true;
 }
 
-bool Response::handlePostRequest(const std::shared_ptr<Request> &request)
+bool	Response::handlePostRequest(const std::shared_ptr<Request> &request)
 {
 	std::string requestBody = request->get_body();
 	std::string requestContentType = request->get_contentType();
@@ -205,19 +201,18 @@ bool Response::handlePostRequest(const std::shared_ptr<Request> &request)
 	return true;
 }
 
-bool Response::handleDeleteRequest(const std::shared_ptr<Request> &request)
+bool	Response::handleDeleteRequest(const std::shared_ptr<Request> &request)
 {
 	std::cout << request->get_requestPath() << std::endl;
 	if (_fileAccess.is_deleteable(_finalPath))
 	{
-		std::cout << _finalPath << std::endl;
 		if (remove(_finalPath))
 		{
 			buildResponse(static_cast<int>(statusCode::OK), "OK", "");
 			return true;
 		}
 	}
-	buildResponse(static_cast<int>(204), "Failed", ""); //change this untill correct
+	buildResponse(static_cast<int>(204), "Failed", "");
 	return false;
 }
 
@@ -228,7 +223,8 @@ const std::string	Response::readFileToBody(std::filesystem::path path)
 	std::ifstream file( path, std::ios::binary);
 
 	if (!file) {
-		std::cout << "Error, invalid path: " << path << std::endl;
+		// _log->logServerError(string("Error, invalid path: " + path), _serverName, _port);
+		std::cerr << "Error, invalid path: " << path << std::endl;
 		return "";
 	}
 	buffer << file.rdbuf();
@@ -236,7 +232,7 @@ const std::string	Response::readFileToBody(std::filesystem::path path)
 	return body;
 }
 
-void Response::handle_multipart()
+void	Response::handle_multipart()
 {
 	statusCode	status = statusCode::OK;
 	std::string	requestBody = _request->get_body();
@@ -260,28 +256,27 @@ void Response::handle_multipart()
 		std::transform(headers.begin(), headers.end(), headers.begin(), [](unsigned char c){ return std::tolower(c);} );
 
 		size_t contentType = headers.find("content-type:");
-		if (contentType == std::string::npos) {
+		if (contentType == std::string::npos)
 			continue;
-		}
 
 		filename = extract_filename(headers);
-		status = write_file(      _finalPath.string() + "/" + filename, content, append); //TODO:make customizable via config -> _finalPath.string()
+		status = write_file(      _finalPath.string() + "/" + filename, content, append);
 		if (status != statusCode::OK)
 			break;
 		append = true;
 		#ifdef DEBUG
 		std::cout << "File Upload success!" << std::endl;
 		std::cout << MSG_BORDER << MSG_BORDER << std::endl;
-		#endif // DEBUG
+		#endif
 		if (status == statusCode::OK)
-			_body = list_dir(_finalPath, _request->get_requestPath(), _request->get_referer(), status_code);//readFileToBody("html/upload_success.html");
+			_body = list_dir(_finalPath, _request->get_requestPath(), _request->get_referer(), status_code);
 		else
-			_body = get_error_body(static_cast<int>(status), "File not found.");//readFileToBody("html/standard_404.html");
+			_body = get_error_body(static_cast<int>(status), "File not found.");
 	}
 	buildResponse(static_cast<int>(status), statusCodeMap.at(status), false);
 }
 
-std::vector<std::string> Response::split_multipart(std::string requestBody, std::string boundary)
+std::vector<std::string>	Response::split_multipart(std::string requestBody, std::string boundary)
 {
 	std::vector<std::string> parts;
 	std::string fullBoundary = "--" + boundary;
@@ -300,17 +295,17 @@ std::vector<std::string> Response::split_multipart(std::string requestBody, std:
 	return parts;
 }
 
-std::string Response::extract_filename(const std::string &headers)
+std::string	Response::extract_filename(const std::string &headers)
 {
 	size_t filename_pos = headers.find("filename=\"");
-				//
+
 	if (filename_pos == std::string::npos)
 				return "temp.txt";
 	size_t filename_end = headers.find("\"", filename_pos + 10);
 	return headers.substr(filename_pos + 10, filename_end - filename_pos - 10);
 }
 
-statusCode Response::write_file(const std::string &path, const std::string &content, bool append)
+statusCode	Response::write_file(const std::string &path, const std::string &content, bool append)
 {
 	std::ofstream file;
 	if (append)
@@ -330,19 +325,19 @@ void	Response::continue_cgi()
 {
 	if (_cgi->readCGIfd()) {
 		std::cerr << "cgi reading error" << std::endl;
-		buildResponse(static_cast<int>(statusCode::INTERNAL_SERVER_ERROR), "Internal Server Error", false); // when cgi double padded?
+		buildResponse(static_cast<int>(statusCode::INTERNAL_SERVER_ERROR), "Internal Server Error", false);
 		_complete = true;
 		return;
 	}
 	if (_cgi->isComplete() == true) {
 		_body = _cgi->get_result();
 		_contentLength = _cgi->get_contentLength();
-		buildResponse(static_cast<int>(statusCode::OK), "OK", true); // when cgi double padded?
+		buildResponse(static_cast<int>(statusCode::OK), "OK", true);
 		_complete = true;
 	}
 }
 
-void Response::buildResponse(int status, const std::string &message, bool isCGI)
+void	Response::buildResponse(int status, const std::string &message, bool isCGI)
 {
 	_responseString.append("HTTP/1.1 " + std::to_string(status) + " " + message +
 							CRLF);
@@ -352,9 +347,8 @@ void Response::buildResponse(int status, const std::string &message, bool isCGI)
 		_responseString.append(_body);
 	}
 	else {
-		if (_body.empty()) {
+		if (_body.empty())
 			return;
-		}
 		else {
 			_responseString.append("Content-Length: " + std::to_string(_body.length()) +
 						  CRLF);
@@ -366,7 +360,7 @@ void Response::buildResponse(int status, const std::string &message, bool isCGI)
 
 const std::string	&Response::get_response() const { return _responseString; }
 const std::string	&Response::get_contentType() const { return _contentType; }
-bool		Response::isComplete() const { return _complete; }
+bool 				Response::isComplete() const { return _complete; }
 
 void Response::printResponse() {
 	std::cout << MSG_BORDER << "[Response]" << MSG_BORDER << std::endl;

@@ -1,14 +1,12 @@
 #include "cgi.hpp"
 #include "defines.hpp"
 #include "log.hpp"
-#include <cstddef>
-#include <cstring>
-#include <sys/types.h>
+#include <cstdlib>
+#include <fcntl.h>
 #include <sys/wait.h>
 #include <vector>
 #include <cerrno>
 #include <cstring>
-#include <unistd.h>
 #include <algorithm>
 
 CGI::CGI() :
@@ -19,7 +17,7 @@ CGI::CGI() :
 
 CGI::CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &scriptPath, const std::string &interpreter, std::shared_ptr<Log> log) :
 	_log(log), _request(request), _scriptPath(scriptPath), _interpreter(interpreter), _result(""),
-	_contentLength(0), _cgiFD(0), _complete(false)
+	_contentLength(0), _cgiFD(0), _complete(false), _pid(0)
 {
 	parseCGI();
 	executeScript();
@@ -27,14 +25,11 @@ CGI::CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &s
 		calculateContentLength();
 }
 
-
 CGI::CGI(const CGI &src) :
 	_log(src._log), _request(src._request), _scriptPath(src._scriptPath), _interpreter(src._interpreter),
 	_cgiArgv(src._cgiArgv), _cgiEnvp(src._cgiEnvp), _result(src._result),
 	_contentLength(src._contentLength), _cgiFD(src._cgiFD), _complete(src._complete)
-{
-
-}
+{}
 
 CGI &CGI::operator=(const CGI &rhs)
 {
@@ -57,7 +52,10 @@ void CGI::swap(CGI &lhs)
 	std::swap(_complete, lhs._complete);
 }
  
-CGI::~CGI() {}
+CGI::~CGI() {
+	if (fcntl(_cgiFD, F_GETFD) >= 0)
+		close(_cgiFD);
+}
 
 void CGI::parseCGI()
 {
@@ -116,7 +114,6 @@ void CGI::executeScript()
 {
     int 	pipeServertoCGI[2];
 	int		pipeCGItoServer[2];
-	pid_t	pid;
 
 	std::vector<char*> envp;
 	for (const auto& var : _cgiEnvp) {
@@ -124,11 +121,13 @@ void CGI::executeScript()
 	}
 	envp.push_back(nullptr);
 
-    if (pipe(pipeServertoCGI) == -1 || pipe(pipeCGItoServer) == -1)
+    if (pipe(pipeServertoCGI) == -1 || pipe(pipeCGItoServer) == -1) {
 		_log->logError("Failed to create pipe");
+		return;
+	}
 
-    pid = fork();
-    if (pid == -1) {
+    _pid = fork();
+    if (_pid == -1) {
         close(pipeServertoCGI[READ]);
         close(pipeServertoCGI[WRITE]);
 		close(pipeCGItoServer[READ]);
@@ -137,7 +136,7 @@ void CGI::executeScript()
 		return;
     }
 
-	if (pid == 0) {  // Child process
+	if (_pid == 0) {// Child process
 		close(pipeServertoCGI[WRITE]);
 		close(pipeCGItoServer[READ]);
 
@@ -151,18 +150,13 @@ void CGI::executeScript()
 		_log->logError("Execve error.");
 		_exit(1);
     }
-	else {  // Parent process
+	else { // Parent process
 		close(pipeServertoCGI[READ]);
 		close(pipeServertoCGI[WRITE]);
         close(pipeCGItoServer[WRITE]);
 
 		_cgiFD = pipeCGItoServer[READ];
 		readCGIfd();
-
-        int status;
-        waitpid(pid, &status, 0);
-        if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
-			_log->logError("Script exited with non-zero status");
     }
 }
 
@@ -170,7 +164,14 @@ int	CGI::readCGIfd()
 {
 	ssize_t bytesRead;
 	std::vector<char> buffer(BUFFSIZE);
+	int status = 0;
 
+	if (!waitpid(_pid, &status, WNOHANG))
+		return 0;
+	if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+		_log->logError("CGI script exited with non-zero status");
+		return 1;
+	}
 	bytesRead = read(_cgiFD, &buffer[0], BUFFSIZE);
 	if (bytesRead < 0) {
 		_complete = true;
@@ -192,6 +193,11 @@ int	CGI::readCGIfd()
 void	CGI::calculateContentLength()
 {
 	std::string body;
+
+	if (_result.empty()) {
+		_contentLength = 0;
+		return;
+	}
 
 	size_t start = _result.find(CRLFCRLF);
 	if (start != std::string::npos) {
