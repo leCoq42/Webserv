@@ -18,8 +18,8 @@ Response::Response():
 	_fileAccess(nullptr), _finalPath(""), _cgi(nullptr), _complete(true)
 {}
 
-Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, int port):
-	_request(request), _contentType(""), _body(""), _contentLength(0), _responseString(""),
+Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, int port, std::shared_ptr<Log> log):
+	_log(log), _request(request), _contentType(""), _body(""), _contentLength(0), _responseString(""),
 	_fileAccess(config), _finalPath(""), _cgi(nullptr), _complete(true)
 {
 	int return_code = 0;
@@ -50,7 +50,7 @@ Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *co
 Response::~Response() {}
 
 Response::Response(const Response &src):
-	_request(src._request), _contentType(src._contentType), _body(src._body), _contentLength(src._contentLength),
+	_log(src._log), _request(src._request), _contentType(src._contentType), _body(src._body), _contentLength(src._contentLength),
 	_responseString(src._responseString), _fileAccess(src._fileAccess),
 	_finalPath(src._finalPath), _cgi(src._cgi), _complete(src._complete)
 {}
@@ -64,6 +64,7 @@ Response	&Response::operator=(const Response &rhs)
 
 void	Response::swap(Response &lhs)
 {
+	std::swap(_log, lhs._log);
 	std::swap(_request, lhs._request);
 	std::swap(_contentType, lhs._contentType);
 	std::swap(_body, lhs._body);
@@ -146,7 +147,7 @@ bool	Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 		}
 		else
 		{
-			_cgi = std::make_shared<CGI>(_request, _finalPath, interpreters.at(_finalPath.extension()));
+			_cgi = std::make_shared<CGI>(_request, _finalPath, interpreters.at(_finalPath.extension()), _log);
 			_complete = _cgi->isComplete();
 			if (_complete == true) {
 				_body = _cgi->get_result();
@@ -180,7 +181,7 @@ bool	Response::handlePostRequest(const std::shared_ptr<Request> &request)
 	if (_finalPath.has_extension()) {
 		if (interpreters.find(_finalPath.extension()) != interpreters.end()) {
 			isCGI = true;
-			_cgi = std::make_shared<CGI>(_request, _finalPath, interpreters.at(_finalPath.extension()));
+			_cgi = std::make_shared<CGI>(_request, _finalPath, interpreters.at(_finalPath.extension()), _log);
 			_complete = _cgi->isComplete();
 			if (_complete == true) {
 				_body = _cgi->get_result();

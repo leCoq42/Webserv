@@ -1,7 +1,5 @@
 #pragma once
 
-#include "ServerStruct.hpp"
-#include "log.hpp"
 #include <arpa/inet.h> 
 #include <cstring>
 #include <netdb.h>
@@ -9,6 +7,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <vector>
+#include <memory>
+#include "ServerStruct.hpp"
 #include "log.hpp"
 
 #define BACKLOG 512
@@ -22,17 +22,17 @@ struct ServerInfo {
 
 class ServerConnection {
 	private:
-		Log _log;
+		std::shared_ptr<Log> _log;
 
 	public:
 		std::vector<ServerInfo> _connectedServers;
-		ServerConnection();
+		ServerConnection(std::shared_ptr<Log> log);
 		~ServerConnection();
 
-		void  initServerInfo(ServerStruct &serverStruct, ServerInfo &info,
+		void					initServerInfo(ServerStruct &serverStruct, ServerInfo &info,
 												std::list<std::string>::iterator it);
-		void  createServerSocket(ServerInfo &info);
-		void  bindServerSocket(ServerInfo &info);
-		void  listenIncomingConnections(ServerInfo &info);
-		void  setUpServerConnection(ServerStruct &serverStruct);
+		void 					createServerSocket(ServerInfo &info);
+		void 					bindServerSocket(ServerInfo &info);
+		void 					listenIncomingConnections(ServerInfo &info);
+		void 					setUpServerConnection(ServerStruct &serverStruct);
 };

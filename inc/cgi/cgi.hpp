@@ -8,7 +8,7 @@
 class CGI {
 public:
 	CGI();
-	CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &scriptPath, const std::string &interpreter);
+	CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &scriptPath, const std::string &interpreter, std::shared_ptr<Log> log);
 	CGI(const CGI &src);
 	CGI &operator=(const CGI &rhs);
 	~CGI();
@@ -22,14 +22,15 @@ public:
 	int			readCGIfd();
 
 private:
-	void		parseCGI();
-	void		executeScript();
-	void		createArgs(std::vector<char *> &argv, std::string &path, std::string &args);
-	void		init_envp();
-	bool		add_to_envp(std::string name, std::string value, std::string prefix);
-	bool		validate_key(std::string key);
-	void		calculateContentLength();
+	void					parseCGI();
+	void					executeScript();
+	void					createArgs(std::vector<char *> &argv, std::string &path, std::string &args, std::shared_ptr<Log> log);
+	void					init_envp();
+	bool					add_to_envp(std::string name, std::string value, std::string prefix);
+	bool					validate_key(std::string key);
+	void					calculateContentLength();
 
+	std::shared_ptr<Log>		_log;
 	std::shared_ptr<Request>	_request;
 	std::filesystem::path		_scriptPath;
 	std::string					_interpreter;
@@ -37,7 +38,6 @@ private:
 	std::vector<std::string>	_cgiEnvp;
 	std::string					_result;
 	size_t						_contentLength;
-	Log							_log;
 	int							_cgiFD;
 	bool						_complete;
 

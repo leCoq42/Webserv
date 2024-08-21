@@ -40,11 +40,10 @@ class ClientConnection {
 private:
 	std::shared_ptr<ServerConnection>   _ptrServerConnection;
 	std::map<int, ConnectionInfo>       _connectionInfo;
-	Log                                 _log;
+	std::shared_ptr<Log>                _log;
 
 public:
-	ClientConnection();
-	ClientConnection(std::shared_ptr<ServerConnection> serverConnection);
+	ClientConnection(std::shared_ptr<ServerConnection> serverConnection, std::shared_ptr<Log> log);
 	~ClientConnection();
 
 	void	handlePollInEvent(int clientFD);

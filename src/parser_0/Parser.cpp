@@ -2,23 +2,23 @@
 
 Parser::Parser(void)
 {
-	this->level = 0;
-	this->old_level = 0;
-	std::cout << "Empty parser constraints, very handy......" << std::endl;
-}
+// 	this->level = 0;
+// 	this->old_level = 0;
+// 	std::cout << "Empty parser constraints, very handy......" << std::endl;
+// }
 
-Parser::Parser(std::string comment, std::string comment_end, std::string to_child, std::string to_parent, std::string ignore, std::string encapsulators, std::string name_end, std::string line_end)
-{
+// Parser::Parser(std::string comment, std::string comment_end, std::string to_child, std::string to_parent, std::string ignore, std::string encapsulators, std::string name_end, std::string line_end)
+// {
 	this->level = 0;
 	this->old_level = 0;
-	this->comment = comment;
-	this->comment_end = comment_end;
-	this->to_child = to_child;
-	this->to_parent = to_parent;
-	this->ignore = ignore;
-	this->encapsulators = encapsulators;
-	this->name_end = name_end;
-	this->line_end = line_end;
+	this->comment = "#";//comment;
+	this->comment_end = "\n";//comment_end;
+	this->to_child = "{";//to_child;
+	this->to_parent = "}";//to_parent;
+	this->ignore = " 	\n";//ignore;
+	this->encapsulators = "'";//encapsulators;
+	this->name_end = " 	\n";//name_end;
+	this->line_end = ";";//line_end;
 }
 
 Parser::~Parser()

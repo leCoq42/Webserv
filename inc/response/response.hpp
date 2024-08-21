@@ -39,7 +39,7 @@ enum class statusCode {
 
 class Response {
 public:
-	Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, int port);
+	Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, int port, std::shared_ptr<Log> log);
 	~Response();
 	Response(const Response &src);
 	Response &operator=(const Response &rhs);
@@ -53,6 +53,7 @@ public:
 	void		printResponse();
 
 private:
+	std::shared_ptr<Log>		_log;
 	std::shared_ptr<Request>	_request;
 	std::string					_contentType;
 	std::string					_body;

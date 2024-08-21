@@ -2,11 +2,12 @@
 
 #include <unordered_map>
 #include <filesystem>
+#include <memory>
+#include "log.hpp"
 
 class Request {
 public:
-	Request();
-	Request(const std::string str);
+	Request(const std::string str, std::shared_ptr<Log> log);
 	Request(const Request &src);
 	Request &operator=(const Request &rhs);
 	void swap(Request &lhs);
@@ -35,6 +36,7 @@ public:
 	void				set_requestStatus(bool status);
 
 private:
+	std::shared_ptr<Log>	_log;
 	const std::string		_rawRequest;
 	std::string				_requestMethod;
 	std::filesystem::path	_requestPath;

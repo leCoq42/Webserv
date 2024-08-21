@@ -13,8 +13,8 @@ CGI::CGI() :
 {}
 
 
-CGI::CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &scriptPath, const std::string &interpreter) :
-	_request(request), _scriptPath(scriptPath), _interpreter(interpreter), _result(""),
+CGI::CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &scriptPath, const std::string &interpreter, std::shared_ptr<Log> log) :
+	_log(log), _request(request), _scriptPath(scriptPath), _interpreter(interpreter), _result(""),
 	_contentLength(0), _cgiFD(0), _complete(false)
 {
 	parseCGI();
@@ -25,7 +25,7 @@ CGI::CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &s
 
 
 CGI::CGI(const CGI &src) :
-	_request(src._request), _scriptPath(src._scriptPath), _interpreter(src._interpreter),
+	_log(src._log), _request(src._request), _scriptPath(src._scriptPath), _interpreter(src._interpreter),
 	_cgiArgv(src._cgiArgv), _cgiEnvp(src._cgiEnvp), _result(src._result),
 	_contentLength(src._contentLength), _cgiFD(src._cgiFD), _complete(src._complete)
 {}
@@ -39,6 +39,7 @@ CGI &CGI::operator=(const CGI &rhs)
 
 void CGI::swap(CGI &lhs)
 {
+	std::swap(_log, lhs._log);
 	std::swap(_request, lhs._request);
 	std::swap(_scriptPath, lhs._scriptPath);
 	std::swap(_interpreter, lhs._interpreter);
@@ -118,7 +119,7 @@ void CGI::executeScript()
 	envp.push_back(nullptr);
 
     if (pipe(pipeServertoCGI) == -1 || pipe(pipeCGItoServer) == -1)
-		_log.logError("Failed to create pipe");
+		_log->logError("Failed to create pipe");
 
     pid = fork();
     if (pid == -1) {
@@ -126,7 +127,7 @@ void CGI::executeScript()
         close(pipeServertoCGI[WRITE]);
 		close(pipeCGItoServer[READ]);
 		close(pipeCGItoServer[WRITE]);
-        _log.logError("Fork Failed.");
+        _log->logError("Fork Failed.");
 		return;
     }
 
@@ -141,7 +142,7 @@ void CGI::executeScript()
 		close(pipeCGItoServer[WRITE]);
 
         execve(_cgiArgv.data()[0], _cgiArgv.data(), envp.data());
-		_log.logError("Execve error.");
+		_log->logError("Execve error.");
 		_exit(1);
     }
 	else {
@@ -155,7 +156,7 @@ void CGI::executeScript()
         int status;
         waitpid(pid, &status, 0);
         if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
-			_log.logError("Script exited with non-zero status");
+			_log->logError("Script exited with non-zero status");
     }
 }
 
