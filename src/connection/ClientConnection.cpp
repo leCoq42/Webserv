@@ -175,9 +175,6 @@ void ClientConnection::acceptClients(int serverFD)
 		return;
 	}
 
-	// int flags = fcntl(clientFD, F_GETFL, 0);
-	// fcntl(clientFD, F_SETFL, flags | O_NONBLOCK);
-
 	if (getpeername(clientFD, (struct sockaddr *)&clientAddr, &clientAddrLen) != 0) {
 		_log->logError("Failed to read client IP: " + std::string(strerror(errno)));
 		close(clientFD);
