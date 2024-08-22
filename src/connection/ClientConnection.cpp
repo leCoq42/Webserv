@@ -13,7 +13,6 @@ ClientConnection::~ClientConnection() {
 		if (!isServerSocket(it.first)) {
 			if (it.first > 0) {
 				close(it.first);
-				_connectionInfo.erase(it.first);
 			}
 		}
 	}

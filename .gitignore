@@ -3,7 +3,7 @@ webserv
 ./webserv
 
 .vscode/
-uploads/*
+html/uploads/*
 
 obj/
 logDir/
