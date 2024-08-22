@@ -8,6 +8,8 @@
 #include <iostream>
 #include <memory>
 
+#define STD_CONFIG "basic_config.txt"
+
 void error_exit(int error_code) {
 	if (error_code == 1)
 		std::cerr << "no file given" << std::endl;
@@ -20,10 +22,11 @@ void error_exit(int error_code) {
 }
 
 int parse(Parser *parser, std::list<ServerStruct> *server_structs,
-           char **buffer, char **argv) {
+           char **buffer, std::string config_file_name)
+{
 	int file_len;
 
-	if (load_file_to_buff(*(argv + 1), buffer, &file_len))
+	if (load_file_to_buff(config_file_name.c_str(), buffer, &file_len))
 		return (2);
 	else if (!parser->parse_content_to_struct(*buffer, file_len))
 		return (3);
@@ -53,20 +56,30 @@ int main(int argc, char **argv) {
 	std::shared_ptr<Log> log = std::make_shared<Log>();
 	char *buffer = NULL;
 	int		parse_code = 0;
+	std::string		config_file_name;
 	std::shared_ptr<ServerConnection> ptr_ServerConnection = std::make_shared<ServerConnection>(log);
 	ClientConnection clientConnection(ptr_ServerConnection, log);
 	std::list<ServerStruct> server_structs;
 	Parser parser;
 
-	if (argc != 2) {
+	if (argc == 1)
+	{
+		config_file_name = STD_CONFIG;
+	}
+	else if (argc != 2) {
 		std::cerr << "Config file is missing." << std::endl;
 		error_exit(1);
+		return (1);
+	}
+	else
+	{
+		config_file_name = *(argv + 1);
 	}
 	std::cout << "\033[32mWebserv started ...\033[0m" << std::endl;
 	log->logAdd("Webserv started.");
 
 	initSignals();
-	parse_code = parse(&parser, &server_structs, &buffer, argv);
+	parse_code = parse(&parser, &server_structs, &buffer, config_file_name);
 	if (parse_code)
 	{
 		if (buffer)
