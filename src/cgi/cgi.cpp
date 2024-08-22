@@ -8,6 +8,7 @@
 #include <cerrno>
 #include <cstring>
 #include <algorithm>
+#include <unistd.h>
 
 CGI::CGI() :
 	_request(nullptr), _scriptPath(""), _interpreter(""), _result(""),

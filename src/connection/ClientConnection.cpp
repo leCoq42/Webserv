@@ -11,8 +11,10 @@ ClientConnection::ClientConnection(std::shared_ptr<ServerConnection> ServerConne
 ClientConnection::~ClientConnection() {
 	for (auto it: _connectionInfo) {
 		if (!isServerSocket(it.first)) {
-			if (fcntl(it.first, F_GETFD) >= 0)
+			if (it.first > 0) {
 				close(it.first);
+				_connectionInfo.erase(it.first);
+			}
 		}
 	}
 }
@@ -211,6 +213,7 @@ void ClientConnection::removeClientSocket(int clientFD)
 	_log->logClientConnection("closed connection", _connectionInfo[clientFD].clientIP, clientFD);
 	#endif
 	_connectionInfo.erase(clientFD);
+	_connectionInfo[clientFD].clientFD = 0;
 }
 
 void ClientConnection::initServerSockets() {
