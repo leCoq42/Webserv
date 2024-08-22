@@ -1,8 +1,4 @@
 #include "ClientConnection.hpp"
-#include "ServerStruct.hpp"
-#include "response.hpp"
-#include <fcntl.h>
-#include <memory>
 
 ClientConnection::ClientConnection(std::shared_ptr<ServerConnection> ServerConnection, std::shared_ptr<Log> log)
 	: _ptrServerConnection(ServerConnection), _log(log) {
@@ -91,7 +87,7 @@ void ClientConnection::receiveData(int clientFD)
 	ssize_t bytesReceived = recv(clientFD, &buffer[0], buffer.size(), MSG_DONTWAIT);
 	if (bytesReceived > 0)
 		client.receiveStr.append(std::string(buffer.begin(), buffer.begin() + bytesReceived));
-	if (bytesReceived < 0 && (errno != EAGAIN && errno != EWOULDBLOCK)) {
+	if (bytesReceived < 0) {
 		_log->logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
 				client.clientIP, clientFD);
 		removeClientSocket(clientFD);
@@ -113,7 +109,7 @@ void ClientConnection::sendData(int clientFD)
 			return;
 		}
 	}
-	if (bytesSent < 0 && (errno != EAGAIN && errno != EWOULDBLOCK)) {
+	if (bytesSent < 0) {
 		_log->logClientError("Failed to send data to client: " + std::string(strerror(errno)), clientInfo.clientIP, clientFD);
 		removeClientSocket(clientFD);
 	}
@@ -179,8 +175,8 @@ void ClientConnection::acceptClients(int serverFD)
 		return;
 	}
 
-	int flags = fcntl(clientFD, F_GETFL, 0);
-	fcntl(clientFD, F_SETFL, flags | O_NONBLOCK);
+	// int flags = fcntl(clientFD, F_GETFL, 0);
+	// fcntl(clientFD, F_SETFL, flags | O_NONBLOCK);
 
 	if (getpeername(clientFD, (struct sockaddr *)&clientAddr, &clientAddrLen) != 0) {
 		_log->logError("Failed to read client IP: " + std::string(strerror(errno)));
