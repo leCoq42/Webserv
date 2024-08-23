@@ -3,7 +3,6 @@ webserv
 ./webserv
 
 .vscode/
-html/uploads/*
 
 obj/
 logDir/
@@ -14,8 +13,5 @@ logDir/
 *.o
 *.out
 *.cgi
-
-ubuntu_cgi_tester
-ubuntu_tester
 
 compile_commands.json
