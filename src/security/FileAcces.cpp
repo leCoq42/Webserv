@@ -3,7 +3,6 @@
 
 FileAccess::FileAccess(std::list<ServerStruct> *config): config(config)
 {
-	// std::cout << MSG_BORDER << "[FILEACCESS SETUP]" << MSG_BORDER << std::endl;
 	_return = "";
 }
 

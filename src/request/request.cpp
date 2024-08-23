@@ -1,6 +1,5 @@
 #include "request.hpp"
 #include "defines.hpp"
-#include "stringUtils.hpp"
 #include <cstddef>
 #include <iostream>
 #include <stdexcept>
@@ -58,6 +57,16 @@ void Request::swap(Request &lhs) {
 	std::swap(_requestStatus, lhs._requestStatus);
 	std::swap(_headers, lhs._headers);
 	std::swap(_requestArgs, lhs._requestArgs);
+}
+
+std::string Request::trim(const std::string &str, const std::string &tokens) {
+  if (str.empty())
+    return str;
+  size_t start = str.find_first_not_of(tokens);
+  size_t end = str.find_last_not_of(tokens);
+  if (start == std::string::npos || end == std::string::npos)
+    return "";
+  return str.substr(start, end - start + 1);
 }
 
 void	Request::parseRequest()
@@ -255,7 +264,7 @@ const std::string	&Request::get_body() const { return _body; }
 
 const std::filesystem::path	&Request::get_requestPath() const { return _requestPath; }
 
-const size_t	&Request::get_contentLength() const { return (_contentLength); }//added
+const size_t	&Request::get_contentLength() const { return (_contentLength); }
 
 const std::string	&Request::get_htmlVersion() const { return _htmlVersion; }
 

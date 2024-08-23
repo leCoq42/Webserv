@@ -18,8 +18,8 @@ class ServerStruct: public ProtoStruct
 	ConfigContent	_names;
 	ConfigContent	_root;
 	ConfigContent	_location;
-	ConfigContent	_errorPage; //list
-	ConfigContent	_return; //list
+	ConfigContent	_errorPage; 
+	ConfigContent	_return; 
 	ConfigContent	_allowMethods;
 
 

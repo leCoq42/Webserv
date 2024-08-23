@@ -2,7 +2,6 @@
 #include "Parser.hpp"
 #include "ServerStruct.hpp"
 #include "LocationStruct.hpp"
-// #include "response.hpp"
 #include <filesystem>
 #include <vector>
 
@@ -26,14 +25,12 @@ class	FileAccess
 	FileAccess(std::list<ServerStruct> *config);
 	~FileAccess();
 	std::filesystem::path	root_or_path(std::filesystem::path path, std::filesystem::path current_root, std::filesystem::path root, LocationStruct	*current);
-	// std::filesystem::path	isFilePermissioned(std::string uri, int &return_code);
 	std::filesystem::path	isFilePermissioned(std::string uri, int &return_code, int port, std::string method);
-	// std::filesystem::path	find_location(std::filesystem::path path, std::string uri, int &return_code);
 	std::filesystem::path	find_location(std::filesystem::path path, std::string uri, int &return_code);
 	std::filesystem::path	getErrorPage(int return_code);
 	bool					allowedMethod(std::string method);
 	void					addFile(std::filesystem::path file);
-	std::string				swap_to_right_server_config(std::string uri, int port);// void					swap_to_right_server_config(std::string uri, int port);
+	std::string				swap_to_right_server_config(std::string uri, int port);
 	void					show_all_allowed(void);
 	std::string				redirect(int &return_code);
 	ConfigContent			*find_location_config(std::string uri, ConfigContent *location_config, std::string method);

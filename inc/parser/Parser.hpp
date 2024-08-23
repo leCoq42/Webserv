@@ -25,7 +25,6 @@ class Parser
 	public:
 	ParserStruct	PS;
 	Parser(void);
-	// Parser(std::string comment, std::string comment_end, std::string to_child, std::string to_parent, std::string ignore, std::string encapsulators, std::string name_end, std::string line_end);
 	~Parser();
 	int	parse_content_to_struct(char *buffer, unsigned long buffer_len);
 };
