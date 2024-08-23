@@ -14,7 +14,4 @@ logDir/
 *.out
 *.cgi
 
-ubuntu_cgi_tester
-ubuntu_tester
-
 compile_commands.json
