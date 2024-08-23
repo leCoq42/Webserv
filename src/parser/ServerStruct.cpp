@@ -131,5 +131,7 @@ int	double_ports(std::list<ServerStruct> &server_structs)
 		}
 		port++;
 	}
+	if (all_ports.empty())
+		throw (std::runtime_error("No ports selected"));// return (1);
 	return (0);
 }
