@@ -10,7 +10,6 @@ int main() {
             << std::endl;
 
   std::cout << "Hello world!" << std::endl;
-  // sleep(10);
   std::cout << "Hello world!" << std::endl;
 
   std::cout << "</body></html>";
