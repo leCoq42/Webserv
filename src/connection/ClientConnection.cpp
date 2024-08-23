@@ -238,7 +238,7 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 			pollfds.push_back(client.second.pfd);
 		}
 
-		int poll_count = poll(pollfds.data(), pollfds.size(), 10);
+		int poll_count = poll(pollfds.data(), pollfds.size(), 100000);
 		if (poll_count > 0) {
 			for (const auto& pfd : pollfds) {
 				if (pfd.revents & POLLIN) {
@@ -247,9 +247,9 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 					else
 						handlePollInEvent(pfd.fd, serverStruct);
 				}
-				if (pfd.revents & POLLOUT)
+				else if (pfd.revents & POLLOUT)
 					handlePollOutEvent(pfd.fd, serverStruct);
-				if (pfd.revents & (POLLHUP | POLLERR))
+				else if (pfd.revents & (POLLHUP | POLLERR))
 					handlePollErrorEvent(pfd.fd);
 			}
 		}
