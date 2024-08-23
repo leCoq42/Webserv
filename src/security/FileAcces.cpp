@@ -1,9 +1,14 @@
 #include "fileAccess.hpp"
 #include "defines.hpp"
 
+#define	DEFUALT_CLIENT_MAX_BODY_SIZE 1000000
+
 FileAccess::FileAccess(std::list<ServerStruct> *config): config(config)
 {
 	_return = "";
+	_clientMaxBodySize = DEFUALT_CLIENT_MAX_BODY_SIZE;
+	// if (!config->_clientMaxBodySize.content_list.empty())
+	// 	_clientMaxBodySize = std::stoi(config->_clientMaxBodySize.content_list.front());
 }
 
 FileAccess::~FileAccess() {}
@@ -232,10 +237,14 @@ std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &retur
 	ConfigContent	*location_config;
 	std::filesystem::path	path;
 
+	std::cout << port << std::endl;
 	uri = swap_to_right_server_config(uri, port);
 	new_uri = redirect(return_code);
 	if (return_code == 301)
 		return ("/");
+	if (!server->_clientMaxBodySize.content_list.empty())
+		_clientMaxBodySize = std::stoi(server->_clientMaxBodySize.content_list.front());
+	std::cout << server->_id << "_" << _clientMaxBodySize << std::endl;
 	location_config = &server->_location;
 	location_config = find_location_config(uri, location_config, method);
 	if (location_config && location_config->childs && !((LocationStruct *)location_config->childs)->allow_methods.content_list.empty())
