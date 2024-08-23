@@ -5,7 +5,6 @@ webserv
 .vscode/
 html/uploads/*
 
-obj/
 logDir/
 
 .DS_Store
