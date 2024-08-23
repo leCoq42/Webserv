@@ -65,7 +65,7 @@ $(CGI_BIN_DIR)/%.cgi: $(CGI_DIR)/%.cpp
 
 # Cleaning Targets
 clean:
-	@find ./obj -name "*.o" -type f -delete 
+	@$(RM) ./obj
 	@$(RM) ./logDir/*
 	@echo "$(YELLOW)Object files deleted$(RESET_COLOR)"
 	@echo "$(YELLOW)Log deleted$(RESET_COLOR)"
