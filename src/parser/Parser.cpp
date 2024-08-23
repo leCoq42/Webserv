@@ -2,13 +2,6 @@
 
 Parser::Parser(void)
 {
-// 	this->level = 0;
-// 	this->old_level = 0;
-// 	std::cout << "Empty parser constraints, very handy......" << std::endl;
-// }
-
-// Parser::Parser(std::string comment, std::string comment_end, std::string to_child, std::string to_parent, std::string ignore, std::string encapsulators, std::string name_end, std::string line_end)
-// {
 	this->level = 0;
 	this->old_level = 0;
 	this->comment = "#";//comment;
@@ -138,7 +131,7 @@ int	Parser::parse_content_to_struct(char *buffer, unsigned long buffer_len)
 	}
 	#ifdef DEBUG
 	this->PS.display(true);
-	#endif // DEBUG
+	#endif
 	if (this->old_level)
 		return (0);
 	this->PS.count_servers();

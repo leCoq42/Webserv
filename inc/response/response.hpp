@@ -97,10 +97,10 @@ private:
 		{".php", "text/html"},
 		{".py", "text/html"},
 
-		{".bad_extension", "text/plain"}, //questionable but needed for test
-		{".bla", "text/plain"}, //questionable but needed for test
-		{".pouic", "text/plain"}, //questionable but needed for test
-		{".pouac", "text/plain"}, //questionable but needed for test, tester does not seem to care about file extensions
+		{".bad_extension", "text/plain"}, 
+		{".bla", "text/plain"}, 
+		{".pouic", "text/plain"}, 
+		{".pouac", "text/plain"}, 
 
 		{"x-www-form-urlencoded", "application/x-www-form-urlencoded"},
 		{"form-data", "multipart/form-data"}};

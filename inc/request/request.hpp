@@ -26,7 +26,7 @@ public:
 	const std::string	&get_connection() const;
 	const std::string	&get_body() const;
 	size_t				parse_contentLen() const;
-	const size_t		&get_contentLength() const; //added
+	const size_t		&get_contentLength() const;
 	const bool			&isValid() const;
 	const bool			&get_requestStatus() const;
 	void				printRequest() const;
@@ -34,6 +34,7 @@ public:
 	const std::unordered_map<std::string, std::string> &get_headers() const;
 	const std::unordered_map<std::string, std::string> &get_requestArgs() const;
 	void				set_requestStatus(bool status);
+	std::string 		trim(const std::string &str, const std::string &tokens);
 
 private:
 	std::shared_ptr<Log>	_log;

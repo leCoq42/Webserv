@@ -223,7 +223,6 @@ const std::string	Response::readFileToBody(std::filesystem::path path)
 	std::ifstream file( path, std::ios::binary);
 
 	if (!file) {
-		// _log->logServerError(string("Error, invalid path: " + path), _serverName, _port);
 		std::cerr << "Error, invalid path: " << path << std::endl;
 		return "";
 	}
