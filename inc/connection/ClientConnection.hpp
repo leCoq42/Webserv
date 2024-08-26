@@ -22,12 +22,12 @@
 #define TIMEOUT 30
 
 struct ConnectionInfo {
-	int                         FD;
-	char                        clientIP[INET_ADDRSTRLEN];
-	int                         port;
+	int							FD;
+	char						clientIP[INET_ADDRSTRLEN];
+	int							port;
 	size_t					  	maxBodySize;
-	std::shared_ptr<Request>    request;
-	std::shared_ptr<Response>   response;
+	std::shared_ptr<Request>	request;
+	std::shared_ptr<Response>	response;
 	long int 					timeOut;
 	long int 					lastRequestTime;
 	std::string 				receiveStr;
@@ -59,6 +59,7 @@ public:
 	void	receiveData(int clientFD);
 	bool	initializeRequest(int clientFD);
 	bool	clientHasTimedOut(int clientFD, std::list<ServerStruct> *serverStruct);
+	bool	contentTooLarge(int clientFD, std::list<ServerStruct> *serverStruct);
 	void	sendData(int clientFD);
 	ServerInfo	findServerInfo(int serverFD);
 };
