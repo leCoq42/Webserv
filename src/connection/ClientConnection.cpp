@@ -19,8 +19,8 @@ void ClientConnection::handlePollErrorEvent(int clientFD) {
 }
 
 void ClientConnection::handlePollOutEvent(int clientFD, std::list<ServerStruct> *serverStruct)
-{
-	if (_connectionInfo.find(clientFD) == _connectionInfo.end())
+{	
+	if (_connectionInfo[clientFD].FD == 0)
 		return;
 	if (clientHasTimedOut(clientFD, serverStruct) || contentTooLarge(clientFD, serverStruct))
 		return;
@@ -82,10 +82,14 @@ bool ClientConnection::contentTooLarge(int clientFD, std::list<ServerStruct> *se
 
 void ClientConnection::sendData(int clientFD)
 {
+	if (_connectionInfo[clientFD].FD == 0)
+		return;
 	auto& clientInfo = _connectionInfo[clientFD];
 	int remainingBytes = clientInfo.bytesToSend - clientInfo.totalBytesSent;
 	int packageSize = std::min(BUFFSIZE, remainingBytes);
 
+	if (_connectionInfo.find(clientFD) == _connectionInfo.end())
+		return;
 	ssize_t bytesSent = send(clientFD,
 							 clientInfo.responseStr.c_str() + clientInfo.totalBytesSent, packageSize, 0);
 	if (bytesSent > 0) {
@@ -97,6 +101,7 @@ void ClientConnection::sendData(int clientFD)
 	if (bytesSent < 0) {
 		_log->logClientError("Failed to send data to client: " + std::string(strerror(errno)), clientInfo.clientIP, clientFD);
 		removeClientSocket(clientFD);
+		return;
 	}
 	else {
 		#ifdef DEBUG
@@ -143,7 +148,7 @@ void ClientConnection::receiveData(int clientFD)
 
 void ClientConnection::handlePollInEvent(int clientFD, std::list<ServerStruct> *serverStruct)
 {
-	if (_connectionInfo.find(clientFD) == _connectionInfo.end())
+	if (_connectionInfo[clientFD].FD == 0)
 		return;
 	if (clientHasTimedOut(clientFD, serverStruct))
 		return;
@@ -282,8 +287,10 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 				}
 				else if (pfd.revents & POLLOUT)
 					handlePollOutEvent(pfd.fd, serverStruct);
-				else if (pfd.revents & (POLLHUP | POLLERR))
+				if (pfd.revents & (POLLHUP | POLLERR)) {
+					std::cout << "poll error" << std::endl;
 					handlePollErrorEvent(pfd.fd);
+				}
 			}
 		}
 		if (globalSignalReceived == 1) {
@@ -292,5 +299,7 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 		}
 		else if (poll_count < 0)
 			_log->logError("Failed to poll.");
+		if (poll_count == 0)
+			continue;
 	}
 }
