@@ -101,12 +101,13 @@ int	load_in_servers(ParserStruct *PS, std::list<ServerStruct> &server_structs)
 	return (1);
 }
 
+//no double in same server
 int	double_ports(std::list<ServerStruct> &server_structs)
 {
-	std::list<int>	all_ports;
-
 	for (std::list<ServerStruct>::iterator server = server_structs.begin(); server != server_structs.end();)
 	{
+		std::list<int>	all_ports;
+
 		for (std::list<std::string>::iterator port_str = server->_port.content_list.begin(); port_str != server->_port.content_list.end();)
 		{
 			try
@@ -119,19 +120,55 @@ int	double_ports(std::list<ServerStruct> &server_structs)
 			}
 			port_str++;
 		}
+		for (std::list<int>::iterator port = all_ports.begin(); port != all_ports.end();)
+		{
+			for (std::list<int>::iterator compare_port = port; compare_port != all_ports.end();)
+			{
+				compare_port++;
+				if (compare_port != all_ports.end() && *compare_port == *port)
+					return (1);
+			}
+			port++;
+		}
+		if (all_ports.empty())
+			throw (std::runtime_error("No ports selected"));// return (1);
 		server++;
 	}
-	for (std::list<int>::iterator port = all_ports.begin(); port != all_ports.end();)
-	{
-		for (std::list<int>::iterator compare_port = port; compare_port != all_ports.end();)
-		{
-			compare_port++;
-			if (compare_port != all_ports.end() && *compare_port == *port)
-				return (1);
-		}
-		port++;
-	}
-	if (all_ports.empty())
-		throw (std::runtime_error("No ports selected"));// return (1);
 	return (0);
 }
+
+//never double
+// int	double_ports(std::list<ServerStruct> &server_structs)
+// {
+// 	std::list<int>	all_ports;
+
+// 	for (std::list<ServerStruct>::iterator server = server_structs.begin(); server != server_structs.end();)
+// 	{
+// 		for (std::list<std::string>::iterator port_str = server->_port.content_list.begin(); port_str != server->_port.content_list.end();)
+// 		{
+// 			try
+// 			{
+// 				all_ports.push_back(std::stoi(*port_str));
+// 			}
+// 			catch (std::exception &e)
+// 			{
+// 				throw(std::runtime_error("Port is not an number."));
+// 			}
+// 			port_str++;
+// 		}
+// 		server++;
+// 	}
+// 	for (std::list<int>::iterator port = all_ports.begin(); port != all_ports.end();)
+// 	{
+// 		for (std::list<int>::iterator compare_port = port; compare_port != all_ports.end();)
+// 		{
+// 			compare_port++;
+// 			if (compare_port != all_ports.end() && *compare_port == *port)
+// 				return (1);
+// 		}
+// 		port++;
+// 	}
+// 	if (all_ports.empty())
+// 		throw (std::runtime_error("No ports selected"));// return (1);
+// 	return (0);
+// }
