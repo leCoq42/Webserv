@@ -14,14 +14,14 @@ int	max_body_limit(std::list<ServerStruct> *config, int port)
 		{
 			if (port_config == port_str)
 			{
-				if (!server->_clientMaxBodySize.content_list.empty())
-					return (std::stoi(server->_clientMaxBodySize.content_list.front()));
+				if (!server_config._clientMaxBodySize.content_list.empty())
+					return (std::stoi(server_config._clientMaxBodySize.content_list.front()));
 				else
 					return (DEFUALT_CLIENT_MAX_BODY_SIZE);
 			}
 		}
 	}
-	}
+	return (DEFUALT_CLIENT_MAX_BODY_SIZE);
 }
 
 FileAccess::FileAccess(std::list<ServerStruct> *config): config(config)
