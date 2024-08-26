@@ -26,8 +26,6 @@ FileAccess::FileAccess(std::list<ServerStruct> *config): config(config)
 {
 	_return = "";
 	_clientMaxBodySize = DEFUALT_CLIENT_MAX_BODY_SIZE;
-	// if (!config->_clientMaxBodySize.content_list.empty())
-	// 	_clientMaxBodySize = std::stoi(config->_clientMaxBodySize.content_list.front());
 }
 
 FileAccess::~FileAccess() {}

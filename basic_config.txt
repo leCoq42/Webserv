@@ -1,5 +1,4 @@
 server A {
-		client_max_body_size 1024000;
 		listen				8080;
 		listen				8081;
 		listen				8082;
@@ -30,6 +29,7 @@ server A {
 
 server B {
 		client_max_body_size 1024;
+		listen				8090;
 		listen				8091;
 		listen				8092;
 		listen				8093;

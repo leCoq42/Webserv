@@ -22,7 +22,7 @@ void ClientConnection::handlePollOutEvent(int clientFD, std::list<ServerStruct> 
 {
 	if (_connectionInfo.find(clientFD) == _connectionInfo.end())
 		return;
-	if (clientHasTimedOut(clientFD, serverStruct))
+	if (clientHasTimedOut(clientFD, serverStruct) || contentTooLarge(clientFD, serverStruct))
 		return;
 	auto& client = _connectionInfo[clientFD];
 
@@ -69,7 +69,6 @@ bool ClientConnection::contentTooLarge(int clientFD, std::list<ServerStruct> *se
 		return false;
 
 	if (client.request->get_body().size() > client.maxBodySize) {
-		std::cout << "test content too large" << std::endl;
 		_log->logClientConnection("Request: Content Too large", client.clientIP, clientFD);
 		client.response = std::make_shared<Response>(413, "Content Too Large", serverStruct, client.port, _log);
 		client.responseStr = client.response->get_response();
@@ -146,7 +145,7 @@ void ClientConnection::handlePollInEvent(int clientFD, std::list<ServerStruct> *
 {
 	if (_connectionInfo.find(clientFD) == _connectionInfo.end())
 		return;
-	if (clientHasTimedOut(clientFD, serverStruct) || contentTooLarge(clientFD, serverStruct))
+	if (clientHasTimedOut(clientFD, serverStruct))
 		return;
 	receiveData(clientFD);
 	auto& client = _connectionInfo[clientFD];

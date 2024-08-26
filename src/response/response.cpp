@@ -31,7 +31,7 @@ Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *co
 		buildResponse(static_cast<int>(return_code), "Not Found", false);
 	}
 	else
-		handleRequest(request);
+		handleRequest();
 	#ifdef DEBUG
 	printResponse();
 	#endif
@@ -44,6 +44,10 @@ Response::Response(int error_code, std::string error_description, std::list<Serv
 	_finalPath = _fileAccess.isFilePermissioned( _finalPath, error_code, _port, "GET");
 	_body = get_error_body(error_code, error_description);
 	buildResponse(error_code, error_description, false);
+	#ifdef DEBUG
+	printResponse();
+	#endif
+
 }
 
 Response::~Response() {}
@@ -88,20 +92,20 @@ std::string	Response::get_error_body(int error_code, std::string error_descripti
 	return (error_body);
 }
 
-void	Response::handleRequest(const std::shared_ptr<Request> &request)
+void	Response::handleRequest()
 {
 	if (_request && !_request->isValid()) {
 		buildResponse(static_cast<int>(statusCode::BAD_REQUEST), "Bad Request");
 		return;
 	}
-	std::string request_method = request->get_requestMethod();
+	std::string request_method = _request->get_requestMethod();
 	try {
 		if (request_method == "GET" && _fileAccess.allowedMethod("GET"))
-			handleGetRequest(request);
+			handleGetRequest();
 		else if (request_method == "POST" && _fileAccess.allowedMethod("POST"))
-			handlePostRequest(request);
+			handlePostRequest();
 		else if (request_method == "DELETE" && _fileAccess.allowedMethod("DELETE"))
-			handleDeleteRequest(request);
+			handleDeleteRequest();
 		else
 		{
 			_body = get_error_body(static_cast<int>(statusCode::METHOD_NOT_ALLOWED), "Method not allowed.");
@@ -115,7 +119,8 @@ void	Response::handleRequest(const std::shared_ptr<Request> &request)
 	}
 }
 
-bool	Response::handleGetRequest(const std::shared_ptr<Request> &request) {
+bool	Response::handleGetRequest()
+{
 	std::stringstream buffer;
 
 	int status_code;
@@ -156,7 +161,7 @@ bool	Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 		}
 	}
 	else
-		_body = list_dir(_finalPath, request->get_requestPath(), request->get_referer(), status_code);
+		_body = list_dir(_finalPath, _request->get_requestPath(), _request->get_referer(), status_code);
 	if (!status_code)
 		buildResponse(static_cast<int>(statusCode::OK), "OK", false);
 	else
@@ -167,10 +172,10 @@ bool	Response::handleGetRequest(const std::shared_ptr<Request> &request) {
 	return true;
 }
 
-bool	Response::handlePostRequest(const std::shared_ptr<Request> &request)
+bool	Response::handlePostRequest()
 {
-	std::string requestBody = request->get_body();
-	std::string requestContentType = request->get_contentType();
+	std::string requestBody = _request->get_body();
+	std::string requestContentType = _request->get_contentType();
 	bool isCGI = false;
 
 	if (!_finalPath.empty() && _finalPath.string()[0] == '/')
@@ -201,9 +206,8 @@ bool	Response::handlePostRequest(const std::shared_ptr<Request> &request)
 	return true;
 }
 
-bool	Response::handleDeleteRequest(const std::shared_ptr<Request> &request)
+bool	Response::handleDeleteRequest()
 {
-	std::cout << request->get_requestPath() << std::endl;
 	if (_fileAccess.is_deleteable(_finalPath))
 	{
 		if (remove(_finalPath))

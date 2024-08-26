@@ -2,9 +2,9 @@
 
 #define MSG_BORDER "---------------------------"
 
-#define BUFFSIZE 11040
+#define BUFFSIZE 1380
 
-#define	DEFUALT_CLIENT_MAX_BODY_SIZE 1000000
+#define DEFUALT_CLIENT_MAX_BODY_SIZE 1000000
 
 #define CRLF "\r\n"
 
