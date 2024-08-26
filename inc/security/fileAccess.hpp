@@ -40,3 +40,5 @@ class	FileAccess
 	bool					is_deleteable(std::filesystem::path to_delete);
 	std::string				get_return(void);
 };
+
+int	max_body_limit(std::list<ServerStruct> *config, int port);

@@ -3,6 +3,27 @@
 
 #define	DEFUALT_CLIENT_MAX_BODY_SIZE 1000000
 
+int	max_body_limit(std::list<ServerStruct> *config, int port)
+{
+	std::string	port_str;
+
+	port_str = std::to_string(port);
+	for (ServerStruct &server_config : *config)
+	{
+		for (std::string &port_config : server_config._port.content_list)
+		{
+			if (port_config == port_str)
+			{
+				if (!server->_clientMaxBodySize.content_list.empty())
+					return (std::stoi(server->_clientMaxBodySize.content_list.front()));
+				else
+					return (DEFUALT_CLIENT_MAX_BODY_SIZE);
+			}
+		}
+	}
+	}
+}
+
 FileAccess::FileAccess(std::list<ServerStruct> *config): config(config)
 {
 	_return = "";
