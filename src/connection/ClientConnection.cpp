@@ -70,11 +70,9 @@ void ClientConnection::sendData(int clientFD)
 	else if (_connectionInfo.find(clientFD) == _connectionInfo.end())
 		return;
 	const int  ret = fcntl(clientFD, F_GETFL);
-	std::cout << ret << std::endl;
 	auto& clientInfo = _connectionInfo[clientFD];
 	int remainingBytes = clientInfo.bytesToSend - clientInfo.totalBytesSent;
 	int packageSize = std::min(BUFFSIZE, remainingBytes);
-	std::cout << "print before sent" << std::endl;
 	ssize_t bytesSent = send(clientFD,
 							 clientInfo.responseStr.c_str() + clientInfo.totalBytesSent, packageSize, 0);
 	if (bytesSent > 0) {
@@ -225,7 +223,6 @@ void ClientConnection::removeClientSocket(int clientFD)
 		return;
 	else if (_connectionInfo.find(clientFD) == _connectionInfo.end())
 		return;
-	std::cout << "remove client socket" << std::endl;
 	close(clientFD);
 	#ifdef DEBUG
 	_log->logClientConnection("closed connection", _connectionInfo[clientFD].clientIP, clientFD);
