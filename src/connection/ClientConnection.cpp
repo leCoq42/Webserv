@@ -41,25 +41,7 @@ void ClientConnection::handlePollOutEvent(int clientFD, std::list<ServerStruct> 
 	}
 }
 
-bool ClientConnection::initializeRequest(int clientFD)
-{
-	auto& client = _connectionInfo[clientFD];
-	time_t  currentTime;
-	time(&currentTime);
-	size_t  headerEnd = client.receiveStr.find(CRLFCRLF);
-	size_t  sizeCRLFCRLF = strlen(CRLFCRLF);
 
-	if (headerEnd != std::string::npos) {
-		client.request = std::make_shared<Request>(client.receiveStr.substr(0, headerEnd + sizeCRLFCRLF), _log);
-		if (headerEnd + sizeCRLFCRLF < client.receiveStr.length()) {
-			client.request->appendToBody(client.receiveStr.substr(headerEnd + sizeCRLFCRLF));
-		}
-		client.receiveStr.clear();
-		client.lastRequestTime = currentTime;
-		return true;
-	}
-	return false;
-}
 
 bool ClientConnection::clientHasTimedOut(int clientFD, std::list<ServerStruct> *serverStruct)
 {
@@ -77,21 +59,6 @@ bool ClientConnection::clientHasTimedOut(int clientFD, std::list<ServerStruct> *
 		return true;
 	}
 	return false;
-}
-
-void ClientConnection::receiveData(int clientFD)
-{
-	auto& client = _connectionInfo[clientFD];
-	std::vector<char> buffer(BUFFSIZE);
-
-	ssize_t bytesReceived = recv(clientFD, &buffer[0], buffer.size(), MSG_DONTWAIT);
-	if (bytesReceived > 0)
-		client.receiveStr.append(std::string(buffer.begin(), buffer.begin() + bytesReceived));
-	if (bytesReceived < 0) {
-		_log->logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
-				client.clientIP, clientFD);
-		removeClientSocket(clientFD);
-	}
 }
 
 void ClientConnection::sendData(int clientFD)
@@ -116,6 +83,41 @@ void ClientConnection::sendData(int clientFD)
 		#ifdef DEBUG
 		_log->logClientConnection("Client disconnected", clientInfo.clientIP, clientFD);
 		#endif
+		removeClientSocket(clientFD);
+	}
+}
+
+bool ClientConnection::initializeRequest(int clientFD)
+{
+	auto& client = _connectionInfo[clientFD];
+	time_t  currentTime;
+	time(&currentTime);
+	size_t  headerEnd = client.receiveStr.find(CRLFCRLF);
+	size_t  sizeCRLFCRLF = strlen(CRLFCRLF);
+
+	if (headerEnd != std::string::npos) {
+		client.request = std::make_shared<Request>(client.receiveStr.substr(0, headerEnd + sizeCRLFCRLF), _log);
+		if (headerEnd + sizeCRLFCRLF < client.receiveStr.length()) {
+			client.request->appendToBody(client.receiveStr.substr(headerEnd + sizeCRLFCRLF));
+		}
+		client.receiveStr.clear();
+		client.lastRequestTime = currentTime;
+		return true;
+	}
+	return false;
+}
+
+void ClientConnection::receiveData(int clientFD)
+{
+	auto& client = _connectionInfo[clientFD];
+	std::vector<char> buffer(BUFFSIZE);
+
+	ssize_t bytesReceived = recv(clientFD, &buffer[0], buffer.size(), MSG_DONTWAIT);
+	if (bytesReceived > 0)
+		client.receiveStr.append(std::string(buffer.begin(), buffer.begin() + bytesReceived));
+	if (bytesReceived < 0) {
+		_log->logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
+				client.clientIP, clientFD);
 		removeClientSocket(clientFD);
 	}
 }
