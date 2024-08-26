@@ -19,6 +19,8 @@ void error_exit(int error_code) {
 		std::cerr << "invalid config file" << std::endl;
 	else if (error_code == 4)
 		std::cerr << "loading server struct went wrong" << std::endl;
+	else if (error_code == 5)
+		std::cerr << "Duplicate ports detected" << std::endl;
 }
 
 int parse(Parser *parser, std::list<ServerStruct> *server_structs,
@@ -26,24 +28,34 @@ int parse(Parser *parser, std::list<ServerStruct> *server_structs,
 {
 	int file_len;
 
-	if (load_file_to_buff(config_file_name.c_str(), buffer, &file_len))
-		return (2);
-	else if (!parser->parse_content_to_struct(*buffer, file_len))
-		return (3);
-	else if (!load_in_servers(&parser->PS, *server_structs))
-		return (4);
-	else
+	try
 	{
-		#ifdef DEBUG
-		std::cout << parser->PS.get_nServers() << std::endl;
-		if (!server_structs->empty()) {
-				for (ServerStruct server : *server_structs) {
-					std::cout << "-------------------------------------" << std::endl;
-					server.show_self();
-					std::cout << "-------------------------------------" << std::endl;
+		if (load_file_to_buff(config_file_name.c_str(), buffer, &file_len))
+			return (2);
+		else if (!parser->parse_content_to_struct(*buffer, file_len))
+			return (3);
+		else if (!load_in_servers(&parser->PS, *server_structs))
+			return (4);
+		else if (double_ports(*server_structs))
+				return (5);
+		else
+		{
+			#ifdef DEBUG
+			std::cout << parser->PS.get_nServers() << std::endl;
+			if (!server_structs->empty()) {
+					for (ServerStruct server : *server_structs) {
+						std::cout << "-------------------------------------" << std::endl;
+						server.show_self();
+						std::cout << "-------------------------------------" << std::endl;
+				}
 			}
+			#endif
 		}
-		#endif
+	}
+	catch (std::exception &e)
+	{
+		std::cerr << e.what();
+		return (6);
 	}
 	return (0);
 }
