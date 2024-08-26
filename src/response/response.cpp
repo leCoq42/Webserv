@@ -218,16 +218,18 @@ bool	Response::handleDeleteRequest(const std::shared_ptr<Request> &request)
 
 const std::string	Response::readFileToBody(std::filesystem::path path)
 {
-	std::stringstream buffer;
 	std::string body;
-	std::ifstream file( path, std::ios::binary);
+	std::ifstream infile(path, std::ios::binary);
 
-	if (!file) {
-		std::cerr << "Error, invalid path: " << path << std::endl;
+	if (!infile) {
+		_log->logError(std::string("Error, invalid path: " + path.string()));
 		return "";
 	}
-	buffer << file.rdbuf();
-	body = buffer.str();
+	infile.seekg(0, std::ios::end);
+	body.resize(infile.tellg());
+	infile.seekg(0, std::ios::beg);
+	infile.read(&body[0], body.size());
+	infile.close();
 	return body;
 }
 

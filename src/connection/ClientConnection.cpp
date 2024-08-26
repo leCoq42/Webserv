@@ -247,9 +247,9 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 					else
 						handlePollInEvent(pfd.fd, serverStruct);
 				}
-				if (pfd.revents & POLLOUT)
+				else if (pfd.revents & POLLOUT)
 					handlePollOutEvent(pfd.fd, serverStruct);
-				if (pfd.revents & (POLLHUP | POLLERR))
+				else if (pfd.revents & (POLLHUP | POLLERR))
 					handlePollErrorEvent(pfd.fd);
 			}
 		}
