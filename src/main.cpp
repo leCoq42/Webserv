@@ -100,8 +100,9 @@ int main(int argc, char **argv) {
 		return (1);
 
 	}
-	for (auto &server : server_structs)
+	for (auto &server : server_structs) {
 		ptr_ServerConnection->setUpServerConnection(server);
+	}
 	clientConnection.setupClientConnection(&server_structs);
 	delete[] buffer;
 
