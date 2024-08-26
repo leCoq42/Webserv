@@ -80,18 +80,15 @@ void ClientConnection::sendData(int clientFD)
 	if (bytesSent > 0) {
 		clientInfo.totalBytesSent += bytesSent;
 		if (clientInfo.totalBytesSent < clientInfo.bytesToSend) {
-			std::cout << "exit still bytes to send?" << std::endl;
 			return;
 		}
 	}
 	if (bytesSent < 0) {
-		std::cout << "exit return send error" << std::endl;
 		_log->logClientError("Failed to send data to client: " + std::string(strerror(errno)), clientInfo.clientIP, clientFD);
 		removeClientSocket(clientFD);
 		return;
 	}
 	else {
-		std::cout << "exit done sending" << std::endl;
 		#ifdef DEBUG
 		_log->logClientConnection("Client disconnected", clientInfo.clientIP, clientFD);
 		#endif
