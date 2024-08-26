@@ -1,8 +1,6 @@
 #include "fileAccess.hpp"
 #include "defines.hpp"
 
-#define	DEFUALT_CLIENT_MAX_BODY_SIZE 1000000
-
 int	max_body_limit(std::list<ServerStruct> *config, int port)
 {
 	std::string	port_str;

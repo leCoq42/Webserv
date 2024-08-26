@@ -4,6 +4,8 @@
 
 #define BUFFSIZE 11040
 
+#define	DEFUALT_CLIENT_MAX_BODY_SIZE 1000000
+
 #define CRLF "\r\n"
 
 #define CRLFCRLF "\r\n\r\n"

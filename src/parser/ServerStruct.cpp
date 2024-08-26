@@ -1,4 +1,5 @@
 #include "ServerStruct.hpp"
+#include "defines.hpp"
 
 ServerStruct::ServerStruct(void)
 {
@@ -23,6 +24,8 @@ ServerStruct::ServerStruct(ParserStruct *parser_struct, int nth_server)
 	this->getContent("return", this->_return);
 	this->getContent("allow_methods", this->_allowMethods);
 	this->getContent("client_max_body_size", this->_clientMaxBodySize);
+	if (this->_clientMaxBodySize.content_list.empty())
+		this->_clientMaxBodySize.content_list.push_back(std::to_string(DEFUALT_CLIENT_MAX_BODY_SIZE));
 }
 
 ServerStruct::ServerStruct(const ServerStruct &to_copy)
