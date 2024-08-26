@@ -3,7 +3,6 @@ webserv
 
 .vscode/
 
-obj/
 logDir/
 
 .DS_Store
