@@ -22,6 +22,8 @@ void ClientConnection::handlePollOutEvent(int clientFD, std::list<ServerStruct> 
 {	
 	if (_connectionInfo[clientFD].FD == 0)
 		return;
+	if (_connectionInfo.find(clientFD) == _connectionInfo.end())
+		return;
 	if (clientHasTimedOut(clientFD, serverStruct))
 		return;
 	auto& client = _connectionInfo[clientFD];
@@ -34,7 +36,7 @@ void ClientConnection::handlePollOutEvent(int clientFD, std::list<ServerStruct> 
 	else if (client.response && client.response->isComplete() == false) {
 		client.response->continue_cgi();
 	}
-	else {
+	else { // else if !new_pollin 
 		client.responseStr = client.response->get_response();
 		client.bytesToSend = client.response->get_response().length();
 		sendData(clientFD);
@@ -65,12 +67,12 @@ void ClientConnection::sendData(int clientFD)
 {
 	if (_connectionInfo[clientFD].FD == 0)
 		return;
+	else if (_connectionInfo.find(clientFD) == _connectionInfo.end())
+		return;
+	const int  ret = fcntl(clientFD, F_GETFL);
 	auto& clientInfo = _connectionInfo[clientFD];
 	int remainingBytes = clientInfo.bytesToSend - clientInfo.totalBytesSent;
 	int packageSize = std::min(BUFFSIZE, remainingBytes);
-
-	if (_connectionInfo.find(clientFD) == _connectionInfo.end())
-		return;
 	ssize_t bytesSent = send(clientFD,
 							 clientInfo.responseStr.c_str() + clientInfo.totalBytesSent, packageSize, 0);
 	if (bytesSent > 0) {
@@ -131,9 +133,12 @@ void ClientConnection::handlePollInEvent(int clientFD, std::list<ServerStruct> *
 {
 	if (_connectionInfo[clientFD].FD == 0)
 		return;
+	else if (_connectionInfo.find(clientFD) == _connectionInfo.end())
+		return;
 	if (clientHasTimedOut(clientFD, serverStruct))
 		return;
 	receiveData(clientFD);
+	//client set new_pollin
 	auto& client = _connectionInfo[clientFD];
 	if (!client.request) {
 		if (!initializeRequest(clientFD))
@@ -214,14 +219,14 @@ bool ClientConnection::isServerSocket(int fd)
 
 void ClientConnection::removeClientSocket(int clientFD)
 {
-	if (_connectionInfo.find(clientFD) == _connectionInfo.end())
+	if (_connectionInfo[clientFD].FD == 0)
 		return;
-
+	else if (_connectionInfo.find(clientFD) == _connectionInfo.end())
+		return;
 	close(clientFD);
 	#ifdef DEBUG
 	_log->logClientConnection("closed connection", _connectionInfo[clientFD].clientIP, clientFD);
 	#endif
-	_connectionInfo.erase(clientFD);
 	_connectionInfo[clientFD].FD = 0;
 }
 
@@ -268,10 +273,8 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 				}
 				else if (pfd.revents & POLLOUT)
 					handlePollOutEvent(pfd.fd, serverStruct);
-				if (pfd.revents & (POLLHUP | POLLERR)) {
-					std::cout << "poll error" << std::endl;
+				if (pfd.revents & (POLLHUP | POLLERR))
 					handlePollErrorEvent(pfd.fd);
-				}
 			}
 		}
 		if (globalSignalReceived == 1) {
