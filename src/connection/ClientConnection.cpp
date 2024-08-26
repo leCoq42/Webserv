@@ -41,6 +41,52 @@ void ClientConnection::handlePollOutEvent(int clientFD, std::list<ServerStruct> 
 	}
 }
 
+
+
+bool ClientConnection::clientHasTimedOut(int clientFD, std::list<ServerStruct> *serverStruct)
+{
+	auto& client = _connectionInfo[clientFD];
+	time_t currentTime;
+	time(&currentTime);
+
+	if (currentTime - client.lastRequestTime > client.timeOut) {
+		_log->logClientConnection("Client timed out", client.clientIP, clientFD);
+		client.response = std::make_shared<Response>(504, "Gateway Timeout", serverStruct, client.port, _log);
+		client.responseStr = client.response->get_response();
+		client.bytesToSend = client.response->get_response().length();
+		sendData(clientFD);
+		removeClientSocket(clientFD);
+		return true;
+	}
+	return false;
+}
+
+void ClientConnection::sendData(int clientFD)
+{
+	auto& clientInfo = _connectionInfo[clientFD];
+	int remainingBytes = clientInfo.bytesToSend - clientInfo.totalBytesSent;
+	int packageSize = std::min(BUFFSIZE, remainingBytes);
+
+	ssize_t bytesSent = send(clientFD,
+							 clientInfo.responseStr.c_str() + clientInfo.totalBytesSent, packageSize, 0);
+	if (bytesSent > 0) {
+		clientInfo.totalBytesSent += bytesSent;
+		if (clientInfo.totalBytesSent < clientInfo.bytesToSend) {
+			return;
+		}
+	}
+	if (bytesSent < 0) {
+		_log->logClientError("Failed to send data to client: " + std::string(strerror(errno)), clientInfo.clientIP, clientFD);
+		removeClientSocket(clientFD);
+	}
+	else {
+		#ifdef DEBUG
+		_log->logClientConnection("Client disconnected", clientInfo.clientIP, clientFD);
+		#endif
+		removeClientSocket(clientFD);
+	}
+}
+
 bool ClientConnection::initializeRequest(int clientFD)
 {
 	auto& client = _connectionInfo[clientFD];
@@ -61,24 +107,6 @@ bool ClientConnection::initializeRequest(int clientFD)
 	return false;
 }
 
-bool ClientConnection::clientHasTimedOut(int clientFD, std::list<ServerStruct> *serverStruct)
-{
-	auto& client = _connectionInfo[clientFD];
-	time_t currentTime;
-	time(&currentTime);
-
-	if (currentTime - client.lastRequestTime > client.timeOut) {
-		_log->logClientConnection("Client timed out", client.clientIP, clientFD);
-		client.response = std::make_shared<Response>(504, "Gateway Timeout", serverStruct, client.port, _log);
-		client.responseStr = client.response->get_response();
-		client.bytesToSend = client.response->get_response().length();
-		sendData(clientFD);
-		removeClientSocket(clientFD);
-		return true;
-	}
-	return false;
-}
-
 void ClientConnection::receiveData(int clientFD)
 {
 	auto& client = _connectionInfo[clientFD];
@@ -90,33 +118,6 @@ void ClientConnection::receiveData(int clientFD)
 	if (bytesReceived < 0) {
 		_log->logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
 				client.clientIP, clientFD);
-		removeClientSocket(clientFD);
-	}
-}
-
-void ClientConnection::sendData(int clientFD)
-{
-	auto& clientInfo = _connectionInfo[clientFD];
-	int remainingBytes = clientInfo.bytesToSend - clientInfo.totalBytesSent;
-	int packageSize = std::min(BUFFSIZE, remainingBytes);
-
-	ssize_t bytesSent = send(clientFD,
-							 clientInfo.responseStr.c_str() + clientInfo.totalBytesSent, packageSize, 0);
-	if (bytesSent > 0) {
-		clientInfo.totalBytesSent += bytesSent;
-		if (clientInfo.totalBytesSent < clientInfo.bytesToSend) {
-			clientInfo.sendStatus = SENDING;
-			return;
-		}
-	}
-	if (bytesSent < 0) {
-		_log->logClientError("Failed to send data to client: " + std::string(strerror(errno)), clientInfo.clientIP, clientFD);
-		removeClientSocket(clientFD);
-	}
-	else {
-		#ifdef DEBUG
-		_log->logClientConnection("Client disconnected", clientInfo.clientIP, clientFD);
-		#endif
 		removeClientSocket(clientFD);
 	}
 }
@@ -142,21 +143,21 @@ void ClientConnection::handlePollInEvent(int clientFD, std::list<ServerStruct> *
 	}
 }
 
-void ClientConnection::initClientInfo(int clientFD, sockaddr_in clientAddr) {
+void ClientConnection::initClientInfo(int clientFD, sockaddr_in clientAddr, ServerInfo server) {
 	ConnectionInfo clientInfo;
 	time_t currentTime;
 	time(&currentTime);
 
-	clientInfo.clientFD = clientFD;
+	clientInfo.FD = clientFD;
 	inet_ntop(AF_INET, &clientAddr.sin_addr, clientInfo.clientIP, sizeof(clientInfo.clientIP));
-	clientInfo.port = _ptrServerConnection->_connectedServers[0].serverPort;
+	clientInfo.port = server.serverPort;
+	clientInfo.maxBodySize = server.MaxBodySize;
 	clientInfo.request = nullptr;
 	clientInfo.response = nullptr;
 	clientInfo.timeOut = TIMEOUT;
 	clientInfo.lastRequestTime = currentTime;
 	clientInfo.receiveStr = "";
 	clientInfo.responseStr = "";
-	clientInfo.sendStatus = -1;
 	clientInfo.totalBytesSent = 0;
 	clientInfo.bytesToSend = 0;
 	clientInfo.pfd.fd = clientFD;
@@ -165,8 +166,19 @@ void ClientConnection::initClientInfo(int clientFD, sockaddr_in clientAddr) {
 	_connectionInfo[clientFD] = clientInfo;
 }
 
+ServerInfo ClientConnection::findServerInfo(int serverFD)
+{
+	for (const auto &server : _ptrServerConnection->_connectedServers) {
+		if (serverFD == server.serverFD)
+			return server;
+	}
+	return *_ptrServerConnection->_connectedServers.begin();
+}
+
+
 void ClientConnection::acceptClients(int serverFD)
 {
+	ServerInfo serverInfo = findServerInfo(serverFD);
 	struct sockaddr_in clientAddr;
 	socklen_t clientAddrLen = sizeof(clientAddr);
 	int clientFD = accept(serverFD, (struct sockaddr *)&clientAddr, &clientAddrLen);
@@ -180,7 +192,7 @@ void ClientConnection::acceptClients(int serverFD)
 		close(clientFD);
 		return;
 	}
-	initClientInfo(clientFD, clientAddr);
+	initClientInfo(clientFD, clientAddr, serverInfo);
 	#ifdef DEBUG
 	_log->logClientConnection("accepted connection", _connectionInfo[clientFD].clientIP, clientFD);
 	#endif
@@ -205,21 +217,23 @@ void ClientConnection::removeClientSocket(int clientFD)
 	_log->logClientConnection("closed connection", _connectionInfo[clientFD].clientIP, clientFD);
 	#endif
 	_connectionInfo.erase(clientFD);
-	_connectionInfo[clientFD].clientFD = 0;
+	_connectionInfo[clientFD].FD = 0;
 }
 
 void ClientConnection::initServerSockets() {
 	for (const auto& server : _ptrServerConnection->_connectedServers) {
 		ConnectionInfo serverInfo;
 
-		serverInfo.clientFD = server.serverFD;
+		serverInfo.FD = server.serverFD;
+		serverInfo.clientIP[0] = '\0';
+		serverInfo.port = server.serverPort;
+		serverInfo.maxBodySize = server.MaxBodySize;
 		serverInfo.request = nullptr;
 		serverInfo.response = nullptr;
 		serverInfo.timeOut = 0;
 		serverInfo.lastRequestTime = 0;
 		serverInfo.receiveStr = "";
 		serverInfo.responseStr = "";
-		serverInfo.sendStatus = -1;
 		serverInfo.totalBytesSent = 0;
 		serverInfo.bytesToSend = 0;
 		serverInfo.pfd.fd = server.serverFD;

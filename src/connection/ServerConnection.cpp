@@ -18,6 +18,7 @@ void ServerConnection::initServerInfo(ServerStruct &serverStruct, ServerInfo &in
 	memset(&server_addr, 0, sizeof(server_addr));
 	info.serverPort = atoi(it->c_str());
 	info.serverID = serverStruct._id;
+	info.MaxBodySize = std::stoll(*serverStruct._clientMaxBodySize.content_list.begin());
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = INADDR_ANY;
 	server_addr.sin_port = htons(atoi(it->c_str()));

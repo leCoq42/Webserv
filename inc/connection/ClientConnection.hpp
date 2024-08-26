@@ -22,16 +22,16 @@
 #define TIMEOUT 30
 
 struct ConnectionInfo {
-	int                         clientFD;
+	int                         FD;
 	char                        clientIP[INET_ADDRSTRLEN];
 	int                         port;
+	size_t					  	maxBodySize;
 	std::shared_ptr<Request>    request;
 	std::shared_ptr<Response>   response;
 	long int 					timeOut;
 	long int 					lastRequestTime;
 	std::string 				receiveStr;
 	std::string					responseStr;
-	int 						sendStatus;
 	int 						totalBytesSent;
 	int 						bytesToSend;
 	pollfd         				pfd;
@@ -47,17 +47,18 @@ public:
 	ClientConnection(std::shared_ptr<ServerConnection> serverConnection, std::shared_ptr<Log> log);
 	~ClientConnection();
 
+	void	setupClientConnection(std::list<ServerStruct> *serverStruct);
 	void	handlePollInEvent(int clientFD, std::list<ServerStruct> *serverStruct);
 	void	acceptClients(int serverFD);
 	void	initServerSockets();
-	void	setupClientConnection(std::list<ServerStruct> *serverStruct);
 	void	removeClientSocket(int clientFD);
 	bool	isServerSocket(int fd);
 	void	handlePollOutEvent(int clientFD, std::list<ServerStruct> *serverStruct);
 	void	handlePollErrorEvent(int clientFD);
-	void	initClientInfo(int clientFD, sockaddr_in clientAddr);
+	void	initClientInfo(int clientFD, sockaddr_in clientAddr, ServerInfo server);
 	void	receiveData(int clientFD);
 	bool	initializeRequest(int clientFD);
 	bool	clientHasTimedOut(int clientFD, std::list<ServerStruct> *serverStruct);
 	void	sendData(int clientFD);
+	ServerInfo	findServerInfo(int serverFD);
 };

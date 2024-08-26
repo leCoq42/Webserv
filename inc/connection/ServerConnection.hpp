@@ -17,6 +17,7 @@ struct ServerInfo {
 	std::string         serverID;
 	int                 serverFD;
 	int                 serverPort;
+	size_t			    MaxBodySize;
 	struct sockaddr_in  server_addr;
 };
 
