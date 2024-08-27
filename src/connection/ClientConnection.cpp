@@ -69,7 +69,6 @@ void ClientConnection::sendData(int clientFD)
 		return;
 	else if (_connectionInfo.find(clientFD) == _connectionInfo.end())
 		return;
-	const int  ret = fcntl(clientFD, F_GETFL);
 	auto& clientInfo = _connectionInfo[clientFD];
 	int remainingBytes = clientInfo.bytesToSend - clientInfo.totalBytesSent;
 	int packageSize = std::min(BUFFSIZE, remainingBytes);
@@ -138,7 +137,6 @@ void ClientConnection::handlePollInEvent(int clientFD, std::list<ServerStruct> *
 	if (clientHasTimedOut(clientFD, serverStruct))
 		return;
 	receiveData(clientFD);
-	//client set new_pollin
 	auto& client = _connectionInfo[clientFD];
 	if (!client.request) {
 		if (!initializeRequest(clientFD))
@@ -265,13 +263,13 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 		int poll_count = poll(pollfds.data(), pollfds.size(), 10);
 		if (poll_count > 0) {
 			for (const auto& pfd : pollfds) {
-				if (pfd.revents & POLLIN) {
+				if (pfd.revents == POLLIN) {
 					if (isServerSocket(pfd.fd))
 						acceptClients(pfd.fd);
 					else
 						handlePollInEvent(pfd.fd, serverStruct);
 				}
-				else if (pfd.revents & POLLOUT)
+				else if (pfd.revents == POLLOUT)
 					handlePollOutEvent(pfd.fd, serverStruct);
 				if (pfd.revents & (POLLHUP | POLLERR))
 					handlePollErrorEvent(pfd.fd);
