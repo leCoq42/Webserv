@@ -21,6 +21,7 @@ class ServerStruct: public ProtoStruct
 	ConfigContent	_errorPage; 
 	ConfigContent	_return; 
 	ConfigContent	_allowMethods;
+	ConfigContent	_clientMaxBodySize;
 
 
 	ServerStruct();
@@ -32,3 +33,4 @@ class ServerStruct: public ProtoStruct
 };
 
 int	load_in_servers(ParserStruct *PS, std::list<ServerStruct> &server_structs);
+int	double_ports(std::list<ServerStruct> &server_structs);

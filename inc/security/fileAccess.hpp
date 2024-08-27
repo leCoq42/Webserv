@@ -20,6 +20,7 @@ class	FileAccess
 	std::vector<std::filesystem::path>	_uploadedFiles;
 	std::vector<std::filesystem::path>	_configPaths;
 	std::vector<LocationStruct>			_configLocations;
+	size_t								_clientMaxBodySize;
 
 	public:
 	FileAccess(std::list<ServerStruct> *config);
@@ -39,3 +40,5 @@ class	FileAccess
 	bool					is_deleteable(std::filesystem::path to_delete);
 	std::string				get_return(void);
 };
+
+int	max_body_limit(std::list<ServerStruct> *config, int port);

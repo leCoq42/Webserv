@@ -180,6 +180,7 @@ int	CGI::readCGIfd()
 	}
 	else if (bytesRead == 0) {
 		close(_cgiFD);
+		_cgiFD = 0;
 		_complete = true;
 		calculateContentLength();
 		return 0;

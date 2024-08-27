@@ -1,9 +1,33 @@
 #include "fileAccess.hpp"
 #include "defines.hpp"
 
+int	max_body_limit(std::list<ServerStruct> *config, int port)
+{
+	std::string	port_str;
+
+	port_str = std::to_string(port);
+	for (ServerStruct &server_config : *config)
+	{
+		for (std::string &port_config : server_config._port.content_list)
+		{
+			if (port_config == port_str)
+			{
+				if (!server_config._clientMaxBodySize.content_list.empty())
+					return (std::stoi(server_config._clientMaxBodySize.content_list.front()));
+				else
+					return (DEFUALT_CLIENT_MAX_BODY_SIZE);
+			}
+		}
+	}
+	return (DEFUALT_CLIENT_MAX_BODY_SIZE);
+}
+
 FileAccess::FileAccess(std::list<ServerStruct> *config): config(config)
 {
 	_return = "";
+	_clientMaxBodySize = DEFUALT_CLIENT_MAX_BODY_SIZE;
+	// if (!config->_clientMaxBodySize.content_list.empty())
+	// 	_clientMaxBodySize = std::stoi(config->_clientMaxBodySize.content_list.front());
 }
 
 FileAccess::~FileAccess() {}
@@ -232,10 +256,14 @@ std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &retur
 	ConfigContent	*location_config;
 	std::filesystem::path	path;
 
+	std::cout << port << std::endl;
 	uri = swap_to_right_server_config(uri, port);
 	new_uri = redirect(return_code);
 	if (return_code == 301)
 		return ("/");
+	if (!server->_clientMaxBodySize.content_list.empty())
+		_clientMaxBodySize = std::stoi(server->_clientMaxBodySize.content_list.front());
+	std::cout << server->_id << "_" << _clientMaxBodySize << std::endl;
 	location_config = &server->_location;
 	location_config = find_location_config(uri, location_config, method);
 	if (location_config && location_config->childs && !((LocationStruct *)location_config->childs)->allow_methods.content_list.empty())

@@ -2,7 +2,9 @@
 
 #define MSG_BORDER "---------------------------"
 
-#define BUFFSIZE 65535 // https://www.baeldung.com/cs/tcp-max-packet-size
+#define BUFFSIZE 11040
+
+#define	DEFUALT_CLIENT_MAX_BODY_SIZE 1000000
 
 #define CRLF "\r\n"
 
