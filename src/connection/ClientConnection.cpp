@@ -67,8 +67,6 @@ void ClientConnection::sendData(int clientFD)
 {
 	if (_connectionInfo[clientFD].FD == 0)
 		return;
-	else if (_connectionInfo.find(clientFD) == _connectionInfo.end())
-		return;
 	auto& clientInfo = _connectionInfo[clientFD];
 	int remainingBytes = clientInfo.bytesToSend - clientInfo.totalBytesSent;
 	int packageSize = std::min(BUFFSIZE, remainingBytes);
@@ -131,8 +129,6 @@ void ClientConnection::receiveData(int clientFD)
 void ClientConnection::handlePollInEvent(int clientFD, std::list<ServerStruct> *serverStruct)
 {
 	if (_connectionInfo[clientFD].FD == 0)
-		return;
-	else if (_connectionInfo.find(clientFD) == _connectionInfo.end())
 		return;
 	if (clientHasTimedOut(clientFD, serverStruct))
 		return;
@@ -256,20 +252,20 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 
 	while (true) {
 		std::vector<pollfd> pollfds;
-		for (const auto& client : _connectionInfo) {
-			pollfds.push_back(client.second.pfd);
+		for (const auto& connection : _connectionInfo) {
+			pollfds.push_back(connection.second.pfd);
 		}
 
 		int poll_count = poll(pollfds.data(), pollfds.size(), 10);
 		if (poll_count > 0) {
 			for (const auto& pfd : pollfds) {
-				if (pfd.revents == POLLIN) {
+				if (pfd.revents & POLLIN) {
 					if (isServerSocket(pfd.fd))
 						acceptClients(pfd.fd);
 					else
 						handlePollInEvent(pfd.fd, serverStruct);
 				}
-				else if (pfd.revents == POLLOUT)
+				else if (pfd.revents & POLLOUT)
 					handlePollOutEvent(pfd.fd, serverStruct);
 				if (pfd.revents & (POLLHUP | POLLERR))
 					handlePollErrorEvent(pfd.fd);
