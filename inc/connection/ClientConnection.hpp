@@ -22,7 +22,6 @@
 #define TIMEOUT 30
 
 struct ConnectionInfo {
-	int                         FD;
 	char                        clientIP[INET_ADDRSTRLEN];
 	int                         port;
 	size_t					  	maxBodySize;
