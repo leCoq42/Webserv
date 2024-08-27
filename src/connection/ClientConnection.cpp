@@ -9,6 +9,7 @@ ClientConnection::~ClientConnection() {
 		if (!isServerSocket(it.second.pfd.fd)) {
 			if (it.second.pfd.fd > 0) {
 				close(it.second.pfd.fd);
+				it.second.pfd.fd = 0;
 			}
 		}
 	}
