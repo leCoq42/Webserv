@@ -1,4 +1,5 @@
 #include "ClientConnection.hpp"
+#include "defines.hpp"
 #include <csignal>
 #include <sys/poll.h>
 
@@ -25,10 +26,10 @@ void ClientConnection::handlePollOutEvent(int clientFD, std::list<ServerStruct> 
 {
 	if (_connectionInfo.find(clientFD) == _connectionInfo.end() || _connectionInfo[clientFD].pfd.fd < 1)
 		return;
-	if (contentTooLarge(clientFD, serverStruct))
+	if (contentTooLarge(clientFD, serverStruct) || clientHasTimedOut(clientFD, serverStruct))
 		return;
-	auto& client = _connectionInfo[clientFD];
 
+	auto& client = _connectionInfo[clientFD];
 	if (!client.response) {
 		client.response = std::make_shared<Response>(client.request, serverStruct, client.port, _log);
 		client.responseStr = client.response->get_response();
@@ -87,7 +88,7 @@ bool ClientConnection::contentTooLarge(int clientFD, std::list<ServerStruct> *se
 
 void ClientConnection::sendData(int clientFD)
 {
-	if (_connectionInfo[clientFD].pfd.fd < 1)
+	if (clientFD < 1 || _connectionInfo[clientFD].pfd.fd < 1)
 		return;
 	auto& clientInfo = _connectionInfo[clientFD];
 	int remainingBytes = clientInfo.bytesToSend - clientInfo.totalBytesSent;
@@ -119,13 +120,11 @@ bool ClientConnection::initializeRequest(int clientFD)
 	time_t  currentTime;
 	time(&currentTime);
 	size_t  headerEnd = client.receiveStr.find(CRLFCRLF);
-	size_t  sizeCRLFCRLF = strlen(CRLFCRLF);
 
 	if (headerEnd != std::string::npos) {
-		client.request = std::make_shared<Request>(client.receiveStr.substr(0, headerEnd + sizeCRLFCRLF), _log);
-		if (headerEnd + sizeCRLFCRLF < client.receiveStr.length()) {
-			client.request->appendToBody(client.receiveStr.substr(headerEnd + sizeCRLFCRLF));
-		}
+		client.request = std::make_shared<Request>(client.receiveStr.substr(0, headerEnd + CRLFCRLFsize), _log);
+		if (headerEnd + CRLFCRLFsize < client.receiveStr.length())
+			client.request->appendToBody(client.receiveStr.substr(headerEnd + CRLFCRLFsize));
 		client.receiveStr.clear();
 		client.lastRequestTime = currentTime;
 		return true;
@@ -276,7 +275,7 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 			pollfds.push_back(connection.second.pfd);
 		}
 
-		int poll_count = poll(pollfds.data(), pollfds.size(), 1000000);
+		int poll_count = poll(pollfds.data(), pollfds.size(), 10);
 		if (poll_count > 0) {
 			for (const auto& pfd : pollfds) {
 				if (pfd.revents & POLLIN) {

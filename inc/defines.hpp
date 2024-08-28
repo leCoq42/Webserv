@@ -10,6 +10,8 @@
 
 #define CRLFCRLF "\r\n\r\n"
 
+#define CRLFCRLFsize 4
+
 #define READ 0
 
 #define WRITE 1
