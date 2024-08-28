@@ -54,7 +54,7 @@ void CGI::swap(CGI &lhs)
 }
  
 CGI::~CGI() {
-	if (fcntl(_cgiFD, F_GETFD) >= 0)
+	if (_cgiFD > 0)
 		close(_cgiFD);
 }
 
