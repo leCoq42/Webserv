@@ -59,8 +59,8 @@ bool ClientConnection::clientHasTimedOut(int clientFD, std::list<ServerStruct> *
 		client.responseStr = client.response->get_response();
 		client.bytesToSend = client.response->get_response().length();
 		client.totalBytesSent = 0;
+		client.pfd.revents = POLLOUT;
 		sendData(clientFD);
-		removeClientSocket(clientFD);
 		return true;
 	}
 	return false;
@@ -80,7 +80,6 @@ bool ClientConnection::contentTooLarge(int clientFD, std::list<ServerStruct> *se
 		client.bytesToSend = client.response->get_response().length();
 		client.totalBytesSent = 0;
 		sendData(clientFD);
-		removeClientSocket(clientFD);
 		return true;
 	}
 	return false;
@@ -107,10 +106,10 @@ void ClientConnection::sendData(int clientFD)
 		return;
 	}
 	else {
-		#ifdef DEBUG
-		_log->logClientConnection("Client disconnected", clientInfo.clientIP, clientFD);
-		#endif
 		removeClientSocket(clientFD);
+		#ifdef DEBUG
+		_log->logClientConnection("Client removed.", clientInfo.clientIP, clientFD);
+		#endif
 	}
 }
 
@@ -275,7 +274,7 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 			pollfds.push_back(connection.second.pfd);
 		}
 
-		int poll_count = poll(pollfds.data(), pollfds.size(), 10);
+		int poll_count = poll(pollfds.data(), pollfds.size(), TIMEOUT * 1000);
 		if (poll_count > 0) {
 			for (const auto& pfd : pollfds) {
 				if (pfd.revents & POLLIN) {
