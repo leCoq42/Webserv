@@ -254,6 +254,7 @@ std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &retur
 	ConfigContent	*location_config;
 	std::filesystem::path	path;
 
+
 	uri = swap_to_right_server_config(uri, port);
 	new_uri = redirect(return_code);
 	if (return_code == 301)

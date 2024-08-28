@@ -22,9 +22,8 @@
 #define TIMEOUT 30
 
 struct ConnectionInfo {
-	int							FD;
-	char						clientIP[INET_ADDRSTRLEN];
-	int							port;
+	char                        clientIP[INET_ADDRSTRLEN];
+	int                         port;
 	size_t					  	maxBodySize;
 	std::shared_ptr<Request>	request;
 	std::shared_ptr<Response>	response;
