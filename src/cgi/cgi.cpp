@@ -174,22 +174,19 @@ int	CGI::readCGIfd()
 		return 1;
 	}
 	bytesRead = read(_cgiFD, &buffer[0], BUFFSIZE);
-	if (bytesRead < 0) {
-		_complete = true;
+	if (bytesRead < 0)
 		return 1;
-	}
 	else if (bytesRead == 0) {
 		close(_cgiFD);
 		_cgiFD = 0;
 		_complete = true;
 		calculateContentLength();
-		return 0;
 	}
 	else {
 		_complete = false;
 		_result.append(buffer.data(), bytesRead);
-		return 0;
 	}
+	return 0;
 }
 
 void	CGI::calculateContentLength()

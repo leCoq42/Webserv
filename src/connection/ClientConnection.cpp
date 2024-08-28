@@ -1,4 +1,5 @@
 #include "ClientConnection.hpp"
+#include <sys/poll.h>
 
 ClientConnection::ClientConnection(std::shared_ptr<ServerConnection> ServerConnection, std::shared_ptr<Log> log)
 	: _ptrServerConnection(ServerConnection), _log(log) {
@@ -37,7 +38,7 @@ void ClientConnection::handlePollOutEvent(int clientFD, std::list<ServerStruct> 
 	else if (client.response && client.response->isComplete() == false) {
 		client.response->continue_cgi();
 	}
-	else { 
+	else {
 		client.responseStr = client.response->get_response();
 		client.bytesToSend = client.response->get_response().length();
 		sendData(clientFD);
@@ -85,7 +86,7 @@ bool ClientConnection::contentTooLarge(int clientFD, std::list<ServerStruct> *se
 
 void ClientConnection::sendData(int clientFD)
 {
-	if (_connectionInfo[clientFD].pfd.fd == 0)
+	if (clientFD < 1 || _connectionInfo[clientFD].pfd.fd < 1)
 		return;
 	auto& clientInfo = _connectionInfo[clientFD];
 	int remainingBytes = clientInfo.bytesToSend - clientInfo.totalBytesSent;
@@ -212,6 +213,7 @@ void ClientConnection::acceptClients(int serverFD)
 	if (getpeername(clientFD, (struct sockaddr *)&clientAddr, &clientAddrLen) != 0) {
 		_log->logError("Failed to read client IP: " + std::string(strerror(errno)));
 		close(clientFD);
+		_connectionInfo[clientFD].pfd.fd = 0;
 		return;
 	}
 	initClientInfo(clientFD, clientAddr, serverInfo);
@@ -282,10 +284,16 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 					else
 						handlePollInEvent(pfd.fd, serverStruct);
 				}
-				else if (pfd.revents & POLLOUT)
+				if (pfd.revents & POLLOUT)
 					handlePollOutEvent(pfd.fd, serverStruct);
-				if (pfd.revents & (POLLHUP | POLLERR))
+				if (pfd.revents & POLLHUP) {
+					std::cout << "POLLHUP" << std::endl;
 					handlePollErrorEvent(pfd.fd);
+				}
+				if (pfd.revents & POLLNVAL)
+					std::cout << "POLLNVAL" << std::endl;
+				if (pfd.revents & POLLERR)
+					std::cout << "POLLERR" << std::endl;
 			}
 		}
 		if (globalSignalReceived == 1) {

@@ -1,4 +1,5 @@
 server A {
+		client_max_body_size 4000000000;
 		listen				8080;
 		listen				8081;
 		listen				8082;

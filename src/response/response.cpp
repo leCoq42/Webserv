@@ -15,7 +15,7 @@
 
 Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *config, int port, std::shared_ptr<Log> log):
 	_log(log), _request(request), _contentType(""), _body(""), _contentLength(0), _responseString(""),
-	_fileAccess(config), _finalPath(""), _cgi(nullptr), _complete(true), _port(port)
+	_fileAccess(config), _finalPath(""), _cgi(nullptr), _complete(false), _port(port)
 {
 	int return_code = 0;
 	_finalPath = _request->get_requestPath();
@@ -39,7 +39,7 @@ Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *co
 
 Response::Response(int error_code, std::string error_description, std::list<ServerStruct> *config, int port, std::shared_ptr<Log> log) :
 	_log(log), _request(nullptr), _contentType("text/html"), _body(""), _contentLength(0), _responseString(""),
-	_fileAccess(config), _finalPath(""), _cgi(nullptr), _complete(true), _port(port)
+	_fileAccess(config), _finalPath(""), _cgi(nullptr), _complete(false), _port(port)
 {
 	_finalPath = _fileAccess.isFilePermissioned( _finalPath, error_code, _port, "GET");
 	_body = get_error_body(error_code, error_description);
@@ -151,8 +151,7 @@ bool	Response::handleGetRequest()
 		else
 		{
 			_cgi = std::make_shared<CGI>(_request, _finalPath, interpreters.at(_finalPath.extension()), _log);
-			_complete = _cgi->isComplete();
-			if (_complete == true) {
+			if (_cgi->isComplete()) {
 				_body = _cgi->get_result();
 				_contentLength = _cgi->get_contentLength();
 				buildResponse(static_cast<int>(statusCode::OK), "OK", true);
@@ -185,8 +184,7 @@ bool	Response::handlePostRequest()
 		if (interpreters.find(_finalPath.extension()) != interpreters.end()) {
 			isCGI = true;
 			_cgi = std::make_shared<CGI>(_request, _finalPath, interpreters.at(_finalPath.extension()), _log);
-			_complete = _cgi->isComplete();
-			if (_complete == true) {
+			if (_cgi->isComplete()) {
 				_body = _cgi->get_result();
 				_contentLength = _cgi->get_contentLength();
 				buildResponse(static_cast<int>(statusCode::OK), "OK", isCGI);
@@ -331,14 +329,13 @@ void	Response::continue_cgi()
 	if (_cgi->readCGIfd()) {
 		std::cerr << "cgi reading error" << std::endl;
 		buildResponse(static_cast<int>(statusCode::INTERNAL_SERVER_ERROR), "Internal Server Error", false);
-		_complete = true;
 		return;
 	}
 	if (_cgi->isComplete() == true) {
 		_body = _cgi->get_result();
 		_contentLength = _cgi->get_contentLength();
 		buildResponse(static_cast<int>(statusCode::OK), "OK", true);
-		_complete = true;
+		return;
 	}
 }
 
@@ -361,6 +358,7 @@ void	Response::buildResponse(int status, const std::string &message, bool isCGI)
 			_responseString.append(CRLF + _body);
 		}
 	}
+	_complete = true;
 }
 
 const std::string	&Response::get_response() const { return _responseString; }

@@ -13,7 +13,7 @@ int	max_body_limit(std::list<ServerStruct> *config, int port)
 			if (port_config == port_str)
 			{
 				if (!server_config._clientMaxBodySize.content_list.empty())
-					return (std::stoi(server_config._clientMaxBodySize.content_list.front()));
+					return (std::stoull(server_config._clientMaxBodySize.content_list.front()));
 				else
 					return (DEFUALT_CLIENT_MAX_BODY_SIZE);
 			}
@@ -260,7 +260,7 @@ std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &retur
 	if (return_code == 301)
 		return ("/");
 	if (!server->_clientMaxBodySize.content_list.empty())
-		_clientMaxBodySize = std::stoi(server->_clientMaxBodySize.content_list.front());
+		_clientMaxBodySize = std::stoull(server->_clientMaxBodySize.content_list.front());
 	location_config = &server->_location;
 	location_config = find_location_config(uri, location_config, method);
 	if (location_config && location_config->childs && !((LocationStruct *)location_config->childs)->allow_methods.content_list.empty())
