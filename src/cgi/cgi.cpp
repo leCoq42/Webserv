@@ -2,7 +2,6 @@
 #include "defines.hpp"
 #include "log.hpp"
 #include <cstdlib>
-#include <fcntl.h>
 #include <sys/wait.h>
 #include <vector>
 #include <cerrno>
@@ -174,8 +173,11 @@ int	CGI::readCGIfd()
 		return 1;
 	}
 	bytesRead = read(_cgiFD, &buffer[0], BUFFSIZE);
-	if (bytesRead < 0)
+	if (bytesRead < 0) {
+		close(_cgiFD);
+		_cgiFD = 0;
 		return 1;
+	}
 	else if (bytesRead == 0) {
 		close(_cgiFD);
 		_cgiFD = 0;

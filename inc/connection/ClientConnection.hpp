@@ -10,7 +10,6 @@
 #include <sys/poll.h>
 #include <sys/types.h>
 #include <map>
-#include <fcntl.h>
 #include <unistd.h>
 #include <cerrno>
 #include <cstddef>
@@ -19,7 +18,7 @@
 #include <algorithm>
 
 #define SENDING 0
-#define TIMEOUT 30
+#define TIMEOUT 1
 
 struct ConnectionInfo {
 	char                        clientIP[INET_ADDRSTRLEN];

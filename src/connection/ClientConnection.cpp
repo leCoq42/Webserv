@@ -1,4 +1,5 @@
 #include "ClientConnection.hpp"
+#include <csignal>
 #include <sys/poll.h>
 
 ClientConnection::ClientConnection(std::shared_ptr<ServerConnection> ServerConnection, std::shared_ptr<Log> log)
@@ -21,12 +22,10 @@ void ClientConnection::handlePollErrorEvent(int clientFD) {
 }
 
 void ClientConnection::handlePollOutEvent(int clientFD, std::list<ServerStruct> *serverStruct)
-{	
-	if (_connectionInfo[clientFD].pfd.fd == 0)
+{
+	if (_connectionInfo.find(clientFD) == _connectionInfo.end() || _connectionInfo[clientFD].pfd.fd < 1)
 		return;
-	if (_connectionInfo.find(clientFD) == _connectionInfo.end())
-		return;
-	if (clientHasTimedOut(clientFD, serverStruct) || contentTooLarge(clientFD, serverStruct))
+	if (contentTooLarge(clientFD, serverStruct))
 		return;
 	auto& client = _connectionInfo[clientFD];
 
@@ -45,10 +44,10 @@ void ClientConnection::handlePollOutEvent(int clientFD, std::list<ServerStruct> 
 	}
 }
 
-
-
 bool ClientConnection::clientHasTimedOut(int clientFD, std::list<ServerStruct> *serverStruct)
 {
+	if (clientFD < 1 || _connectionInfo[clientFD].pfd.fd < 1)
+		return false;
 	auto& client = _connectionInfo[clientFD];
 	time_t currentTime;
 	time(&currentTime);
@@ -58,6 +57,7 @@ bool ClientConnection::clientHasTimedOut(int clientFD, std::list<ServerStruct> *
 		client.response = std::make_shared<Response>(504, "Gateway Timeout", serverStruct, client.port, _log);
 		client.responseStr = client.response->get_response();
 		client.bytesToSend = client.response->get_response().length();
+		client.totalBytesSent = 0;
 		sendData(clientFD);
 		removeClientSocket(clientFD);
 		return true;
@@ -77,6 +77,7 @@ bool ClientConnection::contentTooLarge(int clientFD, std::list<ServerStruct> *se
 		client.response = std::make_shared<Response>(413, "Content Too Large", serverStruct, client.port, _log);
 		client.responseStr = client.response->get_response();
 		client.bytesToSend = client.response->get_response().length();
+		client.totalBytesSent = 0;
 		sendData(clientFD);
 		removeClientSocket(clientFD);
 		return true;
@@ -86,7 +87,7 @@ bool ClientConnection::contentTooLarge(int clientFD, std::list<ServerStruct> *se
 
 void ClientConnection::sendData(int clientFD)
 {
-	if (clientFD < 1 || _connectionInfo[clientFD].pfd.fd < 1)
+	if (_connectionInfo[clientFD].pfd.fd < 1)
 		return;
 	auto& clientInfo = _connectionInfo[clientFD];
 	int remainingBytes = clientInfo.bytesToSend - clientInfo.totalBytesSent;
@@ -149,7 +150,7 @@ void ClientConnection::receiveData(int clientFD)
 
 void ClientConnection::handlePollInEvent(int clientFD, std::list<ServerStruct> *serverStruct)
 {
-	if (_connectionInfo[clientFD].pfd.fd == 0)
+	if (_connectionInfo[clientFD].pfd.fd < 1)
 		return;
 	if (clientHasTimedOut(clientFD, serverStruct))
 		return;
@@ -233,9 +234,9 @@ bool ClientConnection::isServerSocket(int fd)
 
 void ClientConnection::removeClientSocket(int clientFD)
 {
-	if (_connectionInfo[clientFD].pfd.fd == 0)
+	if (_connectionInfo.find(clientFD) == _connectionInfo.end())
 		return;
-	else if (_connectionInfo.find(clientFD) == _connectionInfo.end())
+	else if (_connectionInfo[clientFD].pfd.fd < 1)
 		return;
 	close(clientFD);
 	#ifdef DEBUG
@@ -275,7 +276,7 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 			pollfds.push_back(connection.second.pfd);
 		}
 
-		int poll_count = poll(pollfds.data(), pollfds.size(), 10);
+		int poll_count = poll(pollfds.data(), pollfds.size(), 1000000);
 		if (poll_count > 0) {
 			for (const auto& pfd : pollfds) {
 				if (pfd.revents & POLLIN) {
@@ -284,16 +285,11 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 					else
 						handlePollInEvent(pfd.fd, serverStruct);
 				}
-				if (pfd.revents & POLLOUT)
-					handlePollOutEvent(pfd.fd, serverStruct);
-				if (pfd.revents & POLLHUP) {
-					std::cout << "POLLHUP" << std::endl;
+				if (pfd.revents & (POLLHUP | POLLERR))
 					handlePollErrorEvent(pfd.fd);
+				else if (pfd.revents & POLLOUT) {
+					handlePollOutEvent(pfd.fd, serverStruct);
 				}
-				if (pfd.revents & POLLNVAL)
-					std::cout << "POLLNVAL" << std::endl;
-				if (pfd.revents & POLLERR)
-					std::cout << "POLLERR" << std::endl;
 			}
 		}
 		if (globalSignalReceived == 1) {
