@@ -276,7 +276,7 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 			pollfds.push_back(connection.second.pfd);
 		}
 
-		int poll_count = poll(pollfds.data(), pollfds.size(), TIMEOUT * 1000);
+		int poll_count = poll(pollfds.data(), pollfds.size(),100);
 		if (poll_count > 0) {
 			for (const auto& pfd : pollfds) {
 				if (pfd.revents & POLLIN) {
