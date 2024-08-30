@@ -6,6 +6,7 @@
 #include "response.hpp"
 #include "log.hpp"
 #include "signals.hpp"
+#include <ctime>
 #include <memory>
 #include <sys/poll.h>
 #include <sys/types.h>
@@ -18,7 +19,7 @@
 #include <algorithm>
 
 #define SENDING 0
-#define TIMEOUT 60
+#define TIMEOUT 1
 
 struct ConnectionInfo {
 	char                        clientIP[INET_ADDRSTRLEN];
@@ -27,7 +28,7 @@ struct ConnectionInfo {
 	std::shared_ptr<Request>	request;
 	std::shared_ptr<Response>	response;
 	long int 					timeOut;
-	long int 					lastRequestTime;
+	time_t	 					lastRequestTime;
 	std::string 				receiveStr;
 	std::string					responseStr;
 	int 						totalBytesSent;

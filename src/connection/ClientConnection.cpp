@@ -26,7 +26,7 @@ void ClientConnection::handlePollOutEvent(int clientFD, std::list<ServerStruct> 
 {
 	if (_connectionInfo.find(clientFD) == _connectionInfo.end() || _connectionInfo[clientFD].pfd.fd < 1)
 		return;
-	if (contentTooLarge(clientFD, serverStruct) || clientHasTimedOut(clientFD, serverStruct))
+	if (contentTooLarge(clientFD, serverStruct))
 		return;
 
 	auto& client = _connectionInfo[clientFD];
@@ -137,8 +137,10 @@ void ClientConnection::receiveData(int clientFD)
 	std::vector<char> buffer(BUFFSIZE);
 
 	ssize_t bytesReceived = recv(clientFD, &buffer[0], buffer.size(), MSG_DONTWAIT);
-	if (bytesReceived > 0)
+	if (bytesReceived > 0) {
 		client.receiveStr.append(std::string(buffer.begin(), buffer.begin() + bytesReceived));
+		time(&client.lastRequestTime);
+	}
 	if (bytesReceived < 0) {
 		_log->logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
 				client.clientIP, clientFD);
