@@ -19,7 +19,7 @@
 #include <algorithm>
 
 #define SENDING 0
-#define TIMEOUT 1
+#define TIMEOUT 30
 
 struct ConnectionInfo {
 	char                        clientIP[INET_ADDRSTRLEN];

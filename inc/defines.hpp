@@ -2,7 +2,7 @@
 
 #define MSG_BORDER "---------------------------"
 
-#define BUFFSIZE 1380
+#define BUFFSIZE 1460
 
 #define DEFUALT_CLIENT_MAX_BODY_SIZE 1000000
 
