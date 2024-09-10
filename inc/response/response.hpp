@@ -66,10 +66,10 @@ private:
 	int							_port;
 
 	Response();
-	void	handleRequest(const std::shared_ptr<Request> &request);
-	bool	handleGetRequest(const std::shared_ptr<Request> &request);
-	bool	handlePostRequest(const std::shared_ptr<Request> &request);
-	bool	handleDeleteRequest(const std::shared_ptr<Request> &request);
+	void	handleRequest();
+	bool	handleGetRequest();
+	bool	handlePostRequest();
+	bool	handleDeleteRequest();
 	void	handle_multipart();
 
 	std::unordered_map<std::string, std::string>	get_args(std::string requestBody,

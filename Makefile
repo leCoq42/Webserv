@@ -13,11 +13,15 @@ CC          := c++ --std=c++20
 INCLUDES    := $(shell find inc -type d -exec echo -I {} \;)
 
 #Compiler Flags
-CFLAGS := -Wall -Wextra -Werror -Wunreachable-code #-Ofast -march=native -flto
+CFLAGS := -Wall -Wextra -Werror -Wunreachable-code
 
 #Debug Flags
 ifdef DEBUG
-	CFLAGS += -g -Og -fsanitize=address,undefined #-D DEBUG
+	CFLAGS += -g -Og#-D DEBUG #-fsanitize=address,undefined #-D DEBUG
+endif
+
+ifdef FAST
+	CFLAGS += -Ofast -march=native -flto
 endif
 
 #Source files
@@ -46,6 +50,11 @@ debug:
 	$(MAKE) DEBUG=1
 
 rebug: fclean debug
+
+fast:
+	$(MAKE) FAST=1
+
+refast: fclean fast
 
 cgi:
 	$(MAKE) $(CGI_TARGETS)

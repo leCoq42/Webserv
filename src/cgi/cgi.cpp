@@ -2,7 +2,6 @@
 #include "defines.hpp"
 #include "log.hpp"
 #include <cstdlib>
-#include <fcntl.h>
 #include <sys/wait.h>
 #include <vector>
 #include <cerrno>
@@ -54,7 +53,7 @@ void CGI::swap(CGI &lhs)
 }
  
 CGI::~CGI() {
-	if (fcntl(_cgiFD, F_GETFD) >= 0)
+	if (_cgiFD > 0)
 		close(_cgiFD);
 }
 
@@ -175,7 +174,8 @@ int	CGI::readCGIfd()
 	}
 	bytesRead = read(_cgiFD, &buffer[0], BUFFSIZE);
 	if (bytesRead < 0) {
-		_complete = true;
+		close(_cgiFD);
+		_cgiFD = 0;
 		return 1;
 	}
 	else if (bytesRead == 0) {
@@ -183,13 +183,12 @@ int	CGI::readCGIfd()
 		_cgiFD = 0;
 		_complete = true;
 		calculateContentLength();
-		return 0;
 	}
 	else {
 		_complete = false;
 		_result.append(buffer.data(), bytesRead);
-		return 0;
 	}
+	return 0;
 }
 
 void	CGI::calculateContentLength()
