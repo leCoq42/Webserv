@@ -95,6 +95,7 @@ std::string	Response::get_error_body(int error_code, std::string error_descripti
 void	Response::handleRequest()
 {
 	if (_request && !_request->isValid()) {
+		_body = get_error_body(static_cast<int>(statusCode::BAD_REQUEST), "Bad Request.");
 		buildResponse(static_cast<int>(statusCode::BAD_REQUEST), "Bad Request");
 		return;
 	}
@@ -114,6 +115,7 @@ void	Response::handleRequest()
 		}
 	}
 	catch (const std::exception &e) {
+		_body = get_error_body(static_cast<int>(statusCode::INTERNAL_SERVER_ERROR), "Internal Server Error.");
 		buildResponse(static_cast<int>(statusCode::INTERNAL_SERVER_ERROR),
 					"Internal Server Error", false);
 	}
@@ -192,6 +194,7 @@ bool	Response::handlePostRequest()
 			return true;
 		}
 		else {
+			_body = get_error_body(static_cast<int>(statusCode::NO_CONTENT), "No Content.");
 			buildResponse(static_cast<int>(statusCode::NO_CONTENT), "No Content", "");
 			return true;
 		}
@@ -210,10 +213,11 @@ bool	Response::handleDeleteRequest()
 	{
 		if (remove(_finalPath))
 		{
-			buildResponse(static_cast<int>(statusCode::OK), "OK", "");
+			buildResponse(static_cast<int>(204), "Delete succeeded.", "");
 			return true;
 		}
 	}
+	_body = get_error_body(static_cast<int>(204), "Delete failed.");
 	buildResponse(static_cast<int>(204), "Failed", "");
 	return false;
 }
@@ -328,6 +332,7 @@ void	Response::continue_cgi()
 {
 	if (_cgi->readCGIfd()) {
 		std::cerr << "cgi reading error" << std::endl;
+		_body = get_error_body(static_cast<int>(statusCode::INTERNAL_SERVER_ERROR), "Internal Server Error.");
 		buildResponse(static_cast<int>(statusCode::INTERNAL_SERVER_ERROR), "Internal Server Error", false);
 		return;
 	}
