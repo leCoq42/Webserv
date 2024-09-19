@@ -110,6 +110,8 @@ bool			FileAccess::is_deleteable(std::filesystem::path to_delete)
 
 	root = _root;
 	current_root = _currentRoot;
+	if (to_delete == "")
+		return (false);
 	root = std::filesystem::absolute(root);
 	current_root = std::filesystem::absolute(current_root);
 	to_delete = std::filesystem::absolute(to_delete);
