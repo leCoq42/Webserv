@@ -287,7 +287,7 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 				}
 				if (pfd.revents & (POLLHUP | POLLERR))
 					handlePollErrorEvent(pfd.fd);
-				else if (pfd.revents & POLLOUT) {
+				else if (pfd.fd && pfd.revents & POLLOUT) { //hacky patch
 					handlePollOutEvent(pfd.fd, serverStruct);
 				}
 			}

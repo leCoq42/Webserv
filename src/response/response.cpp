@@ -350,7 +350,10 @@ void	Response::buildResponse(int status, const std::string &message, bool isCGI)
 	}
 	else {
 		if (_body.empty())
+		{
+			_complete = true; // this was missing
 			return;
+		}
 		else {
 			_responseString.append("Content-Length: " + std::to_string(_body.length()) +
 						  CRLF);
