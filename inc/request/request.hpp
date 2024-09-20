@@ -15,6 +15,7 @@ public:
 
 	void	print_Request();
 	void	appendToBody(std::string requestString);
+	std::string			_argStr;
 
 	const std::string	&get_rawRequest() const;
 	const std::string	&get_requestMethod() const;
