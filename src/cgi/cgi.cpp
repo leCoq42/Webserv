@@ -65,7 +65,6 @@ void CGI::parseCGI()
 	_cgiArgv.push_back(const_cast<char *>(_scriptPath.c_str()));
 	_cgiArgv.push_back(NULL);
 
-	// init_envp();
 	if (!_request->get_requestArgs().empty()) {
 		for (auto it: _request->get_requestArgs())
 			add_to_envp(it.first, it.second, "HTTP_");
