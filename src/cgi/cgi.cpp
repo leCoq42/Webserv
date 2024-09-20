@@ -76,8 +76,6 @@ void CGI::init_envp()
 	add_to_envp("GATEWAY_INTERFACE", "CGI/1.1", "");
 	add_to_envp("REQUEST_METHOD", _request->get_requestMethod(), "");
 	add_to_envp("REDIRECT_STATUS", "true", "");
-	// _scriptPath = std::filesystem::absolute(_scriptPath);
-	// add_to_envp("SCRIPT_FILENAME", std::filesystem::absolute(_scriptPath), "");
 	add_to_envp("SCRIPT_FILENAME", _scriptPath, "");
 	add_to_envp("SCRIPT_NAME", _scriptPath, "");
 	if (_request->get_requestMethod() == "GET")
