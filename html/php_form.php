@@ -12,7 +12,6 @@ function real_post() {
 	return $post;
   }
 $_POST = real_post();
-var_dump($_POST);
 $name = $_POST['fname'];
 echo $name;
 ?>

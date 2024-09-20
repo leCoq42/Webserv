@@ -109,7 +109,6 @@ bool CGI::validate_key(std::string key) {
 	for (auto &c : key)
 		c = toupper(c);
 
-	std::cout << key << std::endl;
 	auto it = std::find(metaVarNames.begin(), metaVarNames.end(), key);
 	if (it != metaVarNames.end())
 		return true;
@@ -155,7 +154,7 @@ void CGI::executeScript()
 
         dup2(pipeCGItoServer[WRITE], STDOUT_FILENO);
 		close(pipeCGItoServer[WRITE]);
-		
+
         execve(_cgiArgv.data()[0], _cgiArgv.data(), envp.data());
 		_log->logError("Execve error.");
 		_exit(1);
