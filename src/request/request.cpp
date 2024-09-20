@@ -107,7 +107,6 @@ void	Request::parseUrlArgs(const std::string uri)
 {
 	size_t pos;
 	std::unordered_map<std::string, std::string> args;
-	// std::string argStr;
 
 	pos = uri.find("?");
 	if (pos != std::string::npos) {
