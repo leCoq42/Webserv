@@ -47,7 +47,7 @@ private:
 		"PATH_INFO",      "PATH_TRANSLATED", "QUERY_STRING", "REMOTE_ADDR",
 		"REMOTE_HOST",    "REMOTE_IDENT",    "REMOTE_USER",  "REQUEST_METHOD",
 		"SCRIPT_NAME",    "SERVER_NAME",     "SERVER_PORT",  "SERVER_PROTOCOL",
-		"SERVER_SOFTWARE"
+		"SERVER_SOFTWARE", "REDIRECT_STATUS", "SCRIPT_FILENAME"
 	};
 
 	static const inline std::vector<std::string> custom_var_prefixes = {"HTTP_"};

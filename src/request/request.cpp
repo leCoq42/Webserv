@@ -107,15 +107,14 @@ void	Request::parseUrlArgs(const std::string uri)
 {
 	size_t pos;
 	std::unordered_map<std::string, std::string> args;
-	std::string argStr;
 
 	pos = uri.find("?");
 	if (pos != std::string::npos) {
 		_requestPath = uri.substr(0, pos);
 		if (pos + 1)
 		{
-			argStr = uri.substr(pos + 1);
-			splitUrlArgs(argStr);
+			_argStr = uri.substr(pos + 1);
+			splitUrlArgs(_argStr);
 		}
 	}
 }

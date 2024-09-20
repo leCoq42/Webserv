@@ -59,12 +59,12 @@ CGI::~CGI() {
 
 void CGI::parseCGI()
 {
+	init_envp();
 	if (!_interpreter.empty())
 		_cgiArgv.push_back(const_cast<char *>(_interpreter.c_str()));
 	_cgiArgv.push_back(const_cast<char *>(_scriptPath.c_str()));
 	_cgiArgv.push_back(NULL);
 
-	init_envp();
 	if (!_request->get_requestArgs().empty()) {
 		for (auto it: _request->get_requestArgs())
 			add_to_envp(it.first, it.second, "HTTP_");
@@ -75,13 +75,20 @@ void CGI::init_envp()
 {
 	add_to_envp("GATEWAY_INTERFACE", "CGI/1.1", "");
 	add_to_envp("REQUEST_METHOD", _request->get_requestMethod(), "");
+	add_to_envp("REDIRECT_STATUS", "true", "");
 	add_to_envp("SCRIPT_FILENAME", _scriptPath, "");
+	add_to_envp("SCRIPT_NAME", _scriptPath, "");
+	if (_request->get_requestMethod() == "GET")
+		add_to_envp("QUERY_STRING", _request->_argStr.c_str(), "");
+	for (const auto &[key, value] : _request->get_headers())
+    	add_to_envp(key, value, "");
 }
 
 bool CGI::add_to_envp(std::string key, std::string value, std::string prefix)
 {
 	std::string tmp;
 
+	std::replace(key.begin(), key.end(), '-', '_');
 	if (validate_key(prefix + key)) {
 		tmp = prefix + key;
 		for (auto &c : tmp)
@@ -97,7 +104,7 @@ bool CGI::add_to_envp(std::string key, std::string value, std::string prefix)
 
 bool CGI::validate_key(std::string key) {
 	for (auto &c : key)
-	c = toupper(c);
+		c = toupper(c);
 
 	auto it = std::find(metaVarNames.begin(), metaVarNames.end(), key);
 	if (it != metaVarNames.end())
@@ -106,7 +113,6 @@ bool CGI::validate_key(std::string key) {
 	it = std::find(custom_var_prefixes.begin(), custom_var_prefixes.end(), key);
 	if (it != custom_var_prefixes.end())
 		return true;
-
 	return false;
 }
 
@@ -152,6 +158,7 @@ void CGI::executeScript()
     }
 	else { // Parent process
 		close(pipeServertoCGI[READ]);
+		write(pipeServertoCGI[WRITE], _request->get_body().data(), _request->get_body().length());
 		close(pipeServertoCGI[WRITE]);
         close(pipeCGItoServer[WRITE]);
 
