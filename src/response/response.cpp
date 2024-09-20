@@ -213,6 +213,7 @@ bool	Response::handleDeleteRequest()
 	{
 		if (remove(_finalPath))
 		{
+			_body = get_error_body(static_cast<int>(204), "Delete failed.");
 			buildResponse(static_cast<int>(204), "Delete succeeded.", "");
 			return true;
 		}
