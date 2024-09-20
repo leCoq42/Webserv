@@ -213,13 +213,13 @@ bool	Response::handleDeleteRequest()
 	{
 		if (remove(_finalPath))
 		{
-			_body = get_error_body(static_cast<int>(204), "Delete failed.");
-			buildResponse(static_cast<int>(204), "Delete succeeded.", "");
+			_body = get_error_body(static_cast<int>(204), "Delete.");
+			buildResponse(static_cast<int>(204), "Delete.", "");
 			return true;
 		}
 	}
-	_body = get_error_body(static_cast<int>(204), "Delete failed.");
-	buildResponse(static_cast<int>(204), "Failed", "");
+	_body = get_error_body(static_cast<int>(204), "Delete.");
+	buildResponse(static_cast<int>(204), "Delete.", "");
 	return false;
 }
 
