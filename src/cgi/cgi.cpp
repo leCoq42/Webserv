@@ -158,12 +158,20 @@ void CGI::executeScript()
     }
 	else { // Parent process
 		close(pipeServertoCGI[READ]);
-		write(pipeServertoCGI[WRITE], _request->get_body().data(), _request->get_body().length());
+		close(pipeCGItoServer[WRITE]);
+		ssize_t bytes_written = write(pipeServertoCGI[WRITE], _request->get_body().data(), _request->get_body().length());
 		close(pipeServertoCGI[WRITE]);
-        close(pipeCGItoServer[WRITE]);
-
-		_cgiFD = pipeCGItoServer[READ];
-		readCGIfd();
+		if (bytes_written < 0) {
+			close(pipeCGItoServer[READ]);
+			kill(_pid, SIGKILL);
+			_cgiFD = 0;
+			_log->logError("Failed to write to pipe");
+			return;
+		}
+		else if (bytes_written >= 0) {
+			_cgiFD = pipeCGItoServer[READ];
+			readCGIfd();
+		}
     }
 }
 
