@@ -8,6 +8,8 @@
 #include <cstring>
 #include <algorithm>
 #include <unistd.h>
+#include <signal.h>
+
 
 CGI::CGI() :
 	_request(nullptr), _scriptPath(""), _interpreter(""), _result(""),

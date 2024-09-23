@@ -10,8 +10,11 @@
 #include <memory>
 #include "ServerStruct.hpp"
 #include "log.hpp"
+#include <signal.h>
 
 #define BACKLOG 512
+#define success 0
+#define failed -1
 
 struct ServerInfo {
 	std::string         serverID;
@@ -26,14 +29,14 @@ class ServerConnection {
 		std::shared_ptr<Log> _log;
 
 	public:
-		std::vector<ServerInfo> _connectedServers;
+		std::vector<ServerInfo> _connectedPorts;
 		ServerConnection(std::shared_ptr<Log> log);
 		~ServerConnection();
 
-		void					initServerInfo(ServerStruct &serverStruct, ServerInfo &info,
-												std::list<std::string>::iterator it);
-		void 					createServerSocket(ServerInfo &info);
-		void 					bindServerSocket(ServerInfo &info);
-		void 					listenIncomingConnections(ServerInfo &info);
-		void 					setUpServerConnection(ServerStruct &serverStruct);
+		void	initSocketInfo(ServerStruct &serverStruct, ServerInfo &info,
+								std::list<std::string>::iterator it);
+		int 	createSocket(ServerInfo &info);
+		int 	bindPort(ServerInfo &info);
+		int 	listenOnPort(ServerInfo &info);
+		int 	setUpPorts(ServerStruct &serverStruct);
 };
