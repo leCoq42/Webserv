@@ -160,7 +160,6 @@ void CGI::executeScript()
 		_exit(1);
     }
 	else { // Parent process
-		std::cout << "segger" << std::endl;
 		close(pipeServertoCGI[READ]);
 		write(pipeServertoCGI[WRITE], _request->get_body().data(), _request->get_body().length());
 		close(pipeServertoCGI[WRITE]);
