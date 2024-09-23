@@ -107,10 +107,10 @@ int	load_in_servers(ParserStruct *PS, std::list<ServerStruct> &server_structs)
 //no double in same server
 int	double_ports(std::list<ServerStruct> &server_structs)
 {
+	std::list<int>	all_ports;
+
 	for (std::list<ServerStruct>::iterator server = server_structs.begin(); server != server_structs.end();)
 	{
-		std::list<int>	all_ports;
-
 		for (std::list<std::string>::iterator port_str = server->_port.content_list.begin(); port_str != server->_port.content_list.end();)
 		{
 			try
