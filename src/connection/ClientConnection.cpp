@@ -195,11 +195,11 @@ void ClientConnection::initClientInfo(int clientFD, sockaddr_in clientAddr, Serv
 
 ServerInfo ClientConnection::findServerInfo(int serverFD)
 {
-	for (const auto &server : _ptrServerConnection->_connectedServers) {
+	for (const auto &server : _ptrServerConnection->_connectedPorts) {
 		if (serverFD == server.serverFD)
 			return server;
 	}
-	return *_ptrServerConnection->_connectedServers.begin();
+	return *_ptrServerConnection->_connectedPorts.begin();
 }
 
 void ClientConnection::acceptClients(int serverFD)
@@ -227,7 +227,7 @@ void ClientConnection::acceptClients(int serverFD)
 
 bool ClientConnection::isServerSocket(int fd)
 {
-	for (const auto &server_fd : _ptrServerConnection->_connectedServers) {
+	for (const auto &server_fd : _ptrServerConnection->_connectedPorts) {
 		if (fd == server_fd.serverFD)
 		return true;
 	}
@@ -248,7 +248,7 @@ void ClientConnection::removeClientSocket(int clientFD)
 }
 
 void ClientConnection::initServerSockets() {
-	for (const auto& server : _ptrServerConnection->_connectedServers) {
+	for (const auto& server : _ptrServerConnection->_connectedPorts) {
 		ConnectionInfo serverInfo;
 
 		serverInfo.clientIP[0] = '\0';

@@ -21,6 +21,8 @@ void error_exit(int error_code) {
 		std::cerr << "loading server struct went wrong" << std::endl;
 	else if (error_code == 5)
 		std::cerr << "Duplicate ports detected" << std::endl;
+	else if (error_code == 6)
+		std::cerr << "Couldn't set up server connection" << std::endl;
 }
 
 int parse(Parser *parser, std::list<ServerStruct> *server_structs,
@@ -101,7 +103,12 @@ int main(int argc, char **argv) {
 
 	}
 	for (auto &server : server_structs) {
-		ptr_ServerConnection->setUpServerConnection(server);
+		if (ptr_ServerConnection->setUpPorts(server) == failed) {
+			error_exit(6);
+			if (buffer)
+				delete[] buffer;
+			return (1);
+		}
 	}
 	clientConnection.setupClientConnection(&server_structs);
 	delete[] buffer;

@@ -4,18 +4,18 @@ ServerConnection::ServerConnection(std::shared_ptr<Log> log) : _log(log){}
 
 ServerConnection::~ServerConnection() 
 {
-  for (size_t i = 0; i < _connectedServers.size(); i++) {
-    _log->logServerConnection("Closing server", _connectedServers[i].serverID, _connectedServers[i].serverFD, _connectedServers[i].serverPort);
-    close(_connectedServers[i].serverFD);
+  for (size_t i = 0; i < _connectedPorts.size(); i++) {
+	_log->logServerConnection("Closing server", _connectedPorts[i].serverID, _connectedPorts[i].serverFD, _connectedPorts[i].serverPort);
+	close(_connectedPorts[i].serverFD);
   }
   _log->logAdd("All servers closed.");
   _log->logAdd("Webserv is closed correctly.");
 }
 
-void ServerConnection::initServerInfo(ServerStruct &serverStruct, ServerInfo &info, std::list<std::string>::iterator it) 
+void ServerConnection::initSocketInfo(ServerStruct &serverStruct, ServerInfo &info, std::list<std::string>::iterator it) 
 {
 	struct sockaddr_in server_addr;
-	memset(&server_addr, 0, sizeof(server_addr));
+
 	info.serverPort = atoi(it->c_str());
 	info.serverID = serverStruct._id;
 	info.MaxBodySize = std::stoll(*serverStruct._clientMaxBodySize.content_list.begin());
@@ -25,62 +25,77 @@ void ServerConnection::initServerInfo(ServerStruct &serverStruct, ServerInfo &in
 	info.server_addr = server_addr;
 }
 
-void ServerConnection::createServerSocket(ServerInfo &info) 
+int	ServerConnection::createSocket(ServerInfo &info) 
 {
   info.serverFD = socket(AF_INET, SOCK_STREAM, 0);
-  if (info.serverFD == -1)
-    _log->logServerError("Failed to create server socket", info.serverID, info.serverPort);
+  if (info.serverFD == -1) {
+		_log->logServerError("Failed to create server socket", info.serverID, info.serverPort);
+		return (failed);
+	}
+	return (success);
 }
 
-void ServerConnection::bindServerSocket(ServerInfo &info) 
+int ServerConnection::bindPort(ServerInfo &info) 
 {
   const int reuse = 1;
   if (setsockopt(info.serverFD, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) != 0) {
-    close(info.serverFD);
-    _log->logError("Could not configure socket options: " +
-             std::string(std::strerror(errno)));
+	close(info.serverFD);
+	_log->logError("Could not configure socket options: " +
+			 std::string(std::strerror(errno)));
   }
-  if (bind(info.serverFD, (struct sockaddr *)&info.server_addr,
-           sizeof(info.server_addr)) == -1) {
-    _log->logServerError("Failed to bind server", info.serverID, info.serverPort);
-    close(info.serverFD);
+
+  int ret = bind(info.serverFD, (struct sockaddr *)&info.server_addr,
+		   sizeof(info.server_addr));
+	if (ret == -1) {
+		_log->logServerError("Failed to bind server", info.serverID, info.serverPort);
+		close(info.serverFD);
+		return (failed);
   }
+  return (success);
 }
 
-void ServerConnection::listenIncomingConnections(ServerInfo &info) {
-  if (listen(info.serverFD, BACKLOG) == -1) {
-    close(info.serverFD);
-    _log->logServerError("Failed to listen for connection on server", info.serverID, info.serverPort);
-  }
-}
-
-bool	already_in_servers(int port_number, std::vector<ServerInfo>	_connectedServers)
+int	ServerConnection::listenOnPort(ServerInfo &info) 
 {
-	for (ServerInfo connected : _connectedServers){
+	int ret = listen(info.serverFD, BACKLOG);
+
+	if (ret == -1) {
+		close(info.serverFD);
+		_log->logServerError("Failed to listen for connection on server", info.serverID, info.serverPort);
+		return (failed);
+  }
+  return (success);
+}
+
+bool	portIsConnected(int port_number, std::vector<ServerInfo>	_connectedPorts)
+{
+	for (ServerInfo connected : _connectedPorts){
 		if (connected.serverPort == port_number)
 			return (true);
 	}
 	return (false);
 }
 
-void ServerConnection::setUpServerConnection(ServerStruct &serverStruct) 
+int	ServerConnection::setUpPorts(ServerStruct &serverStruct) 
 {
   std::list<std::string>::iterator it = serverStruct._port.content_list.begin();
   for (; it != serverStruct._port.content_list.end(); ++it) {
-	if (!already_in_servers(atoi(it->c_str()), _connectedServers))
-	{
-		if (atoi(it->c_str()) > 0 && atoi(it->c_str()) < 65536) {
-			ServerInfo info;
-			initServerInfo(serverStruct, info, it);
-			createServerSocket(info);
-			bindServerSocket(info);
-			listenIncomingConnections(info);
-			_connectedServers.push_back(info);
-			_log->logServerConnection("Server created", info.serverID, info.serverFD, info.serverPort);
-		} 
-		else {
-			_log->logServerError("Invalid port number", serverStruct._id, atoi(it->c_str()));
-		}
+	if (!portIsConnected(atoi(it->c_str()), _connectedPorts)) {
+	  if (atoi(it->c_str()) > 0 && atoi(it->c_str()) < 65536) {
+		ServerInfo info;
+		initSocketInfo(serverStruct, info, it);
+		if (createSocket(info) == failed)
+		  return (failed);
+		if (bindPort(info) == failed)
+		  return (failed);
+		if (listenOnPort(info) == failed)
+		  return (failed);
+		_connectedPorts.push_back(info);
+		_log->logServerConnection("Port connection created", info.serverID, info.serverFD, info.serverPort);
+	  } 
+	  else {
+		_log->logServerError("Invalid port number", serverStruct._id, atoi(it->c_str()));
+	  }
 	}
   }
+  return (success);
 }
