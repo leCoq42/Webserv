@@ -26,6 +26,10 @@ server A {
 			autoindex			on;
 			root				html/cgi-bin;
 		}
+		location /php-bin {
+			autoindex			on;
+			root				html/php-bin;
+		}
 }
 
 server B {

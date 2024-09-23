@@ -146,6 +146,8 @@ void ClientConnection::receiveData(int clientFD)
 				client.clientIP, clientFD);
 		removeClientSocket(clientFD);
 	}
+	// if (!bytesReceived)
+	// 	removeClientSocket(clientFD);
 }
 
 void ClientConnection::handlePollInEvent(int clientFD, std::list<ServerStruct> *serverStruct)

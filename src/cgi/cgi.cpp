@@ -10,13 +10,13 @@
 #include <unistd.h>
 
 CGI::CGI() :
-	_request(nullptr), _scriptPath(""), _interpreter(""), _result(""),
+	_request(nullptr), _scriptPath(""), _path(""), _script(""), _interpreter(""), _result(""),
 	_contentLength(0), _cgiFD(0), _complete(false)
 {}
 
 
 CGI::CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &scriptPath, const std::string &interpreter, std::shared_ptr<Log> log) :
-	_log(log), _request(request), _scriptPath(scriptPath), _interpreter(interpreter), _result(""),
+	_log(log), _request(request), _scriptPath(scriptPath), _path(scriptPath), _script(""), _interpreter(interpreter), _result(""),
 	_contentLength(0), _cgiFD(0), _complete(false), _pid(0)
 {
 	parseCGI();
@@ -26,7 +26,7 @@ CGI::CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &s
 }
 
 CGI::CGI(const CGI &src) :
-	_log(src._log), _request(src._request), _scriptPath(src._scriptPath), _interpreter(src._interpreter),
+	_log(src._log), _request(src._request), _scriptPath(src._scriptPath), _path(src._path), _script(src._script), _interpreter(src._interpreter),
 	_cgiArgv(src._cgiArgv), _cgiEnvp(src._cgiEnvp), _result(src._result),
 	_contentLength(src._contentLength), _cgiFD(src._cgiFD), _complete(src._complete)
 {}
@@ -43,6 +43,7 @@ void CGI::swap(CGI &lhs)
 	std::swap(_log, lhs._log);
 	std::swap(_request, lhs._request);
 	std::swap(_scriptPath, lhs._scriptPath);
+	std::swap(_path, lhs._path);
 	std::swap(_interpreter, lhs._interpreter);
 	std::swap(_cgiArgv, lhs._cgiArgv);
 	std::swap(_cgiEnvp, lhs._cgiEnvp);
@@ -50,6 +51,7 @@ void CGI::swap(CGI &lhs)
 	std::swap(_contentLength, lhs._contentLength);
 	std::swap(_cgiFD, lhs._cgiFD);
 	std::swap(_complete, lhs._complete);
+	std::swap(_script, lhs._script);
 }
  
 CGI::~CGI() {
@@ -59,12 +61,12 @@ CGI::~CGI() {
 
 void CGI::parseCGI()
 {
+	_script = _scriptPath.filename().c_str();
 	init_envp();
 	if (!_interpreter.empty())
 		_cgiArgv.push_back(const_cast<char *>(_interpreter.c_str()));
-	_cgiArgv.push_back(const_cast<char *>(_scriptPath.c_str()));
+	_cgiArgv.push_back(const_cast<char *>(_script.c_str()));
 	_cgiArgv.push_back(NULL);
-
 	if (!_request->get_requestArgs().empty()) {
 		for (auto it: _request->get_requestArgs())
 			add_to_envp(it.first, it.second, "HTTP_");
@@ -76,8 +78,8 @@ void CGI::init_envp()
 	add_to_envp("GATEWAY_INTERFACE", "CGI/1.1", "");
 	add_to_envp("REQUEST_METHOD", _request->get_requestMethod(), "");
 	add_to_envp("REDIRECT_STATUS", "true", "");
-	add_to_envp("SCRIPT_FILENAME", _scriptPath, "");
-	add_to_envp("SCRIPT_NAME", _scriptPath, "");
+	add_to_envp("SCRIPT_FILENAME", _script, "");
+	add_to_envp("SCRIPT_NAME", _script, "");
 	if (_request->get_requestMethod() == "GET")
 		add_to_envp("QUERY_STRING", _request->_argStr.c_str(), "");
 	for (const auto &[key, value] : _request->get_headers())
@@ -143,6 +145,7 @@ void CGI::executeScript()
     }
 
 	if (_pid == 0) {// Child process
+		chdir(_path.remove_filename().c_str());
 		close(pipeServertoCGI[WRITE]);
 		close(pipeCGItoServer[READ]);
 
@@ -157,6 +160,7 @@ void CGI::executeScript()
 		_exit(1);
     }
 	else { // Parent process
+		std::cout << "segger" << std::endl;
 		close(pipeServertoCGI[READ]);
 		write(pipeServertoCGI[WRITE], _request->get_body().data(), _request->get_body().length());
 		close(pipeServertoCGI[WRITE]);
