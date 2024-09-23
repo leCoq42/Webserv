@@ -33,6 +33,8 @@ private:
 	std::shared_ptr<Log>		_log;
 	std::shared_ptr<Request>	_request;
 	std::filesystem::path		_scriptPath;
+	std::filesystem::path		_path;
+	std::string					_script;
 	std::string					_interpreter;
 	std::vector<char *>			_cgiArgv;
 	std::vector<std::string>	_cgiEnvp;
