@@ -141,11 +141,13 @@ void ClientConnection::receiveData(int clientFD)
 		client.receiveStr.append(std::string(buffer.begin(), buffer.begin() + bytesReceived));
 		time(&client.lastRequestTime);
 	}
-	if (bytesReceived < 0) {
+	else if (bytesReceived < 0) {
 		_log->logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
 				client.clientIP, clientFD);
 		removeClientSocket(clientFD);
 	}
+	else
+		return;
 }
 
 void ClientConnection::handlePollInEvent(int clientFD, std::list<ServerStruct> *serverStruct)
