@@ -59,8 +59,7 @@ bool ClientConnection::clientHasTimedOut(int clientFD, std::list<ServerStruct> *
 		client.responseStr = client.response->get_response();
 		client.bytesToSend = client.response->get_response().length();
 		client.totalBytesSent = 0;
-		client.pfd.revents = POLLOUT;
-		sendData(clientFD);
+		client.pfd.events = POLLOUT;
 		return true;
 	}
 	return false;
