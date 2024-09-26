@@ -76,15 +76,18 @@ std::string	FileAccess::swap_to_right_server_config(std::string uri, int port, s
 				{
 					for (std::string &server_name : server_config._names.content_list)
 					{
-						if (!prev_match)
+						if (find_server_name_in_uri(host, server_name))
 						{
-							prev_match = &server_config;
-							_prevServerName = server_name;
+							if (server_name.length() > _prevServerName.length())
+							{
+								prev_match = &server_config;
+								_prevServerName = server_name;
+							}
 						}
-						else if (server_name.length() > _prevServerName.length() && find_server_name_in_uri(host, server_name))
+						else if (!prev_match)
 						{
 							prev_match = &server_config;
-							_prevServerName = server_name;
+							_prevServerName = "";
 						}
 					}
 				}
