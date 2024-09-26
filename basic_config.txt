@@ -36,7 +36,7 @@ server B {
 		listen				8081;
 		listen				8082;
 		listen				8083;
-		server_name			*.nl our-site.org mail.*;
+		server_name			our-site.org our-site2.org;
 		error_page			404 error/404.html;
 		allow_methods		GET POST DELETE;
 		root				html;
