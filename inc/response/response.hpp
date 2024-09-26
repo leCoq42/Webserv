@@ -103,7 +103,9 @@ private:
 		{".pouac", "text/plain"}, 
 
 		{"x-www-form-urlencoded", "application/x-www-form-urlencoded"},
-		{"form-data", "multipart/form-data"}};
+		{"form-data", "multipart/form-data"},
+		{".ico", "image/x-icon"}
+	};
 
 	static const inline std::unordered_map<std::string, std::string> interpreters{
 		{".cgi", ""},
