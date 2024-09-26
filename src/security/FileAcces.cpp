@@ -30,13 +30,13 @@ FileAccess::FileAccess(std::list<ServerStruct> *config): config(config)
 
 FileAccess::~FileAccess() {}
 
-bool	find_server_name_in_uri(std::string uri, std::string server_name)
+bool	find_server_name_in_uri(std::string host, std::string server_name)
 {
-	if (server_name.at(0) == '*' && uri.find(server_name.substr(1), (uri.length() - server_name.length())) == uri.length() - server_name.length() + 1)
+	if (server_name.at(0) == '*' && host.find(server_name.substr(1), (host.length() - server_name.length())) == host.length() - server_name.length() + 1)
 		return (true);
-	else if (server_name.at(server_name.length() - 1) == '*' && !uri.find(server_name.substr(0, server_name.length() - 1)))
+	else if (server_name.at(server_name.length() - 1) == '*' && !host.find(server_name.substr(0, server_name.length() - 1)))
 		return (true);
-	else if (!uri.find(server_name))
+	else if (!host.find(server_name))
 		return (true);
 	return (false);
 }
@@ -58,7 +58,7 @@ std::string	remove_server_name(std::string uri, std::string server_name)
 	return (new_uri);
 }
 
-std::string	FileAccess::swap_to_right_server_config(std::string uri, int port)
+std::string	FileAccess::swap_to_right_server_config(std::string uri, int port, std::string host)
 {
 	std::string		port_str;
 	ServerStruct	*prev_match;
@@ -74,7 +74,7 @@ std::string	FileAccess::swap_to_right_server_config(std::string uri, int port)
 				if (!prev_match)
 					prev_match = &server_config;
 				else if (server_config._names.content_list.front().length() > prev_match->_names.content_list.front().length()
-					&& find_server_name_in_uri(uri, server_config._names.content_list.front()))
+					&& find_server_name_in_uri(host, server_config._names.content_list.front()))
 					prev_match = &server_config;
 			}
 		}
@@ -84,8 +84,8 @@ std::string	FileAccess::swap_to_right_server_config(std::string uri, int port)
 	_currentRoot = _root;
 	_allowedMethods = &server->_allowMethods.content_list;
 	_currentAllowedMethods = _allowedMethods;
-	if (!server->_names.content_list.empty())
-		return remove_server_name(uri, server->_names.content_list.front());
+	// if (!server->_names.content_list.empty())
+	// 	return remove_server_name(uri, server->_names.content_list.front());
 	return (uri);
 }
 
@@ -250,14 +250,14 @@ std::string	FileAccess::redirect(int &return_code)
 	return ("");
 }
 
-std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &return_code, int port, std::string method)
+std::filesystem::path	FileAccess::isFilePermissioned(std::string uri, int &return_code, int port, std::string method, std::string host)
 {
 	std::string		new_uri;
 	ConfigContent	*location_config;
 	std::filesystem::path	path;
 
 
-	uri = swap_to_right_server_config(uri, port);
+	uri = swap_to_right_server_config(uri, port, host);
 	new_uri = redirect(return_code);
 	if (return_code == 301)
 		return ("/");

@@ -21,6 +21,7 @@ public:
 	const std::string	&get_requestMethod() const;
 	const std::string	&get_uri() const;
 	const std::string	get_referer() const;
+	const std::string 	get_host() const;
 	const std::string	get_contentType() const;
 	const std::string	get_boundary() const;
 	const std::string	&get_htmlVersion() const;
