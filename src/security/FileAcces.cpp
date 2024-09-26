@@ -32,11 +32,12 @@ FileAccess::~FileAccess() {}
 
 bool	find_server_name_in_uri(std::string host, std::string server_name)
 {
+	host = host.substr(0, host.find(":"));
 	if (server_name.at(0) == '*' && host.find(server_name.substr(1), (host.length() - server_name.length())) == host.length() - server_name.length() + 1)
 		return (true);
 	else if (server_name.at(server_name.length() - 1) == '*' && !host.find(server_name.substr(0, server_name.length() - 1)))
 		return (true);
-	else if (!host.find(server_name))
+	else if (!host.find(server_name) && host.length() == server_name.length())
 		return (true);
 	return (false);
 }
@@ -71,11 +72,27 @@ std::string	FileAccess::swap_to_right_server_config(std::string uri, int port, s
 		{
 			if (port_config == port_str)
 			{
-				if (!prev_match)
+				if (!server_config._names.content_list.empty())
+				{
+					for (std::string &server_name : server_config._names.content_list)
+					{
+						if (!prev_match)
+						{
+							prev_match = &server_config;
+							_prevServerName = server_name;
+						}
+						else if (server_name.length() > _prevServerName.length() && find_server_name_in_uri(host, server_name))
+						{
+							prev_match = &server_config;
+							_prevServerName = server_name;
+						}
+					}
+				}
+				else if (!prev_match)
+				{
 					prev_match = &server_config;
-				else if (server_config._names.content_list.front().length() > prev_match->_names.content_list.front().length()
-					&& find_server_name_in_uri(host, server_config._names.content_list.front()))
-					prev_match = &server_config;
+					_prevServerName = "";
+				}
 			}
 		}
 	}
