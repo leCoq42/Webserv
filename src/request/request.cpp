@@ -218,6 +218,14 @@ const std::string Request::get_referer() const
 	return referer->second;
 }
 
+const std::string Request::get_host() const
+{
+	auto host = _headers.find("host");
+	if (host == _headers.end())
+		return "";
+	return host->second;
+}
+
 const std::string	Request::get_contentType() const
 {
 	auto res = _headers.find("content-type");

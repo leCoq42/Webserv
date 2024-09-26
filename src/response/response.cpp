@@ -23,7 +23,7 @@ Response::Response(std::shared_ptr<Request> request, std::list<ServerStruct> *co
 	if (!_finalPath.empty() && _finalPath.string()[0] == '/')
 		_finalPath = _finalPath.string().substr(1);
 
-	_finalPath = _fileAccess.isFilePermissioned( _finalPath, return_code, port, _request->get_requestMethod());
+	_finalPath = _fileAccess.isFilePermissioned( _finalPath, return_code, port, _request->get_requestMethod(), _request->get_host());
 	if (return_code == 301)
 		buildResponse(static_cast<int>(return_code), redirect(_fileAccess.get_return()), false);
 	else if (return_code) {
@@ -41,7 +41,7 @@ Response::Response(int error_code, std::string error_description, std::list<Serv
 	_log(log), _request(nullptr), _contentType("text/html"), _body(""), _contentLength(0), _responseString(""),
 	_fileAccess(config), _finalPath(""), _cgi(nullptr), _complete(false), _port(port)
 {
-	_finalPath = _fileAccess.isFilePermissioned( _finalPath, error_code, _port, "GET");
+	_finalPath = _fileAccess.isFilePermissioned( _finalPath, error_code, _port, "GET", "");
 	_body = get_error_body(error_code, error_description);
 	buildResponse(error_code, error_description, false);
 	#ifdef DEBUG
