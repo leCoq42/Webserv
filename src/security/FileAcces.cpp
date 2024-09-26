@@ -84,8 +84,6 @@ std::string	FileAccess::swap_to_right_server_config(std::string uri, int port, s
 	_currentRoot = _root;
 	_allowedMethods = &server->_allowMethods.content_list;
 	_currentAllowedMethods = _allowedMethods;
-	// if (!server->_names.content_list.empty())
-	// 	return remove_server_name(uri, server->_names.content_list.front());
 	return (uri);
 }
 
