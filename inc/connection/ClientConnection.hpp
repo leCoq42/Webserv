@@ -19,7 +19,7 @@
 #include <algorithm>
 
 #define SENDING 0
-#define TIMEOUT 30
+#define TIMEOUT 1
 
 struct ConnectionInfo {
 	char                        clientIP[INET_ADDRSTRLEN];
@@ -28,7 +28,7 @@ struct ConnectionInfo {
 	std::shared_ptr<Request>	request;
 	std::shared_ptr<Response>	response;
 	long int 					timeOut;
-	time_t	 					lastRequestTime;
+	time_t	 					lastPacketTime;
 	std::string 				receiveStr;
 	std::string					responseStr;
 	int 						totalBytesSent;

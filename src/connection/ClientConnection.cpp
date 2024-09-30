@@ -53,7 +53,7 @@ bool ClientConnection::clientHasTimedOut(int clientFD, std::list<ServerStruct> *
 	time_t currentTime;
 	time(&currentTime);
 
-	if (currentTime - client.lastRequestTime > client.timeOut) {
+	if (client.lastPacketTime && (currentTime - client.lastPacketTime > client.timeOut)) {
 		_log->logClientConnection("Client timed out", client.clientIP, clientFD);
 		client.response = std::make_shared<Response>(504, "Gateway Timeout", serverStruct, client.port, _log);
 		client.responseStr = client.response->get_response();
@@ -124,7 +124,7 @@ bool ClientConnection::initializeRequest(int clientFD)
 		if (headerEnd + CRLFCRLFsize < client.receiveStr.length())
 			client.request->appendToBody(client.receiveStr.substr(headerEnd + CRLFCRLFsize));
 		client.receiveStr.clear();
-		client.lastRequestTime = currentTime;
+		client.lastPacketTime = currentTime;
 		return true;
 	}
 	return false;
@@ -138,7 +138,7 @@ void ClientConnection::receiveData(int clientFD)
 	ssize_t bytesReceived = recv(clientFD, &buffer[0], buffer.size(), MSG_DONTWAIT);
 	if (bytesReceived > 0) {
 		client.receiveStr.append(std::string(buffer.begin(), buffer.begin() + bytesReceived));
-		time(&client.lastRequestTime);
+		time(&client.lastPacketTime);
 	}
 	else if (bytesReceived < 0) {
 		_log->logClientError("Failed to receive data from client: " + std::string(std::strerror(errno)),
@@ -151,9 +151,8 @@ void ClientConnection::receiveData(int clientFD)
 
 void ClientConnection::handlePollInEvent(int clientFD, std::list<ServerStruct> *serverStruct)
 {
+	(void)serverStruct;
 	if (_connectionInfo[clientFD].pfd.fd < 1)
-		return;
-	if (clientHasTimedOut(clientFD, serverStruct))
 		return;
 	receiveData(clientFD);
 	auto& client = _connectionInfo[clientFD];
@@ -166,6 +165,7 @@ void ClientConnection::handlePollInEvent(int clientFD, std::list<ServerStruct> *
 		client.receiveStr.clear();
 	}
 	if (client.request->get_requestStatus() == true) {
+		client.lastPacketTime = 0;
 		client.pfd.events = POLLOUT;
 	}
 }
@@ -181,7 +181,7 @@ void ClientConnection::initClientInfo(int clientFD, sockaddr_in clientAddr, Serv
 	clientInfo.request = nullptr;
 	clientInfo.response = nullptr;
 	clientInfo.timeOut = TIMEOUT;
-	clientInfo.lastRequestTime = currentTime;
+	clientInfo.lastPacketTime = 0;
 	clientInfo.receiveStr = "";
 	clientInfo.responseStr = "";
 	clientInfo.totalBytesSent = 0;
@@ -256,7 +256,7 @@ void ClientConnection::initServerSockets() {
 		serverInfo.request = nullptr;
 		serverInfo.response = nullptr;
 		serverInfo.timeOut = 0;
-		serverInfo.lastRequestTime = 0;
+		serverInfo.lastPacketTime = 0;
 		serverInfo.receiveStr = "";
 		serverInfo.responseStr = "";
 		serverInfo.totalBytesSent = 0;
@@ -280,26 +280,25 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 		int poll_count = poll(pollfds.data(), pollfds.size(),100);
 		if (poll_count > 0) {
 			for (const auto& pfd : pollfds) {
-				if (pfd.revents & POLLIN) {
+				if (pfd.revents & POLLIN){
 					if (isServerSocket(pfd.fd))
 						acceptClients(pfd.fd);
 					else
 						handlePollInEvent(pfd.fd, serverStruct);
 				}
-				if (pfd.revents & (POLLHUP | POLLERR))
+				else if (pfd.revents & (POLLHUP | POLLERR))
 					handlePollErrorEvent(pfd.fd);
-				else if (pfd.fd && (pfd.revents & POLLOUT)) {
+				else if (pfd.fd && (pfd.revents & POLLOUT))
 					handlePollOutEvent(pfd.fd, serverStruct);
-				}
 			}
 		}
+		for (const auto& pfd : pollfds)
+			clientHasTimedOut(pfd.fd, serverStruct);
 		if (globalSignalReceived == 1) {
 			_log->logAdd("Interrupt signal received.");
 			break;
 		}
 		else if (poll_count < 0)
 			_log->logError("Failed to poll.");
-		if (poll_count == 0)
-			continue;
 	}
 }
