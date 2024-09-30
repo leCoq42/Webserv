@@ -13,6 +13,7 @@ class	FileAccess
 	std::filesystem::path				_root;
 	std::filesystem::path				_currentRoot;
 	std::string							_return;
+	std::string							_prevServerName;
 	std::list<std::string>				*_allowedMethods;
 	std::list<std::string>				*_currentAllowedMethods;
 	std::list<ServerStruct>				*config;
