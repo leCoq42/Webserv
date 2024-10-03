@@ -211,7 +211,7 @@ bool	Response::handleDeleteRequest()
 {
 	if (_fileAccess.is_deleteable(_finalPath))
 	{
-		if (remove(_finalPath))
+		if (std::remove(_finalPath.c_str()))
 		{
 			_body = get_error_body(static_cast<int>(204), "Delete.");
 			buildResponse(static_cast<int>(204), "Delete.", "");
@@ -329,20 +329,31 @@ statusCode	Response::write_file(const std::string &path, const std::string &cont
 		return statusCode::INTERNAL_SERVER_ERROR;
 }
 
-void	Response::continue_cgi()
+int	Response::continue_cgi()
 {
-	if (_cgi->readCGIfd()) {
-		std::cerr << "cgi reading error" << std::endl;
-		_body = get_error_body(static_cast<int>(statusCode::INTERNAL_SERVER_ERROR), "Internal Server Error.");
-		buildResponse(static_cast<int>(statusCode::INTERNAL_SERVER_ERROR), "Internal Server Error", false);
-		return;
+	if (_cgi->isComplete() == true) {
+		_body = _cgi->get_result();
+		_contentLength = _cgi->get_contentLength();
+		buildResponse(static_cast<int>(statusCode::OK), "OK", true);
+		return (1);
+	}
+	if (_cgi->get_pollfdWrite().revents & POLLOUT && _cgi->writeCGIfd())
+		;
+	if (_cgi->get_pollfdRead().revents & POLLIN || _cgi->get_pollfdRead().revents == POLLHUP || _cgi->get_pollfdRead().revents == POLLNVAL){
+		if (_cgi->readCGIfd()) {
+			std::cerr << "cgi reading error" << std::endl;
+			_body = get_error_body(static_cast<int>(statusCode::INTERNAL_SERVER_ERROR), "Internal Server Error.");
+			buildResponse(static_cast<int>(statusCode::INTERNAL_SERVER_ERROR), "Internal Server Error", false);
+		}
+		return (1);
 	}
 	if (_cgi->isComplete() == true) {
 		_body = _cgi->get_result();
 		_contentLength = _cgi->get_contentLength();
 		buildResponse(static_cast<int>(statusCode::OK), "OK", true);
-		return;
+		return (1);
 	}
+	return (0);
 }
 
 void	Response::buildResponse(int status, const std::string &message, bool isCGI)
@@ -373,6 +384,7 @@ void	Response::buildResponse(int status, const std::string &message, bool isCGI)
 const std::string	&Response::get_response() const { return _responseString; }
 const std::string	&Response::get_contentType() const { return _contentType; }
 bool 				Response::isComplete() const { return _complete; }
+const std::shared_ptr<CGI>	Response::get_cgi() {return _cgi;};
 
 void Response::printResponse() {
 	std::cout << MSG_BORDER << "[Response]" << MSG_BORDER << std::endl;

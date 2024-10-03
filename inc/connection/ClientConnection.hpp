@@ -47,7 +47,7 @@ public:
 	~ClientConnection();
 
 	void	setupClientConnection(std::list<ServerStruct> *serverStruct);
-	void	handlePollInEvent(int clientFD, std::list<ServerStruct> *serverStruct);
+	void	handlePollInEvent(int clientFD);
 	void	acceptClients(int serverFD);
 	void	initServerSockets();
 	void	removeClientSocket(int clientFD);
