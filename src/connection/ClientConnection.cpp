@@ -10,9 +10,9 @@ ClientConnection::ClientConnection(std::shared_ptr<ServerConnection> ServerConne
 ClientConnection::~ClientConnection() {
 	for (auto it: _connectionInfo) {
 		if (!isServerSocket(it.second.pfd.fd)) {
-			if (it.second.pfd.fd > 0) {
+			if (it.second.pfd.fd >= 0) {
 				close(it.second.pfd.fd);
-				it.second.pfd.fd = 0;
+				it.second.pfd.fd = -1;
 			}
 		}
 	}
@@ -35,9 +35,8 @@ void ClientConnection::handlePollOutEvent(int clientFD, std::list<ServerStruct> 
 		client.responseStr = client.response->get_response();
 		client.bytesToSend = client.response->get_response().length();
 	}
-	else if (client.response && client.response->isComplete() == false) {
+	else if (client.response && client.response->isComplete() == false)
 		client.response->continue_cgi();
-	}
 	else {
 		client.responseStr = client.response->get_response();
 		client.bytesToSend = client.response->get_response().length();
@@ -149,9 +148,8 @@ void ClientConnection::receiveData(int clientFD)
 		return;
 }
 
-void ClientConnection::handlePollInEvent(int clientFD, std::list<ServerStruct> *serverStruct)
+void ClientConnection::handlePollInEvent(int clientFD)
 {
-	(void)serverStruct;
 	if (_connectionInfo[clientFD].pfd.fd < 1)
 		return;
 	receiveData(clientFD);
@@ -211,14 +209,14 @@ void ClientConnection::acceptClients(int serverFD)
 		_log->logError("Failed to connect client: " + std::string(strerror(errno)));
 		return;
 	}
-
 	if (getpeername(clientFD, (struct sockaddr *)&clientAddr, &clientAddrLen) != 0) {
 		_log->logError("Failed to read client IP: " + std::string(strerror(errno)));
 		close(clientFD);
-		_connectionInfo[clientFD].pfd.fd = 0;
+		_connectionInfo[clientFD].pfd.fd = -1;
 		return;
 	}
 	initClientInfo(clientFD, clientAddr, serverInfo);
+	time(&_connectionInfo[clientFD].lastPacketTime);
 	#ifdef DEBUG
 	_log->logClientConnection("accepted connection", _connectionInfo[clientFD].clientIP, clientFD);
 	#endif
@@ -237,13 +235,13 @@ void ClientConnection::removeClientSocket(int clientFD)
 {
 	if (_connectionInfo.find(clientFD) == _connectionInfo.end())
 		return;
-	else if (_connectionInfo[clientFD].pfd.fd < 1)
+	else if (_connectionInfo[clientFD].pfd.fd <= 1)
 		return;
 	close(clientFD);
 	#ifdef DEBUG
 	_log->logClientConnection("closed connection", _connectionInfo[clientFD].clientIP, clientFD);
 	#endif
-	_connectionInfo[clientFD].pfd.fd = 0;
+	_connectionInfo[clientFD].pfd.fd = -1;
 }
 
 void ClientConnection::initServerSockets() {
@@ -274,22 +272,41 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 	while (true) {
 		std::vector<pollfd> pollfds;
 		for (const auto& connection : _connectionInfo) {
-			pollfds.push_back(connection.second.pfd);
+			if (connection.second.pfd.fd > 0){ //hacky patch
+				pollfds.push_back(connection.second.pfd);
+				if (connection.second.response && connection.second.response->get_cgi())
+				{
+					pollfds.push_back(connection.second.response->get_cgi()->get_pollfdRead());
+					pollfds.push_back(connection.second.response->get_cgi()->get_pollfdWrite());
+				}
+			}
 		}
 
-		int poll_count = poll(pollfds.data(), pollfds.size(),100);
+		int poll_count = poll(pollfds.data(), pollfds.size(),TIMEOUT * 1000);
+
 		if (poll_count > 0) {
-			for (const auto& pfd : pollfds) {
+			std::vector<pollfd>::iterator pfd_it = pollfds.begin();
+			while (pfd_it < pollfds.end()){
+				int		it_with = 1;
+				pollfd	pfd = *pfd_it;
+				if (_connectionInfo[pfd.fd].response && _connectionInfo[pfd.fd].response->get_cgi())
+				{
+					_connectionInfo[pfd.fd].response->get_cgi()->get_pollfdRead().revents = (pfd_it + 1)->revents;
+					_connectionInfo[pfd.fd].response->get_cgi()->get_pollfdWrite().revents = (pfd_it + 2)->revents;
+					it_with = 3;
+				}
 				if (pfd.revents & POLLIN){
 					if (isServerSocket(pfd.fd))
 						acceptClients(pfd.fd);
 					else
-						handlePollInEvent(pfd.fd, serverStruct);
+						handlePollInEvent(pfd.fd);
 				}
-				else if (pfd.revents & (POLLHUP | POLLERR))
+				else if (pfd.revents & (POLLHUP | POLLERR | POLLNVAL))
 					handlePollErrorEvent(pfd.fd);
-				else if (pfd.fd && (pfd.revents & POLLOUT))
+				else if (pfd.revents & POLLOUT && (it_with != 3 || 
+					(_connectionInfo[pfd.fd].response->get_cgi()->get_pollfdRead().revents || _connectionInfo[pfd.fd].response->get_cgi()->get_pollfdWrite().revents || _connectionInfo[pfd.fd].response->get_cgi()->isComplete())))
 					handlePollOutEvent(pfd.fd, serverStruct);
+				pfd_it += it_with;
 			}
 		}
 		for (const auto& pfd : pollfds)

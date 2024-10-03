@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 #include "log.hpp"
+#include <sys/poll.h>
 
 class CGI {
 public:
@@ -16,10 +17,14 @@ public:
 	void				swap(CGI &lhs);
 	const size_t		&get_contentLength() const;
 	const std::string	&get_result() const;
-	const int			&get_cgiFD() const;
+	pid_t			&get_cgiReadFD();
+	pid_t			&get_cgiWriteFD();
+	pollfd		&get_pollfdRead();
+	pollfd		&get_pollfdWrite();
 	const bool			&isComplete() const;
 
 	int					readCGIfd();
+	int					writeCGIfd();
 
 private:
 	void					parseCGI();
@@ -40,9 +45,13 @@ private:
 	std::vector<std::string>	_cgiEnvp;
 	std::string					_result;
 	size_t						_contentLength;
-	int							_cgiFD;
+	size_t						_bytesWritten;
+	pid_t						_cgiReadFD;
+	pid_t						_cgiWriteFD;
 	bool						_complete;
 	pid_t						_pid;
+	pollfd						_pollfdRead;
+	pollfd						_pollfdWrite;
 
 	static const inline std::vector<std::string> metaVarNames = {
 		"AUTH_TYPE",      "CONTENT_LENGTH",  "CONTENT_TYPE", "GATEWAY_INTERFACE",
