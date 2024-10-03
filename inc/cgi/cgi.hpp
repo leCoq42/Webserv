@@ -17,8 +17,6 @@ public:
 	void				swap(CGI &lhs);
 	const size_t		&get_contentLength() const;
 	const std::string	&get_result() const;
-	pid_t			&get_cgiReadFD();
-	pid_t			&get_cgiWriteFD();
 	pollfd		&get_pollfdRead();
 	pollfd		&get_pollfdWrite();
 	const bool			&isComplete() const;
@@ -46,8 +44,6 @@ private:
 	std::string					_result;
 	size_t						_contentLength;
 	size_t						_bytesWritten;
-	pid_t						_cgiReadFD;
-	pid_t						_cgiWriteFD;
 	bool						_complete;
 	pid_t						_pid;
 	pollfd						_pollfdRead;

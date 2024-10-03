@@ -13,19 +13,23 @@
 
 CGI::CGI() :
 	_request(nullptr), _scriptPath(""), _path(""), _script(""), _interpreter(""), _result(""),
-	_contentLength(0), _cgiReadFD(-1), _cgiWriteFD(-1), _complete(false)
+	_contentLength(0), _complete(false)
 {
-	_pollfdRead.fd = _cgiReadFD;
-	_pollfdWrite.fd = _cgiWriteFD;
+	_pollfdRead.fd = -1;
+	_pollfdWrite.fd = -1;
+	_pollfdRead.events = 0;
+	_pollfdWrite.events = 0;
 }
 
 
 CGI::CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &scriptPath, const std::string &interpreter, std::shared_ptr<Log> log) :
 	_log(log), _request(request), _scriptPath(scriptPath), _path(scriptPath), _script(""), _interpreter(interpreter), _result(""),
-	_contentLength(0), _cgiReadFD(-1), _cgiWriteFD(-1), _complete(false), _pid(0)
+	_contentLength(0), _complete(false), _pid(0)
 {
-	_pollfdRead.fd = _cgiReadFD;
-	_pollfdWrite.fd = _cgiWriteFD;
+	_pollfdRead.fd = -1;
+	_pollfdWrite.fd = -1;
+	_pollfdRead.events = 0;
+	_pollfdWrite.events = 0;
 	parseCGI();
 	executeScript();
 	if (_complete)
@@ -35,10 +39,12 @@ CGI::CGI(const std::shared_ptr<Request> &request, const std::filesystem::path &s
 CGI::CGI(const CGI &src) :
 	_log(src._log), _request(src._request), _scriptPath(src._scriptPath), _path(src._path), _script(src._script), _interpreter(src._interpreter),
 	_cgiArgv(src._cgiArgv), _cgiEnvp(src._cgiEnvp), _result(src._result),
-	_contentLength(src._contentLength), _cgiReadFD(src._cgiReadFD), _cgiWriteFD(src._cgiWriteFD), _complete(src._complete)
+	_contentLength(src._contentLength), _complete(src._complete)
 {
-	_pollfdRead.fd = _cgiReadFD;
-	_pollfdWrite.fd = _cgiWriteFD;
+	_pollfdRead.fd = src._pollfdRead.fd;
+	_pollfdWrite.fd = src._pollfdWrite.fd;
+	_pollfdRead.events = src._pollfdRead.events;
+	_pollfdWrite.events = src._pollfdWrite.events;
 }
 
 CGI &CGI::operator=(const CGI &rhs)
@@ -59,19 +65,23 @@ void CGI::swap(CGI &lhs)
 	std::swap(_cgiEnvp, lhs._cgiEnvp);
 	std::swap(_result, lhs._result);
 	std::swap(_contentLength, lhs._contentLength);
-	std::swap(_cgiReadFD, lhs._cgiReadFD);
-	std::swap(_cgiWriteFD, lhs._cgiWriteFD);
+	std::swap(_pollfdRead.fd, lhs._pollfdRead.fd);
+	std::swap(_pollfdWrite.fd, lhs._pollfdWrite.fd);
+	std::swap(_pollfdRead.events, lhs._pollfdRead.events);
+	std::swap(_pollfdWrite.events, lhs._pollfdWrite.events);
 	std::swap(_complete, lhs._complete);
 	std::swap(_script, lhs._script);
-	_pollfdRead.fd = _cgiReadFD;
-	_pollfdWrite.fd = _cgiWriteFD;
 }
  
 CGI::~CGI() {
-	if (_cgiReadFD != -1)
-		close(_cgiReadFD);
-	if (_cgiWriteFD != -1)
-		close(_cgiWriteFD);
+	int	status;
+	
+	if (!waitpid(_pid, &status, WNOHANG))
+		kill(_pid, SIGKILL);
+	if (_pollfdRead.fd != -1)
+		close(_pollfdRead.fd);
+	if (_pollfdWrite.fd != -1)
+		close(_pollfdWrite.fd);
 }
 
 void CGI::parseCGI()
@@ -180,15 +190,18 @@ void CGI::executeScript()
 		close(pipeCGItoServer[WRITE]);
 		if (!_request->get_body().length())
 		{
-			close(_cgiWriteFD);
-			_cgiWriteFD = -1;
+			_pollfdWrite.fd = pipeServertoCGI[WRITE];
+			close(_pollfdWrite.fd);
+			_pollfdWrite.fd = -1;
 		}
-		_cgiReadFD = pipeCGItoServer[READ];
-		_cgiWriteFD = pipeServertoCGI[WRITE];
-		_pollfdRead.fd = _cgiReadFD;
-		_pollfdWrite.fd = _cgiWriteFD;
+		else
+		{
+			_pollfdWrite.fd = pipeServertoCGI[WRITE];
+			_pollfdWrite.events = POLLOUT;
+		}
+		_pollfdRead.fd = pipeCGItoServer[READ];
 		_pollfdRead.events = POLLIN;
-		_pollfdWrite.events = POLLOUT;
+
     }
 }
 
@@ -197,16 +210,22 @@ int	CGI::readCGIfd()
 	ssize_t bytesRead;
 	std::vector<char> buffer(BUFFSIZE);
 
-	bytesRead = read(_cgiReadFD, &buffer[0], BUFFSIZE);
+	if (_pollfdRead.fd > 0)
+		bytesRead = read(_pollfdRead.fd, &buffer[0], BUFFSIZE);
+	else
+		bytesRead = 0;
 	if (bytesRead < 0) {
-		close(_cgiReadFD);
-		_cgiReadFD = -1;
+		if (_pollfdRead.fd > 0)
+			close(_pollfdRead.fd);
+		_pollfdRead.fd = -1;
 		_complete = true;
+		calculateContentLength();
 		return 1;
 	}
 	else if (bytesRead == 0) {
-		close(_cgiReadFD);
-		_cgiReadFD = -1;
+		if (_pollfdRead.fd > 0)
+			close(_pollfdRead.fd);
+		_pollfdRead.fd = -1;
 		_complete = true;
 		calculateContentLength();
 	}
@@ -224,17 +243,17 @@ int	CGI::writeCGIfd()
 	to_write = _request->get_body().length() - _bytesWritten;
 	if (to_write > BUFFSIZE) //maybe something else then BUFFSIZE
 		to_write = BUFFSIZE;
-	size_t bytes_written = write(_cgiWriteFD, _request->get_body().data() + _bytesWritten, to_write);
+	size_t bytes_written = write(_pollfdWrite.fd, _request->get_body().data() + _bytesWritten, to_write);
 	_bytesWritten += to_write;
 	if (_bytesWritten == _request->get_body().length())
 	{
 		_pollfdWrite.events = 0;
-		close(_cgiWriteFD);
+		close(_pollfdWrite.fd);
 		_pollfdWrite.fd = -1;
 		return (1);
 	}
 	if (bytes_written < 0) {
-		close(_cgiWriteFD);
+		close(_pollfdWrite.fd);
 		kill(_pid, SIGKILL);
 		_pollfdRead.fd = -1;
 		_pollfdWrite.fd = -1;
@@ -264,8 +283,6 @@ void	CGI::calculateContentLength()
 
 const size_t		&CGI::get_contentLength() const { return _contentLength; }
 const std::string	&CGI::get_result() const { return _result; }
-pid_t			&CGI::get_cgiReadFD() { return _cgiReadFD; }
-pid_t			&CGI::get_cgiWriteFD() { return _cgiWriteFD; }
-pollfd		&CGI::get_pollfdRead() { return _pollfdRead; }
-pollfd		&CGI::get_pollfdWrite() { return _pollfdWrite; }
+pollfd				&CGI::get_pollfdRead() { return _pollfdRead; }
+pollfd				&CGI::get_pollfdWrite() { return _pollfdWrite; }
 const bool			&CGI::isComplete() const { return _complete; }
