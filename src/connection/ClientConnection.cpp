@@ -145,7 +145,12 @@ void ClientConnection::receiveData(int clientFD)
 		removeClientSocket(clientFD);
 	}
 	else
-		return;
+	{
+		removeClientSocket(clientFD);
+		#ifdef DEBUG
+		_log->logClientConnection("Client disconnected.", clientInfo.clientIP, clientFD);
+		#endif
+	}
 }
 
 void ClientConnection::handlePollInEvent(int clientFD)
@@ -293,14 +298,16 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 					_connectionInfo[pfd.fd].response->get_cgi()->get_pollfdWrite().revents = (pfd_it + 2)->revents;
 					it_with = 3;
 				}
-				if (pfd.revents & POLLIN){
+				if (pfd.revents & (POLLHUP | POLLERR | POLLNVAL))
+					handlePollErrorEvent(pfd.fd);
+				else if (pfd.revents & POLLIN){
 					if (isServerSocket(pfd.fd))
 						acceptClients(pfd.fd);
 					else
 						handlePollInEvent(pfd.fd);
 				}
-				else if (pfd.revents & (POLLHUP | POLLERR | POLLNVAL))
-					handlePollErrorEvent(pfd.fd);
+				// else if (pfd.revents & (POLLHUP | POLLERR | POLLNVAL))
+				// 	handlePollErrorEvent(pfd.fd);
 				else if (pfd.revents & POLLOUT && (it_with != 3 || 
 					(_connectionInfo[pfd.fd].response->get_cgi()->get_pollfdRead().revents || _connectionInfo[pfd.fd].response->get_cgi()->get_pollfdWrite().revents || _connectionInfo[pfd.fd].response->get_cgi()->isComplete())))
 					handlePollOutEvent(pfd.fd, serverStruct);

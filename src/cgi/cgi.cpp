@@ -241,7 +241,7 @@ int	CGI::writeCGIfd()
 	size_t	to_write;
 
 	to_write = _request->get_body().length() - _bytesWritten;
-	if (to_write > BUFFSIZE) //maybe something else then BUFFSIZE
+	if (to_write > BUFFSIZE)
 		to_write = BUFFSIZE;
 	size_t bytes_written = write(_pollfdWrite.fd, _request->get_body().data() + _bytesWritten, to_write);
 	_bytesWritten += to_write;
