@@ -186,7 +186,6 @@ void ClientConnection::initClientInfo(int clientFD, sockaddr_in clientAddr, Serv
 	clientInfo.bytesToSend = 0;
 	clientInfo.pfd.fd = clientFD;
 	clientInfo.pfd.events = POLLIN;
-
 	_connectionInfo[clientFD] = clientInfo;
 }
 
@@ -235,9 +234,8 @@ void ClientConnection::removeClientSocket(int clientFD)
 {
 	if (_connectionInfo.find(clientFD) == _connectionInfo.end())
 		return;
-	else if (_connectionInfo[clientFD].pfd.fd <= 1)
-		return;
-	close(clientFD);
+	else if (_connectionInfo[clientFD].pfd.fd > 1)
+		close(clientFD);
 	#ifdef DEBUG
 	_log->logClientConnection("closed connection", _connectionInfo[clientFD].clientIP, clientFD);
 	#endif
@@ -283,7 +281,7 @@ void ClientConnection::setupClientConnection(std::list<ServerStruct> *serverStru
 		}
 
 		int poll_count = poll(pollfds.data(), pollfds.size(),TIMEOUT * 1000);
-
+		// std::cout << _connectionInfo.size() << std::endl;
 		if (poll_count > 0) {
 			std::vector<pollfd>::iterator pfd_it = pollfds.begin();
 			while (pfd_it < pollfds.end()){

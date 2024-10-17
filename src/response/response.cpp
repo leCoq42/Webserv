@@ -340,6 +340,8 @@ int	Response::continue_cgi()
 	if (_cgi->get_pollfdWrite().revents & POLLOUT && _cgi->writeCGIfd())
 		;
 	if (_cgi->get_pollfdRead().revents & POLLIN || _cgi->get_pollfdRead().revents == POLLHUP || _cgi->get_pollfdRead().revents == POLLNVAL){
+		// if (_cgi->get_pollfdRead().revents == POLLHUP || _cgi->get_pollfdRead().revents == POLLNVAL)
+		// 	_cgi->readCGIfd();
 		if (_cgi->readCGIfd()) {
 			std::cerr << "cgi reading error" << std::endl;
 			_body = get_error_body(static_cast<int>(statusCode::INTERNAL_SERVER_ERROR), "Internal Server Error.");
