@@ -14,7 +14,7 @@ The bonus part includes additional features like support for cookies and session
 Program name:        <pre>Webserv</pre>
 Makefile:            <pre>all, clean, fclean, re, bonus</pre>
 Arguments:           <pre>A configuration file</pre>
-External functions:  <pre>Everything in C++ 98.
+External functions:  <pre>Everything in C++ 20.
 execve, dup, dup2, pipe, strerror, gai_strerror,
 errno, dup, dup2, fork, socketpair, htons, htonl,
 ntohs, ntohl, select, poll, epoll (epoll_create,
