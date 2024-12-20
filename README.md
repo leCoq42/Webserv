@@ -1,5 +1,5 @@
 # Webserv
-**This project is about writing a HTTP server in c++ which will be tested in an actual browser.**
+**This project is about writing a resilient HTTP server from scratch in C++ with a functional CGI.**
 
 
 The server must be able to handle multiple ports, serve static websites, accept GET, POST, and DELETE methods, allow file uploads, and be non-blocking using only one poll() (or equivalent) for all I/O operations. Additionally, the server must accurately handle HTTP response status codes, have default error pages, and be compatible with HTTP 1.1 standards like NGINX.
