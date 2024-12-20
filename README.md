@@ -14,8 +14,8 @@ The bonus part includes additional features like support for cookies and session
 Program name:        <pre>Webserv</pre>
 Makefile:            <pre>all, clean, fclean, re, bonus</pre>
 Arguments:           <pre>A configuration file</pre>
-External functions:  <pre>Everything in C++ 20.
-execve, dup, dup2, pipe, strerror, gai_strerror,
+Allowed functions:  <pre>Everything in C++ STL.
+Additionally: execve, dup, dup2, pipe, strerror, gai_strerror,
 errno, dup, dup2, fork, socketpair, htons, htonl,
 ntohs, ntohl, select, poll, epoll (epoll_create,
 epoll_ctl, epoll_wait), kqueue (kqueue, kevent),
@@ -24,7 +24,7 @@ connect, getaddrinfo, freeaddrinfo, setsockopt,
 getsockname, getprotobyname, fcntl, close, read,
 write, waitpid, kill, signal, access, stat, open,
 opendir, readdir and closedir.</pre>
-External libraties:  <pre>Any external library and Boost libraries are forbidden</pre>
+External libraries:  <pre>Any external library and Boost libraries are forbidden.</pre>
 
 
 This project was accomplished by [Martin](https://github.com/leCoq42),  [J. van der Laan](https://github.com/JzCo42)  &  [C. ter Maat](https://github.com/Chavert-ter-Maat)
